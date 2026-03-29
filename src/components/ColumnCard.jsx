@@ -65,13 +65,12 @@ function OptionButton({ col, opt, currentValue, onDirectSelect, onOpenModal, edi
   })();
 
   return (
-    <div className="relative">
+    <div className="relative h-full">
       <button
         type="button"
         onClick={handleClick}
-        className="w-full min-h-[72px] border font-nunito text-xs uppercase tracking-wide transition-colors select-none touch-manipulation rounded-sm"
+        className="w-full h-full min-h-[48px] border font-nunito text-xs uppercase tracking-wide transition-colors select-none touch-manipulation rounded-sm"
         style={{
-          minHeight:       72,
           backgroundColor: active ? '#ffffff' : '#1e1e1e',
           borderColor:     active ? '#ffffff' : '#3a3a3a',
           color:           active ? '#000000' : '#ffffff',
@@ -119,30 +118,69 @@ export default function ColumnCard({
     else setNameInput(col.name);
   }
 
+  // ── modal-list card (single full-width button → scrollable list) ──
+  if (col.type === 'modal-list') {
+    const hasValue = value != null;
+    return (
+      <div className="rounded-lg overflow-hidden flex flex-col" style={{ border: '1px solid #555555' }}>
+        {editMode && (
+          <CardHeader
+            col={col}
+            value={value}
+            editMode={editMode}
+            editingName={editingName}
+            nameInput={nameInput}
+            setNameInput={setNameInput}
+            onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
+            onCommitRename={commitRename}
+            onDeleteCol={() => onDeleteCol?.(col.id)}
+            onMoveCol={onMoveCol}
+          />
+        )}
+        <div className="p-2 flex-1" style={{ backgroundColor: '#111111' }}>
+          <button
+            type="button"
+            onClick={() => onOpenModal({ type: 'dropdown', columnId: col.id, options: col.listOptions, title: col.name })}
+            className="w-full h-full min-h-[72px] border font-nunito font-black text-sm uppercase tracking-wide transition-colors rounded-sm"
+            style={{
+              backgroundColor: hasValue ? '#ffffff' : '#1e1e1e',
+              borderColor:     hasValue ? '#ffffff' : '#3a3a3a',
+              color:           hasValue ? '#000000' : '#ffffff',
+              boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
+            }}
+          >
+            {hasValue ? String(value) : col.name}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ── modal-number card (single full-width button) ──
   if (col.type === 'modal-number') {
     const hasValue = value != null;
     return (
       <div className="rounded-lg overflow-hidden flex flex-col" style={{ border: '1px solid #555555' }}>
-        <CardHeader
-          col={col}
-          value={value}
-          editMode={editMode}
-          editingName={editingName}
-          nameInput={nameInput}
-          setNameInput={setNameInput}
-          onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
-          onCommitRename={commitRename}
-          onDeleteCol={() => onDeleteCol?.(col.id)}
-          onMoveCol={onMoveCol}
-        />
-        <div className="p-2" style={{ backgroundColor: '#111111' }}>
+        {editMode && (
+          <CardHeader
+            col={col}
+            value={value}
+            editMode={editMode}
+            editingName={editingName}
+            nameInput={nameInput}
+            setNameInput={setNameInput}
+            onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
+            onCommitRename={commitRename}
+            onDeleteCol={() => onDeleteCol?.(col.id)}
+            onMoveCol={onMoveCol}
+          />
+        )}
+        <div className="p-2 flex-1" style={{ backgroundColor: '#111111' }}>
           <button
             type="button"
             onClick={() => onOpenModal({ type: 'number', columnId: col.id, min: col.min, max: col.max, title: col.name })}
-            className="w-full min-h-[72px] border font-nunito font-black text-sm uppercase tracking-wide transition-colors rounded-sm"
+            className="w-full h-full min-h-[72px] border font-nunito font-black text-sm uppercase tracking-wide transition-colors rounded-sm"
             style={{
-              minHeight:       72,
               backgroundColor: hasValue ? '#ffffff' : '#1e1e1e',
               borderColor:     hasValue ? '#ffffff' : '#3a3a3a',
               color:           hasValue ? '#000000' : '#ffffff',
@@ -159,24 +197,27 @@ export default function ColumnCard({
   // ── buttons card ──
   return (
     <div className="rounded-lg overflow-hidden flex flex-col" style={{ border: '1px solid #555555' }}>
-      <CardHeader
-        col={col}
-        value={value}
-        editMode={editMode}
-        editingName={editingName}
-        nameInput={nameInput}
-        setNameInput={setNameInput}
-        onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
-        onCommitRename={commitRename}
-        onDeleteCol={() => onDeleteCol?.(col.id)}
-        onMoveCol={onMoveCol}
-      />
+      {editMode && (
+        <CardHeader
+          col={col}
+          value={value}
+          editMode={editMode}
+          editingName={editingName}
+          nameInput={nameInput}
+          setNameInput={setNameInput}
+          onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
+          onCommitRename={commitRename}
+          onDeleteCol={() => onDeleteCol?.(col.id)}
+          onMoveCol={onMoveCol}
+        />
+      )}
       <div
-        className="p-2 gap-2"
+        className="p-2 gap-2 flex-1"
         style={{
           backgroundColor: '#111111',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))',
+          gridAutoRows: '1fr',
         }}
       >
         {col.options.map((opt, idx) => (
@@ -194,7 +235,7 @@ export default function ColumnCard({
         {editMode && (
           <button
             onClick={() => onAddOption?.(col.id)}
-            className="min-h-[72px] border border-dashed font-nunito font-black text-xs text-white/25 hover:text-white/60 transition-colors"
+            className="h-full min-h-[72px] border border-dashed font-nunito font-black text-xs text-white/25 hover:text-white/60 transition-colors"
             style={{ borderColor: '#3a3a3a', backgroundColor: 'transparent' }}
           >
             <Plus size={14} className="mx-auto" />

@@ -1,13 +1,21 @@
 // Default "ODK" tracker column configuration.
 // - id:   IndexedDB field name (never changes, even if user renames the column)
 // - name: display label (editable in Edit Mode)
-// - type: 'buttons' | 'modal-number'
+// - type: 'buttons' | 'modal-number' | 'modal-list'
 // - options (for 'buttons'): array of { label, value?, action?, ...actionProps }
 //   - no action  → direct value button (toggles on/off)
 //   - action:'modal-number'     → opens NumberModal; min/max required
 //   - action:'modal-dropdown'   → opens DropdownModal; dropdownOptions required
 //   - action:'modal-suboptions' → opens DropdownModal with subOptions; subOptions required
 // - type 'modal-number': entire card is one button that opens the number modal
+// - type 'modal-list':   entire card is one button that opens a DropdownModal list; listOptions required
+
+// Yard line display labels: Own 49 → Own 1 → 50 → Opp 1 → Opp 49
+export const YARD_LINE_OPTIONS = [
+  ...Array.from({ length: 49 }, (_, i) => `Own ${49 - i}`),
+  '50',
+  ...Array.from({ length: 49 }, (_, i) => `Opp ${i + 1}`),
+];
 
 const STK_OPTIONS = [
   '2 Pt.', '2 Pt. Defend', 'Extra Pt.', 'Extra Pt. Block',
@@ -51,10 +59,10 @@ export const DEFAULT_COLUMNS = [
     name: 'QTR',
     type: 'buttons',
     options: [
-      { label: '1', value: '1' },
-      { label: '2', value: '2' },
-      { label: '3', value: '3' },
-      { label: '4', value: '4' },
+      { label: '1Q', value: '1Q' },
+      { label: '2Q', value: '2Q' },
+      { label: '3Q', value: '3Q' },
+      { label: '4Q', value: '4Q' },
     ],
   },
   {
@@ -73,17 +81,22 @@ export const DEFAULT_COLUMNS = [
     name: 'Dist',
     type: 'buttons',
     options: [
-      { label: '5',  value: '5' },
-      { label: '10', value: '10' },
-      { label: '+',  action: 'modal-number', min: 1, max: 99 },
+      { label: '1-3',  value: '1-3' },
+      { label: '4-6',  value: '4-6' },
+      { label: '7-9',  value: '7-9' },
+      { label: '10+',  value: '10+' },
+      {
+        label: '+',
+        action: 'modal-dropdown',
+        dropdownOptions: Array.from({ length: 25 }, (_, i) => String(i + 1)),
+      },
     ],
   },
   {
     id: 'yardLn',
     name: 'YARD LN',
-    type: 'modal-number',
-    min: -49,
-    max: 50,
+    type: 'modal-list',
+    listOptions: YARD_LINE_OPTIONS,
   },
   {
     id: 'hash',
