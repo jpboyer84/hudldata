@@ -1,21 +1,27 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Plus, Clipboard } from 'lucide-react';
+import { Plus, Clipboard, LayoutTemplate, Trash2 } from 'lucide-react';
 import db from '../db';
 import { DEFAULT_COLUMNS } from '../columns';
 import NewGameModal from '../components/NewGameModal';
+import NewTemplateModal from '../components/NewTemplateModal';
 
-const PILL_LIMIT = 4; // show first N column pills, then "+rest"
+const PILL_LIMIT = 4;
 
 export default function LandingPage({ onOpenGame }) {
-  const [showModal, setShowModal] = useState(false);
+  const [showGameModal, setShowGameModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   const games = useLiveQuery(
     () => db.games.orderBy('createdAt').reverse().toArray(),
     []
   );
 
-  // Count only filled rows (rows with at least one column value)
+  const templates = useLiveQuery(
+    () => db.templates.orderBy('createdAt').toArray(),
+    []
+  );
+
   const playCounts = useLiveQuery(async () => {
     if (!games) return {};
     const result = {};
@@ -30,9 +36,13 @@ export default function LandingPage({ onOpenGame }) {
     return result;
   }, [games]);
 
-  function handleCreated(id) {
-    setShowModal(false);
+  function handleGameCreated(id) {
+    setShowGameModal(false);
     onOpenGame(id);
+  }
+
+  async function deleteTemplate(id) {
+    await db.templates.delete(id);
   }
 
   return (
@@ -48,7 +58,7 @@ export default function LandingPage({ onOpenGame }) {
           </div>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => setShowGameModal(true)}
           className="flex items-center gap-2 border px-4 py-2.5 text-white font-nunito font-black text-xs tracking-wider hover:bg-white hover:text-black transition-colors"
           style={{ backgroundColor: '#1e1e1e', borderColor: '#3a3a3a' }}
         >
@@ -57,33 +67,33 @@ export default function LandingPage({ onOpenGame }) {
         </button>
       </header>
 
-      {/* ── Content ── */}
-      <main className="flex-1 px-6 py-6">
-        {!games ? (
-          <div className="text-white/20 text-xs font-mono">LOADING...</div>
+      <main className="flex-1 px-6 py-6 flex flex-col gap-10">
 
-        ) : games.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-5">
-            <Clipboard size={40} className="text-white/10" />
-            <div className="text-white/25 text-sm text-center font-mono leading-relaxed">
-              No games yet.<br />Create your first game to start tracking.
-            </div>
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 bg-white text-black px-6 py-3 font-nunito font-black text-sm tracking-wider hover:bg-white/90 transition-colors"
-            >
-              <Plus size={14} />
-              NEW GAME
-            </button>
+        {/* ── GAMES section ── */}
+        <section>
+          <div className="text-white/25 text-[10px] font-mono uppercase tracking-widest mb-4">
+            GAMES{games ? ` · ${games.length}` : ''}
           </div>
 
-        ) : (
-          <>
-            <div className="text-white/25 text-[10px] font-mono uppercase tracking-widest mb-4">
-              {games.length} {games.length === 1 ? 'GAME' : 'GAMES'}
+          {!games ? (
+            <div className="text-white/20 text-xs font-mono">LOADING...</div>
+
+          ) : games.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              <Clipboard size={32} className="text-white/10" />
+              <div className="text-white/25 text-sm text-center font-mono leading-relaxed">
+                No games yet.<br />Create your first game to start tracking.
+              </div>
+              <button
+                onClick={() => setShowGameModal(true)}
+                className="flex items-center gap-2 bg-white text-black px-6 py-3 font-nunito font-black text-sm tracking-wider hover:bg-white/90 transition-colors"
+              >
+                <Plus size={14} />
+                NEW GAME
+              </button>
             </div>
 
-            {/* Tracker card grid — 2 columns on tablet */}
+          ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 max-w-5xl">
               {games.map(game => {
                 const rowCount  = playCounts?.[game.id] ?? null;
@@ -99,7 +109,6 @@ export default function LandingPage({ onOpenGame }) {
                     className="text-left rounded-lg overflow-hidden group transition-all hover:ring-1 hover:ring-white/20"
                     style={{ border: '1px solid #3a3a3a' }}
                   >
-                    {/* Card header */}
                     <div className="px-4 pt-4 pb-3" style={{ backgroundColor: '#1e1e1e' }}>
                       <div className="font-nunito font-black text-white text-base leading-tight truncate">
                         {game.homeTeam}
@@ -114,7 +123,6 @@ export default function LandingPage({ onOpenGame }) {
                           year:    'numeric',
                         })}
                       </div>
-                      {/* Counts */}
                       <div className="flex items-center gap-3 mt-2">
                         <span className="text-white/40 text-[10px] font-mono">
                           {colCount} cols
@@ -125,8 +133,6 @@ export default function LandingPage({ onOpenGame }) {
                         </span>
                       </div>
                     </div>
-
-                    {/* Column name pills */}
                     <div
                       className="px-4 py-3 flex flex-wrap gap-1.5"
                       style={{ backgroundColor: '#111111' }}
@@ -149,12 +155,70 @@ export default function LandingPage({ onOpenGame }) {
                 );
               })}
             </div>
-          </>
-        )}
+          )}
+        </section>
+
+        {/* ── TEMPLATES section ── */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-white/25 text-[10px] font-mono uppercase tracking-widest">
+              TEMPLATES{templates ? ` · ${templates.length}` : ''}
+            </span>
+            <button
+              onClick={() => setShowTemplateModal(true)}
+              className="flex items-center gap-1.5 text-white/40 hover:text-white text-[10px] font-mono uppercase tracking-widest transition-colors"
+            >
+              <Plus size={10} />
+              NEW
+            </button>
+          </div>
+
+          {!templates ? (
+            <div className="text-white/20 text-xs font-mono">LOADING...</div>
+
+          ) : templates.length === 0 ? (
+            <div className="text-white/20 text-xs font-mono py-2">No templates saved.</div>
+
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 max-w-5xl">
+              {templates.map(t => (
+                <div
+                  key={t.id}
+                  className="flex items-center justify-between px-4 py-3 rounded-lg"
+                  style={{ border: '1px solid #3a3a3a', backgroundColor: '#1e1e1e' }}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <LayoutTemplate size={14} className="text-white/30 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="font-nunito font-black text-white text-sm tracking-wide truncate">
+                        {t.name}
+                      </div>
+                      <div className="text-white/30 text-[10px] font-mono mt-0.5">
+                        {t.columns.length} columns
+                      </div>
+                    </div>
+                  </div>
+                  {!t.isDefault && (
+                    <button
+                      onClick={() => deleteTemplate(t.id)}
+                      className="text-white/20 hover:text-red-400 transition-colors p-1 -mr-1 flex-shrink-0 ml-3"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
       </main>
 
-      {showModal && (
-        <NewGameModal onClose={() => setShowModal(false)} onCreated={handleCreated} />
+      {showGameModal && (
+        <NewGameModal onClose={() => setShowGameModal(false)} onCreated={handleGameCreated} />
+      )}
+      {showTemplateModal && (
+        <NewTemplateModal onClose={() => setShowTemplateModal(false)} onCreated={() => setShowTemplateModal(false)} />
       )}
     </div>
   );

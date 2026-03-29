@@ -1,25 +1,34 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import db from '../db';
+import { DEFAULT_COLUMNS } from '../columns';
 
 export default function NewGameModal({ onClose, onCreated }) {
   const [homeTeam, setHomeTeam] = useState('');
   const [awayTeam, setAwayTeam] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const templates = useLiveQuery(() => db.templates.orderBy('createdAt').toArray(), []);
+
+  const effectiveTemplateId = selectedTemplateId ?? templates?.[0]?.id ?? null;
+  const selectedTemplate = templates?.find(t => t.id === effectiveTemplateId);
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!homeTeam.trim() || !awayTeam.trim()) return;
     setSaving(true);
     try {
+      const columns = selectedTemplate?.columns ?? DEFAULT_COLUMNS;
       const id = await db.games.add({
         homeTeam: homeTeam.trim().toUpperCase(),
         awayTeam: awayTeam.trim().toUpperCase(),
         date,
+        config: columns,
         createdAt: Date.now(),
       });
-      // Pre-allocate 200 empty rows so navigation never waits during a game
       const rows = Array.from({ length: 200 }, (_, i) => ({
         gameId: id, rowIndex: i, createdAt: Date.now(),
       }));
@@ -35,8 +44,8 @@ export default function NewGameModal({ onClose, onCreated }) {
       className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-surface border border-edge w-full max-w-sm">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-edge">
+      <div className="bg-surface border border-edge w-full max-w-sm max-h-[90svh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-edge sticky top-0 bg-surface z-10">
           <span className="font-nunito font-black text-white text-base tracking-wider">NEW GAME</span>
           <button
             onClick={onClose}
@@ -80,6 +89,40 @@ export default function NewGameModal({ onClose, onCreated }) {
               className="bg-bg border border-edge text-white px-3 py-2.5 font-mono text-sm focus:outline-none focus:border-white/50 transition-colors"
             />
           </label>
+
+          {/* Template selector */}
+          <div className="flex flex-col gap-2">
+            <span className="text-white/40 text-[10px] uppercase tracking-widest font-mono">Template</span>
+            {!templates ? (
+              <div className="text-white/20 text-xs font-mono py-1">LOADING...</div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                {templates.map(t => {
+                  const isSelected = t.id === effectiveTemplateId;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setSelectedTemplateId(t.id)}
+                      className={`flex items-center justify-between px-3 py-2.5 border text-left transition-colors ${
+                        isSelected
+                          ? 'border-white bg-white/10'
+                          : 'border-edge bg-bg hover:border-white/30'
+                      }`}
+                    >
+                      <span className={`font-mono text-sm font-bold ${isSelected ? 'text-white' : 'text-white/50'}`}>
+                        {t.name}
+                      </span>
+                      <span className="text-white/25 text-[10px] font-mono">
+                        {t.columns.length} cols
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           <button
             type="submit"
             disabled={saving || !homeTeam.trim() || !awayTeam.trim()}
