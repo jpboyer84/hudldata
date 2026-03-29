@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Plus, Clipboard, LayoutTemplate, Trash2 } from 'lucide-react';
+import { Plus, Clipboard, LayoutTemplate, Trash2, Pencil } from 'lucide-react';
 import db from '../db';
 import { DEFAULT_COLUMNS } from '../columns';
 import NewGameModal from '../components/NewGameModal';
@@ -8,7 +8,7 @@ import NewTemplateModal from '../components/NewTemplateModal';
 
 const PILL_LIMIT = 4;
 
-export default function LandingPage({ onOpenGame }) {
+export default function LandingPage({ onOpenGame, onEditTemplate }) {
   const [showGameModal, setShowGameModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
 
@@ -198,14 +198,22 @@ export default function LandingPage({ onOpenGame }) {
                       </div>
                     </div>
                   </div>
-                  {!t.isDefault && (
+                  <div className="flex items-center gap-1 flex-shrink-0 ml-3">
                     <button
-                      onClick={() => deleteTemplate(t.id)}
-                      className="text-white/20 hover:text-red-400 transition-colors p-1 -mr-1 flex-shrink-0 ml-3"
+                      onClick={() => onEditTemplate(t.id)}
+                      className="text-white/20 hover:text-white transition-colors p-1"
                     >
-                      <Trash2 size={14} />
+                      <Pencil size={14} />
                     </button>
-                  )}
+                    {!t.isDefault && (
+                      <button
+                        onClick={() => deleteTemplate(t.id)}
+                        className="text-white/20 hover:text-red-400 transition-colors p-1 -mr-1"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
