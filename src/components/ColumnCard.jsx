@@ -122,7 +122,7 @@ export default function ColumnCard({
   if (col.type === 'modal-list') {
     const hasValue = value != null;
     return (
-      <div className="rounded-lg overflow-hidden flex flex-col" style={{ border: '1px solid #555555' }}>
+      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '1px solid #555555' }}>
         {editMode && (
           <CardHeader
             col={col}
@@ -160,7 +160,7 @@ export default function ColumnCard({
   if (col.type === 'modal-number') {
     const hasValue = value != null;
     return (
-      <div className="rounded-lg overflow-hidden flex flex-col" style={{ border: '1px solid #555555' }}>
+      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '1px solid #555555' }}>
         {editMode && (
           <CardHeader
             col={col}
@@ -196,7 +196,7 @@ export default function ColumnCard({
 
   // ── buttons card ──
   return (
-    <div className="rounded-lg overflow-hidden flex flex-col" style={{ border: '1px solid #555555' }}>
+    <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '1px solid #555555' }}>
       {editMode && (
         <CardHeader
           col={col}

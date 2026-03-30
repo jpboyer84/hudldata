@@ -117,8 +117,8 @@ export function DropdownModal({ title, options, currentValue, onSelect, onClose 
         {currentValue != null && (
           <button
             onClick={() => { onSelect(null); onClose(); }}
-            className="w-full px-4 py-2.5 text-left font-mono text-xs tracking-wider text-white/30 hover:text-white hover:bg-white/5 transition-colors"
-            style={{ borderBottom: '1px solid #3a3a3a' }}
+            className="w-full px-4 py-3 text-left font-mono tracking-wider text-white/30 hover:text-white hover:bg-white/5 transition-colors"
+            style={{ borderBottom: '1px solid #3a3a3a', fontSize: 20 }}
           >
             — CLEAR —
           </button>
@@ -130,12 +130,13 @@ export function DropdownModal({ title, options, currentValue, onSelect, onClose 
               key={opt}
               ref={active ? activeRef : null}
               onClick={() => { onSelect(opt); onClose(); }}
-              className="w-full px-4 py-3 text-left font-mono text-sm transition-colors"
+              className="w-full px-4 py-4 text-left font-mono transition-colors"
               style={{
                 borderBottom: '1px solid #3a3a3a',
                 backgroundColor: active ? '#ffffff' : 'transparent',
                 color: active ? '#000000' : '#ffffff',
                 fontWeight: active ? 700 : 400,
+                fontSize: 20,
               }}
             >
               {opt}

@@ -10,11 +10,11 @@
 // - type 'modal-number': entire card is one button that opens the number modal
 // - type 'modal-list':   entire card is one button that opens a DropdownModal list; listOptions required
 
-// Yard line display labels: Own 49 → Own 1 → 50 → Opp 1 → Opp 49
+// Yard line: -1 … -49 (own side), 50 (midfield), 49 … 1 (opponent side)
 export const YARD_LINE_OPTIONS = [
-  ...Array.from({ length: 49 }, (_, i) => `Own ${49 - i}`),
+  ...Array.from({ length: 49 }, (_, i) => `-${i + 1}`),
   '50',
-  ...Array.from({ length: 49 }, (_, i) => `Opp ${i + 1}`),
+  ...Array.from({ length: 49 }, (_, i) => `${49 - i}`),
 ];
 
 const STK_OPTIONS = [
@@ -140,9 +140,8 @@ export const DEFAULT_COLUMNS = [
   {
     id: 'gainLoss',
     name: 'Gain/Loss',
-    type: 'modal-number',
-    min: -99,
-    max: 99,
+    type: 'modal-list',
+    listOptions: Array.from({ length: 199 }, (_, i) => String(i - 99)),
   },
   {
     id: 'offForm',

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { ChevronLeft, Plus, X } from 'lucide-react';
 import db from '../db';
 import { DEFAULT_COLUMNS } from '../columns';
 import { NumberModal, DropdownModal } from '../components/Modals';
@@ -35,23 +35,25 @@ function getColumns(game) {
 
 // ─── SpreadsheetBar ───────────────────────────────────────────────────────────
 
-function SpreadsheetBar({ columns, currentRow, rowNumber }) {
+function SpreadsheetBar({ columns, currentRow, rowNumber, onJumpClick }) {
   return (
     <div
       className="border-b border-edge flex-shrink-0 overflow-x-auto"
       style={{ backgroundColor: '#111111' }}
     >
       <div className="flex min-w-max h-[52px]">
-        {/* Play # — white tint */}
-        <div
-          className="flex flex-col justify-center border-r border-edge px-3 min-w-[48px] flex-shrink-0"
+        {/* Play # — tappable, opens jump modal */}
+        <button
+          type="button"
+          onClick={onJumpClick}
+          className="flex flex-col justify-center border-r border-edge px-3 min-w-[48px] flex-shrink-0 transition-colors active:bg-white/15 touch-manipulation"
           style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}
         >
           <span className="text-white/30 text-[9px] font-mono uppercase tracking-widest leading-none">#</span>
-          <span className="text-white font-nunito font-black text-sm leading-tight mt-0.5">
+          <span className="text-white font-nunito font-black text-sm leading-tight mt-0.5 underline decoration-dotted underline-offset-2 decoration-white/30">
             {rowNumber ?? '—'}
           </span>
-        </div>
+        </button>
         {/* Column cells */}
         {columns.map(col => (
           <div
@@ -164,6 +166,73 @@ function AddOptionDialog({ colName, onAdd, onClose }) {
   );
 }
 
+// ─── Jump-to-play modal ───────────────────────────────────────────────────────
+
+function JumpModal({ current, max, onJump, onClose }) {
+  const [raw, setRaw] = useState(String(current));
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => inputRef.current?.select(), 80);
+    return () => clearTimeout(t);
+  }, []);
+
+  const n = parseInt(raw, 10);
+  const valid = !isNaN(n) && n >= 1 && n <= max;
+
+  function handleJump() {
+    if (!valid) return;
+    onJump(n - 1); // convert to 0-based rowIndex
+    onClose();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="w-full max-w-xs rounded-lg overflow-hidden"
+        style={{ backgroundColor: '#1e1e1e', border: '1px solid #555555' }}
+      >
+        <div
+          className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+          style={{ borderBottom: '1px solid #3a3a3a' }}
+        >
+          <span className="font-nunito font-black text-white text-sm uppercase tracking-wider">
+            JUMP TO PLAY
+          </span>
+          <button onClick={onClose} className="text-white/40 hover:text-white p-1 -mr-1">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="p-4 flex flex-col gap-3">
+          <input
+            ref={inputRef}
+            type="number"
+            inputMode="numeric"
+            value={raw}
+            onChange={e => setRaw(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleJump()}
+            min={1}
+            max={max}
+            className="bg-bg border border-edge text-white font-mono text-3xl text-center px-4 py-5 focus:outline-none focus:border-white/50 transition-colors w-full"
+          />
+          <div className="text-white/25 text-[10px] font-mono text-center">1 – {max}</div>
+          <button
+            onClick={handleJump}
+            disabled={!valid}
+            className="py-3.5 bg-white text-black font-nunito font-black text-sm uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/90 transition-colors"
+          >
+            JUMP
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Restore file input (hidden) ─────────────────────────────────────────────
 
 function RestoreInput({ onRestore }) {
@@ -202,6 +271,7 @@ export default function TrackerPage({ gameId, onBack }) {
   const [view,        setView]        = useState('tracker');
   const [addColOpen,  setAddColOpen]  = useState(false);
   const [addOptFor,   setAddOptFor]   = useState(null); // colId or null
+  const [jumpOpen,    setJumpOpen]    = useState(false);
   const restoreRef = useRef(null);
 
   // ── DB queries ──
@@ -220,6 +290,35 @@ export default function TrackerPage({ gameId, onBack }) {
   const columns = editMode && editColumns
     ? editColumns
     : getColumns(game);
+
+  // ── Auto-advance when all columns are filled ──
+
+  const prevCurrentRowRef = useRef(null);
+  useEffect(() => {
+    const prev = prevCurrentRowRef.current;
+    prevCurrentRowRef.current = currentRow ?? null;
+
+    if (!currentRow || !plays || editMode) return;
+    // Skip if we just navigated to a different row (vs. values changed in place)
+    if (!prev || prev.id !== currentRow.id) return;
+
+    const allFilled = columns.length > 0 && columns.every(c => currentRow[c.id] != null);
+    if (!allFilled) return;
+
+    // Only fire when a value was just added (transition to complete)
+    const justCompleted = columns.some(c => prev[c.id] == null && currentRow[c.id] != null);
+    if (!justCompleted) return;
+
+    const nextIndex = rowIndex + 1;
+    const timer = setTimeout(async () => {
+      if (nextIndex >= plays.length) {
+        await allocateRows(gameId, plays.length, REFILL_AMOUNT);
+      }
+      setRowIndex(nextIndex);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [currentRow, columns, rowIndex, plays, gameId, editMode]);
 
   // ── Auto-refill pre-allocated rows ──
 
@@ -398,7 +497,7 @@ export default function TrackerPage({ gameId, onBack }) {
     <div className="h-svh bg-bg flex flex-col overflow-hidden">
 
       {/* ── Header ── */}
-      <header className="flex items-center gap-2 px-3 py-2.5 border-b border-edge flex-shrink-0" style={{ backgroundColor: '#111111' }}>
+      <header className="flex items-center gap-2 px-3 pb-2.5 pt-6 border-b border-edge flex-shrink-0" style={{ backgroundColor: '#111111' }}>
         <button
           onClick={editMode ? cancelEditMode : onBack}
           className="flex items-center gap-1 font-mono text-xs tracking-wide text-white/40 hover:text-white transition-colors shrink-0 py-1 pr-1"
@@ -526,11 +625,12 @@ export default function TrackerPage({ gameId, onBack }) {
             columns={columns}
             currentRow={currentRow}
             rowNumber={rowIndex + 1}
+            onJumpClick={() => setJumpOpen(true)}
           />
 
           {/* ── Column card grid ── */}
           <div className="flex-1 overflow-y-auto p-3">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, gridAutoRows: '120px' }}>
               {columns.map(col => (
                 <ColumnCard
                   key={col.id}
@@ -592,6 +692,15 @@ export default function TrackerPage({ gameId, onBack }) {
           currentValue={currentRow?.[modal.columnId] ?? null}
           onSelect={handleModalConfirm}
           onClose={closeModal}
+        />
+      )}
+
+      {jumpOpen && (
+        <JumpModal
+          current={rowIndex + 1}
+          max={plays?.length ?? rowIndex + 1}
+          onJump={setRowIndex}
+          onClose={() => setJumpOpen(false)}
         />
       )}
 
