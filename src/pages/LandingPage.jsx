@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Plus, Clipboard, LayoutTemplate, Trash2, Pencil } from 'lucide-react';
+import { Plus, Clipboard, LayoutTemplate, Trash2, Pencil, BookMarked } from 'lucide-react';
 import db from '../db';
 import { DEFAULT_COLUMNS } from '../columns';
 import NewGameModal from '../components/NewGameModal';
@@ -8,8 +8,18 @@ import NewTemplateModal from '../components/NewTemplateModal';
 
 const PILL_LIMIT = 4;
 
-export default function LandingPage({ onOpenGame, onEditTemplate }) {
-  const [showGameModal, setShowGameModal] = useState(false);
+function describeLibraryCol(col) {
+  if (col.type === 'buttons') {
+    const count = col.options?.length ?? 0;
+    return `${count} button${count !== 1 ? 's' : ''}`;
+  }
+  if (col.type === 'modal-list') return 'list picker';
+  if (col.type === 'modal-number') return 'number picker';
+  return col.type;
+}
+
+export default function LandingPage({ onOpenGame, onEditTemplate, onEditLibraryCol }) {
+  const [showGameModal,     setShowGameModal]     = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   const games = useLiveQuery(
@@ -19,6 +29,11 @@ export default function LandingPage({ onOpenGame, onEditTemplate }) {
 
   const templates = useLiveQuery(
     () => db.templates.orderBy('createdAt').toArray(),
+    []
+  );
+
+  const libraryColumns = useLiveQuery(
+    () => db.columnLibrary.orderBy('createdAt').toArray(),
     []
   );
 
@@ -43,6 +58,10 @@ export default function LandingPage({ onOpenGame, onEditTemplate }) {
 
   async function deleteTemplate(id) {
     await db.templates.delete(id);
+  }
+
+  async function deleteLibraryCol(id) {
+    await db.columnLibrary.delete(id);
   }
 
   return (
@@ -96,11 +115,11 @@ export default function LandingPage({ onOpenGame, onEditTemplate }) {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 max-w-5xl">
               {games.map(game => {
-                const rowCount  = playCounts?.[game.id] ?? null;
+                const rowCount   = playCounts?.[game.id] ?? null;
                 const activeCols = game.config ?? DEFAULT_COLUMNS;
-                const colCount  = activeCols.length;
-                const pills     = activeCols.slice(0, PILL_LIMIT);
-                const overflow  = colCount - PILL_LIMIT;
+                const colCount   = activeCols.length;
+                const pills      = activeCols.slice(0, PILL_LIMIT);
+                const overflow   = colCount - PILL_LIMIT;
 
                 return (
                   <button
@@ -213,6 +232,61 @@ export default function LandingPage({ onOpenGame, onEditTemplate }) {
                         <Trash2 size={14} />
                       </button>
                     )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ── COLUMN LIBRARY section ── */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-white/25 text-[10px] font-mono uppercase tracking-widest">
+              COLUMN LIBRARY{libraryColumns ? ` · ${libraryColumns.length}` : ''}
+            </span>
+          </div>
+
+          {!libraryColumns ? (
+            <div className="text-white/20 text-xs font-mono">LOADING...</div>
+
+          ) : libraryColumns.length === 0 ? (
+            <div className="text-white/20 text-xs font-mono py-2">
+              No saved columns. Use "Save to Library" in the template editor.
+            </div>
+
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 max-w-5xl">
+              {libraryColumns.map(entry => (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between px-4 py-3 rounded-lg"
+                  style={{ border: '1px solid #3a3a3a', backgroundColor: '#1e1e1e' }}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <BookMarked size={14} className="text-white/30 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="font-nunito font-black text-white text-sm tracking-wide truncate">
+                        {entry.name}
+                      </div>
+                      <div className="text-white/30 text-[10px] font-mono mt-0.5">
+                        {describeLibraryCol(entry.column)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0 ml-3">
+                    <button
+                      onClick={() => onEditLibraryCol(entry.id)}
+                      className="text-white/20 hover:text-white transition-colors p-1"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => deleteLibraryCol(entry.id)}
+                      className="text-white/20 hover:text-red-400 transition-colors p-1 -mr-1"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               ))}

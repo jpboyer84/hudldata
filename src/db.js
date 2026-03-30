@@ -28,16 +28,37 @@ db.version(3).stores({
   }
 });
 
-// Seed the default ODK template if none exist
+// Version 4: add columnLibrary table
+db.version(4).stores({
+  games: '++id, createdAt',
+  plays: '++id, gameId, [gameId+rowIndex]',
+  templates: '++id, createdAt',
+  columnLibrary: '++id, createdAt',
+});
+
+// Seed on first open
 db.on('ready', async () => {
-  const count = await db.templates.count();
-  if (count === 0) {
+  // Seed ODK template
+  const tcount = await db.templates.count();
+  if (tcount === 0) {
     await db.templates.add({
       name: 'ODK',
       columns: DEFAULT_COLUMNS,
       createdAt: Date.now(),
       isDefault: true,
     });
+  }
+  // Seed column library with all ODK columns
+  const lcount = await db.columnLibrary.count();
+  if (lcount === 0) {
+    const now = Date.now();
+    await db.columnLibrary.bulkAdd(
+      DEFAULT_COLUMNS.map((col, i) => ({
+        name: col.name,
+        column: col,
+        createdAt: now + i,
+      }))
+    );
   }
 });
 
