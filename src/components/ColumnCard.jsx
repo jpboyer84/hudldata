@@ -65,11 +65,11 @@ function OptionButton({ col, opt, currentValue, onDirectSelect, onOpenModal, edi
   })();
 
   return (
-    <div className="relative h-full">
+    <div className="relative" style={{ aspectRatio: '1' }}>
       <button
         type="button"
         onClick={handleClick}
-        className="w-full h-full min-h-[48px] border font-nunito text-xs uppercase tracking-wide transition-colors select-none touch-manipulation rounded-sm"
+        className="w-full h-full border font-nunito text-xs uppercase tracking-wide transition-colors select-none touch-manipulation rounded-sm"
         style={{
           backgroundColor: active ? '#ffffff' : '#1e1e1e',
           borderColor:     active ? '#ffffff' : '#3a3a3a',
@@ -216,8 +216,7 @@ export default function ColumnCard({
         style={{
           backgroundColor: '#111111',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))',
-          gridAutoRows: '1fr',
+          gridTemplateColumns: `repeat(${col.options.length + (editMode ? 1 : 0)}, 1fr)`,
         }}
       >
         {col.options.map((opt, idx) => (
@@ -235,7 +234,8 @@ export default function ColumnCard({
         {editMode && (
           <button
             onClick={() => onAddOption?.(col.id)}
-            className="h-full min-h-[72px] border border-dashed font-nunito font-black text-xs text-white/25 hover:text-white/60 transition-colors"
+            style={{ aspectRatio: '1' }}
+            className="w-full border border-dashed font-nunito font-black text-xs text-white/25 hover:text-white/60 transition-colors"
             style={{ borderColor: '#3a3a3a', backgroundColor: 'transparent' }}
           >
             <Plus size={14} className="mx-auto" />
