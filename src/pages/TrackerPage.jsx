@@ -630,7 +630,7 @@ export default function TrackerPage({ gameId, onBack }) {
 
           {/* ── Column card grid ── */}
           <div className="flex-1 overflow-y-auto p-3">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, gridAutoRows: '120px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {columns.map(col => (
                 <ColumnCard
                   key={col.id}
