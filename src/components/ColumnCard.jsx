@@ -69,10 +69,10 @@ function OptionButton({ col, opt, currentValue, onDirectSelect, onOpenModal, edi
       <button
         type="button"
         onClick={handleClick}
-        className="w-full h-full border font-nunito text-sm uppercase tracking-wide transition-colors select-none touch-manipulation rounded-sm"
+        className="w-full h-full border font-nunito text-2xl uppercase tracking-wide transition-colors select-none touch-manipulation rounded-sm"
         style={{
-          backgroundColor: active ? '#ffffff' : '#1e1e1e',
-          borderColor:     active ? '#ffffff' : '#3a3a3a',
+          backgroundColor: active ? '#ffffff' : '#4a4a4a',
+          border:          active ? '2px solid #ffffff' : '2px solid #666666',
           color:           active ? '#000000' : '#ffffff',
           fontWeight:      900,
           boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
@@ -122,8 +122,8 @@ export default function ColumnCard({
   if (col.type === 'modal-list') {
     const hasValue = value != null;
     return (
-      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '1px solid #555555' }}>
-        <CardHeader
+      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '2px solid #555555' }}>
+        {editMode && <CardHeader
           col={col}
           value={value}
           editMode={editMode}
@@ -134,15 +134,15 @@ export default function ColumnCard({
           onCommitRename={commitRename}
           onDeleteCol={() => onDeleteCol?.(col.id)}
           onMoveCol={onMoveCol}
-        />
+        />}
         <div className="p-2 flex-1" style={{ backgroundColor: '#111111' }}>
           <button
             type="button"
             onClick={() => onOpenModal({ type: 'dropdown', columnId: col.id, options: col.listOptions, title: col.name })}
-            className="w-full h-full min-h-[72px] border font-nunito font-black text-sm uppercase tracking-wide transition-colors rounded-sm"
+            className="w-full h-full min-h-[72px] font-nunito font-black text-2xl uppercase tracking-wide transition-colors rounded-sm"
             style={{
               backgroundColor: hasValue ? '#ffffff' : '#1e1e1e',
-              borderColor:     hasValue ? '#ffffff' : '#3a3a3a',
+              border:          hasValue ? '2px solid #ffffff' : '2px solid #666666',
               color:           hasValue ? '#000000' : '#ffffff',
               boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
             }}
@@ -158,8 +158,8 @@ export default function ColumnCard({
   if (col.type === 'modal-number') {
     const hasValue = value != null;
     return (
-      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '1px solid #555555' }}>
-        <CardHeader
+      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '2px solid #555555' }}>
+        {editMode && <CardHeader
           col={col}
           value={value}
           editMode={editMode}
@@ -170,15 +170,15 @@ export default function ColumnCard({
           onCommitRename={commitRename}
           onDeleteCol={() => onDeleteCol?.(col.id)}
           onMoveCol={onMoveCol}
-        />
+        />}
         <div className="p-2 flex-1" style={{ backgroundColor: '#111111' }}>
           <button
             type="button"
             onClick={() => onOpenModal({ type: 'number', columnId: col.id, min: col.min, max: col.max, title: col.name })}
-            className="w-full h-full min-h-[72px] border font-nunito font-black text-sm uppercase tracking-wide transition-colors rounded-sm"
+            className="w-full h-full min-h-[72px] font-nunito font-black text-2xl uppercase tracking-wide transition-colors rounded-sm"
             style={{
               backgroundColor: hasValue ? '#ffffff' : '#1e1e1e',
-              borderColor:     hasValue ? '#ffffff' : '#3a3a3a',
+              border:          hasValue ? '2px solid #ffffff' : '2px solid #666666',
               color:           hasValue ? '#000000' : '#ffffff',
               boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
             }}
@@ -192,8 +192,8 @@ export default function ColumnCard({
 
   // ── buttons card ──
   return (
-    <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '1px solid #555555' }}>
-      <CardHeader
+    <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '2px solid #555555' }}>
+      {editMode && <CardHeader
         col={col}
         value={value}
         editMode={editMode}
@@ -204,9 +204,9 @@ export default function ColumnCard({
         onCommitRename={commitRename}
         onDeleteCol={() => onDeleteCol?.(col.id)}
         onMoveCol={onMoveCol}
-      />
+      />}
       <div
-        className="p-2 gap-2 flex-1"
+        className="p-3 gap-3 flex-1"
         style={{
           backgroundColor: '#111111',
           display: 'grid',

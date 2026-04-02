@@ -12,7 +12,9 @@
       "Bash(git branch:*)",
       "Bash(git push:*)",
       "Bash(npx plugins:*)",
-      "Bash(git ship:*)"
+      "Bash(git ship:*)",
+      "mcp__hudl-mcp__get_playlists",
+      "mcp__hudl-mcp__get_library"
     ]
   }
 }

@@ -63,7 +63,7 @@ function SpreadsheetBar({ columns, currentRow, rowNumber, onJumpClick }) {
             <span className="text-white/25 text-[9px] font-mono uppercase tracking-widest leading-none whitespace-nowrap">
               {col.name}
             </span>
-            <span className="text-white font-mono text-[11px] leading-tight mt-0.5 whitespace-nowrap">
+            <span className="text-white font-nunito font-black text-sm leading-tight mt-0.5 whitespace-nowrap">
               {currentRow?.[col.id] != null
                 ? String(currentRow[col.id])
                 : ''
@@ -84,8 +84,8 @@ function NavBtn({ onClick, disabled, children }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex-1 py-3.5 font-nunito font-black text-xs tracking-widest border-r border-edge last:border-r-0 transition-colors disabled:opacity-25 select-none touch-manipulation"
-      style={{ backgroundColor: '#f59e0b', color: '#000000' }}
+      className="flex-1 py-1 font-nunito font-black text-base tracking-widest border-r border-edge last:border-r-0 select-none touch-manipulation disabled:opacity-25"
+      style={{ backgroundColor: '#ffe600', color: '#000000' }}
     >
       {children}
     </button>
@@ -348,6 +348,10 @@ export default function TrackerPage({ gameId, onBack }) {
     setRowIndex(nextIndex);
   }
 
+  async function handleAdd25() {
+    await allocateRows(gameId, plays?.length ?? 0, 25);
+  }
+
   // ── Set / clear values ──
 
   async function setColValue(columnId, value) {
@@ -497,7 +501,7 @@ export default function TrackerPage({ gameId, onBack }) {
     <div className="h-svh bg-bg flex flex-col overflow-hidden">
 
       {/* ── Header ── */}
-      <header className="flex items-center gap-2 px-3 pb-2.5 pt-6 border-b border-edge flex-shrink-0" style={{ backgroundColor: '#111111' }}>
+      <header className="flex items-center gap-2 px-3 py-1.5 border-b border-edge flex-shrink-0" style={{ backgroundColor: '#111111' }}>
         <button
           onClick={editMode ? cancelEditMode : onBack}
           className="flex items-center gap-1 font-mono text-xs tracking-wide text-white/40 hover:text-white transition-colors shrink-0 py-1 pr-1"
@@ -665,6 +669,7 @@ export default function TrackerPage({ gameId, onBack }) {
           {!editMode && (
             <nav className="flex border-t border-edge flex-shrink-0">
               <NavBtn onClick={handlePrev} disabled={isPrevDis}>← PREV</NavBtn>
+              <NavBtn onClick={handleAdd25}>+25</NavBtn>
               <NavBtn onClick={handleNext} disabled={isNextDis}>NEXT →</NavBtn>
             </nav>
           )}
