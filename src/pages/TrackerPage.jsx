@@ -84,8 +84,8 @@ function NavBtn({ onClick, disabled, children }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex-1 py-3.5 font-nunito font-black text-xs tracking-widest text-white border-r border-edge last:border-r-0 transition-colors disabled:opacity-25 select-none touch-manipulation"
-      style={{ backgroundColor: '#1e1e1e' }}
+      className="flex-1 py-3.5 font-nunito font-black text-xs tracking-widest border-r border-edge last:border-r-0 transition-colors disabled:opacity-25 select-none touch-manipulation"
+      style={{ backgroundColor: '#f59e0b', color: '#000000' }}
     >
       {children}
     </button>
@@ -630,7 +630,7 @@ export default function TrackerPage({ gameId, onBack }) {
 
           {/* ── Column card grid ── */}
           <div className="flex-1 overflow-y-auto p-3">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               {columns.map(col => (
                 <ColumnCard
                   key={col.id}
@@ -665,7 +665,6 @@ export default function TrackerPage({ gameId, onBack }) {
           {!editMode && (
             <nav className="flex border-t border-edge flex-shrink-0">
               <NavBtn onClick={handlePrev} disabled={isPrevDis}>← PREV</NavBtn>
-              <NavBtn onClick={handleNew}>＋ NEW</NavBtn>
               <NavBtn onClick={handleNext} disabled={isNextDis}>NEXT →</NavBtn>
             </nav>
           )}

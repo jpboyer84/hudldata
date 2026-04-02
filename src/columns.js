@@ -70,10 +70,10 @@ export const DEFAULT_COLUMNS = [
     name: 'DN',
     type: 'buttons',
     options: [
-      { label: '1', value: '1' },
-      { label: '2', value: '2' },
-      { label: '3', value: '3' },
-      { label: '4', value: '4' },
+      { label: 'DN1', value: 'DN1' },
+      { label: 'DN2', value: 'DN2' },
+      { label: 'DN3', value: 'DN3' },
+      { label: 'DN4', value: 'DN4' },
     ],
   },
   {

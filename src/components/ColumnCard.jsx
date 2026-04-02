@@ -69,12 +69,12 @@ function OptionButton({ col, opt, currentValue, onDirectSelect, onOpenModal, edi
       <button
         type="button"
         onClick={handleClick}
-        className="w-full h-full border font-nunito text-xs uppercase tracking-wide transition-colors select-none touch-manipulation rounded-sm"
+        className="w-full h-full border font-nunito text-sm uppercase tracking-wide transition-colors select-none touch-manipulation rounded-sm"
         style={{
           backgroundColor: active ? '#ffffff' : '#1e1e1e',
           borderColor:     active ? '#ffffff' : '#3a3a3a',
           color:           active ? '#000000' : '#ffffff',
-          fontWeight:      active ? 900       : 800,
+          fontWeight:      900,
           boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
         }}
       >
@@ -123,20 +123,18 @@ export default function ColumnCard({
     const hasValue = value != null;
     return (
       <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '1px solid #555555' }}>
-        {editMode && (
-          <CardHeader
-            col={col}
-            value={value}
-            editMode={editMode}
-            editingName={editingName}
-            nameInput={nameInput}
-            setNameInput={setNameInput}
-            onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
-            onCommitRename={commitRename}
-            onDeleteCol={() => onDeleteCol?.(col.id)}
-            onMoveCol={onMoveCol}
-          />
-        )}
+        <CardHeader
+          col={col}
+          value={value}
+          editMode={editMode}
+          editingName={editingName}
+          nameInput={nameInput}
+          setNameInput={setNameInput}
+          onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
+          onCommitRename={commitRename}
+          onDeleteCol={() => onDeleteCol?.(col.id)}
+          onMoveCol={onMoveCol}
+        />
         <div className="p-2 flex-1" style={{ backgroundColor: '#111111' }}>
           <button
             type="button"
@@ -161,20 +159,18 @@ export default function ColumnCard({
     const hasValue = value != null;
     return (
       <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '1px solid #555555' }}>
-        {editMode && (
-          <CardHeader
-            col={col}
-            value={value}
-            editMode={editMode}
-            editingName={editingName}
-            nameInput={nameInput}
-            setNameInput={setNameInput}
-            onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
-            onCommitRename={commitRename}
-            onDeleteCol={() => onDeleteCol?.(col.id)}
-            onMoveCol={onMoveCol}
-          />
-        )}
+        <CardHeader
+          col={col}
+          value={value}
+          editMode={editMode}
+          editingName={editingName}
+          nameInput={nameInput}
+          setNameInput={setNameInput}
+          onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
+          onCommitRename={commitRename}
+          onDeleteCol={() => onDeleteCol?.(col.id)}
+          onMoveCol={onMoveCol}
+        />
         <div className="p-2 flex-1" style={{ backgroundColor: '#111111' }}>
           <button
             type="button"
@@ -197,20 +193,18 @@ export default function ColumnCard({
   // ── buttons card ──
   return (
     <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '1px solid #555555' }}>
-      {editMode && (
-        <CardHeader
-          col={col}
-          value={value}
-          editMode={editMode}
-          editingName={editingName}
-          nameInput={nameInput}
-          setNameInput={setNameInput}
-          onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
-          onCommitRename={commitRename}
-          onDeleteCol={() => onDeleteCol?.(col.id)}
-          onMoveCol={onMoveCol}
-        />
-      )}
+      <CardHeader
+        col={col}
+        value={value}
+        editMode={editMode}
+        editingName={editingName}
+        nameInput={nameInput}
+        setNameInput={setNameInput}
+        onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
+        onCommitRename={commitRename}
+        onDeleteCol={() => onDeleteCol?.(col.id)}
+        onMoveCol={onMoveCol}
+      />
       <div
         className="p-2 gap-2 flex-1"
         style={{
@@ -234,7 +228,6 @@ export default function ColumnCard({
         {editMode && (
           <button
             onClick={() => onAddOption?.(col.id)}
-            style={{ aspectRatio: '1' }}
             className="w-full border border-dashed font-nunito font-black text-xs text-white/25 hover:text-white/60 transition-colors"
             style={{ borderColor: '#3a3a3a', backgroundColor: 'transparent' }}
           >
