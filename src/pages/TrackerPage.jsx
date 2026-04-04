@@ -9,6 +9,16 @@ import PlayTable from '../components/PlayTable';
 import StatsPanel from '../components/StatsPanel';
 import { exportToXLSX, downloadBackup, restoreFromFile } from '../utils/dataUtils';
 
+// ─── Theme constants ──────────────────────────────────────────────────────────
+const BG     = '#111111';
+const SURFACE = '#1e1e1e';
+const EDGE   = '#3a3a3a';
+const ACCENT = '#ff4713';
+const TEXT   = '#ffffff';
+const DIM    = '#666666';
+const BARLOW = "'Barlow Condensed', sans-serif";
+const BEBAS  = "'Bebas Neue', cursive";
+
 // ─── Pre-allocation helpers ───────────────────────────────────────────────────
 
 const INITIAL_ALLOC = 200;
@@ -37,37 +47,47 @@ function getColumns(game) {
 
 function SpreadsheetBar({ columns, currentRow, rowNumber, onJumpClick }) {
   return (
-    <div
-      className="border-b border-edge flex-shrink-0 overflow-x-auto"
-      style={{ backgroundColor: '#111111' }}
-    >
-      <div className="flex min-w-max h-[52px]">
+    <div style={{ backgroundColor: SURFACE, borderBottom: `1px solid ${EDGE}`, flexShrink: 0, overflowX: 'auto' }}>
+      <div style={{ display: 'flex', minWidth: 'max-content', height: 50 }}>
+
         {/* Play # — tappable, opens jump modal */}
         <button
           type="button"
           onClick={onJumpClick}
-          className="flex flex-col justify-center border-r border-edge px-3 min-w-[48px] flex-shrink-0 transition-colors active:bg-white/15 touch-manipulation"
-          style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}
+          style={{
+            display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            borderRight: `1px solid ${EDGE}`, padding: '0 14px',
+            minWidth: 54, flexShrink: 0,
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            touchAction: 'manipulation', cursor: 'pointer',
+          }}
         >
-          <span className="text-white/30 text-[9px] font-mono uppercase tracking-widest leading-none">#</span>
-          <span className="text-white font-nunito font-black text-sm leading-tight mt-0.5 underline decoration-dotted underline-offset-2 decoration-white/30">
+          <span style={{ color: DIM, fontSize: 8, fontFamily: BARLOW, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.16em', lineHeight: 1 }}>
+            PLAY
+          </span>
+          <span style={{ color: '#ffffff', fontFamily: BEBAS, fontSize: 24, lineHeight: 1, marginTop: 2, textDecoration: 'underline dotted', textDecorationColor: 'rgba(255,255,255,0.22)' }}>
             {rowNumber ?? '—'}
           </span>
         </button>
+
         {/* Column cells */}
         {columns.map(col => (
           <div
             key={col.id}
-            className="flex flex-col justify-center border-r border-edge last:border-r-0 px-2.5 min-w-[52px] flex-shrink-0"
+            style={{
+              display: 'flex', flexDirection: 'column', justifyContent: 'center',
+              borderRight: `1px solid ${EDGE}`, padding: '0 10px',
+              minWidth: 58, flexShrink: 0,
+            }}
           >
-            <span className="text-white/25 text-[9px] font-mono uppercase tracking-widest leading-none whitespace-nowrap">
+            <span style={{ color: DIM, fontSize: 8, fontFamily: BARLOW, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.13em', lineHeight: 1, whiteSpace: 'nowrap' }}>
               {col.name}
             </span>
-            <span className="text-white font-nunito font-black text-sm leading-tight mt-0.5 whitespace-nowrap">
-              {currentRow?.[col.id] != null
-                ? String(currentRow[col.id])
-                : ''
-              }
+            <span style={{
+              color: currentRow?.[col.id] != null ? '#ffffff' : '#444444',
+              fontFamily: BARLOW, fontWeight: 700, fontSize: 15, lineHeight: 1.2, marginTop: 2, whiteSpace: 'nowrap',
+            }}>
+              {currentRow?.[col.id] != null ? String(currentRow[col.id]) : '·'}
             </span>
           </div>
         ))}
@@ -78,14 +98,23 @@ function SpreadsheetBar({ columns, currentRow, rowNumber, onJumpClick }) {
 
 // ─── NavBtn ───────────────────────────────────────────────────────────────────
 
-function NavBtn({ onClick, disabled, children }) {
+function NavBtn({ onClick, disabled, children, noBorder, primary }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex-1 py-1 font-nunito font-black text-base tracking-widest border-r border-edge last:border-r-0 select-none touch-manipulation disabled:opacity-25"
-      style={{ backgroundColor: '#ffe600', color: '#000000' }}
+      style={{
+        flex: 1, padding: '18px 0',
+        fontFamily: "'Nunito', sans-serif", fontWeight: 900, fontSize: 20,
+        letterSpacing: '0.04em', textTransform: 'uppercase',
+        backgroundColor: primary ? '#ffffff' : '#2a2a2a',
+        color: primary ? '#000000' : '#ffffff',
+        borderRight: noBorder ? 'none' : `1px solid ${EDGE}`,
+        opacity: disabled ? 0.25 : 1,
+        userSelect: 'none', touchAction: 'manipulation',
+        cursor: disabled ? 'default' : 'pointer',
+      }}
     >
       {children}
     </button>
@@ -99,26 +128,41 @@ function AddColumnDialog({ onAdd, onClose }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
+      style={{ backgroundColor: 'rgba(0,0,0,0.88)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-xs rounded-lg overflow-hidden" style={{ backgroundColor: '#1e1e1e', border: '1px solid #555555' }}>
-        <div className="px-4 py-3 border-b border-edge">
-          <span className="font-nunito font-black text-white text-sm uppercase tracking-wider">ADD COLUMN</span>
+      <div
+        className="w-full max-w-xs overflow-hidden"
+        style={{ backgroundColor: SURFACE, borderTop: `3px solid ${ACCENT}`, border: `1px solid ${EDGE}`, borderRadius: 4 }}
+      >
+        <div style={{ padding: '10px 14px', borderBottom: `1px solid ${EDGE}` }}>
+          <span style={{ fontFamily: BARLOW, fontWeight: 700, fontSize: 14, letterSpacing: '0.1em', color: ACCENT, textTransform: 'uppercase' }}>
+            ADD COLUMN
+          </span>
         </div>
-        <div className="p-4 flex flex-col gap-3">
+        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input
             autoFocus
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && name.trim()) { onAdd(name.trim()); onClose(); }}}
             placeholder="Column name"
-            className="bg-bg border border-edge text-white px-3 py-2.5 font-mono text-sm w-full focus:outline-none focus:border-white/50"
+            style={{
+              backgroundColor: BG, border: `1px solid ${EDGE}`, color: TEXT,
+              padding: '10px 12px', fontFamily: BARLOW, fontWeight: 600, fontSize: 14,
+              letterSpacing: '0.04em', width: '100%', outline: 'none',
+            }}
           />
           <button
             onClick={() => { if (name.trim()) { onAdd(name.trim()); onClose(); } }}
             disabled={!name.trim()}
-            className="py-3 bg-white text-black font-nunito font-black text-sm uppercase tracking-wider disabled:opacity-30"
+            className="disabled:opacity-30"
+            style={{
+              padding: '11px', backgroundColor: ACCENT, color: '#000',
+              fontFamily: BARLOW, fontWeight: 700, fontSize: 14,
+              letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: 2,
+              cursor: name.trim() ? 'pointer' : 'not-allowed',
+            }}
           >
             ADD
           </button>
@@ -128,35 +172,48 @@ function AddColumnDialog({ onAdd, onClose }) {
   );
 }
 
-// ─── Edit Mode: Add / Rename Option dialog ────────────────────────────────────
+// ─── Edit Mode: Add Option dialog ─────────────────────────────────────────────
 
 function AddOptionDialog({ colName, onAdd, onClose }) {
   const [label, setLabel] = useState('');
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
+      style={{ backgroundColor: 'rgba(0,0,0,0.88)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-xs rounded-lg overflow-hidden" style={{ backgroundColor: '#1e1e1e', border: '1px solid #555555' }}>
-        <div className="px-4 py-3 border-b border-edge">
-          <span className="font-nunito font-black text-white text-sm uppercase tracking-wider">
+      <div
+        className="w-full max-w-xs overflow-hidden"
+        style={{ backgroundColor: SURFACE, borderTop: `3px solid ${ACCENT}`, border: `1px solid ${EDGE}`, borderRadius: 4 }}
+      >
+        <div style={{ padding: '10px 14px', borderBottom: `1px solid ${EDGE}` }}>
+          <span style={{ fontFamily: BARLOW, fontWeight: 700, fontSize: 14, letterSpacing: '0.1em', color: ACCENT, textTransform: 'uppercase' }}>
             ADD BUTTON — {colName}
           </span>
         </div>
-        <div className="p-4 flex flex-col gap-3">
+        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input
             autoFocus
             value={label}
             onChange={e => setLabel(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && label.trim()) { onAdd(label.trim()); onClose(); }}}
             placeholder="Button label"
-            className="bg-bg border border-edge text-white px-3 py-2.5 font-mono text-sm w-full focus:outline-none focus:border-white/50"
+            style={{
+              backgroundColor: BG, border: `1px solid ${EDGE}`, color: TEXT,
+              padding: '10px 12px', fontFamily: BARLOW, fontWeight: 600, fontSize: 14,
+              letterSpacing: '0.04em', width: '100%', outline: 'none',
+            }}
           />
           <button
             onClick={() => { if (label.trim()) { onAdd(label.trim()); onClose(); } }}
             disabled={!label.trim()}
-            className="py-3 bg-white text-black font-nunito font-black text-sm uppercase tracking-wider disabled:opacity-30"
+            className="disabled:opacity-30"
+            style={{
+              padding: '11px', backgroundColor: ACCENT, color: '#000',
+              fontFamily: BARLOW, fontWeight: 700, fontSize: 14,
+              letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: 2,
+              cursor: label.trim() ? 'pointer' : 'not-allowed',
+            }}
           >
             ADD
           </button>
@@ -189,25 +246,22 @@ function JumpModal({ current, max, onJump, onClose }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
+      style={{ backgroundColor: 'rgba(0,0,0,0.88)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="w-full max-w-xs rounded-lg overflow-hidden"
-        style={{ backgroundColor: '#1e1e1e', border: '1px solid #555555' }}
+        className="w-full max-w-xs overflow-hidden"
+        style={{ backgroundColor: SURFACE, borderTop: `3px solid ${ACCENT}`, border: `1px solid ${EDGE}`, borderRadius: 4 }}
       >
-        <div
-          className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-          style={{ borderBottom: '1px solid #3a3a3a' }}
-        >
-          <span className="font-nunito font-black text-white text-sm uppercase tracking-wider">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: `1px solid ${EDGE}` }}>
+          <span style={{ fontFamily: BARLOW, fontWeight: 700, fontSize: 14, letterSpacing: '0.1em', color: ACCENT, textTransform: 'uppercase' }}>
             JUMP TO PLAY
           </span>
-          <button onClick={onClose} className="text-white/40 hover:text-white p-1 -mr-1">
+          <button onClick={onClose} style={{ color: DIM, padding: 4, cursor: 'pointer' }}>
             <X size={16} />
           </button>
         </div>
-        <div className="p-4 flex flex-col gap-3">
+        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <input
             ref={inputRef}
             type="number"
@@ -217,13 +271,26 @@ function JumpModal({ current, max, onJump, onClose }) {
             onKeyDown={e => e.key === 'Enter' && handleJump()}
             min={1}
             max={max}
-            className="bg-bg border border-edge text-white font-mono text-3xl text-center px-4 py-5 focus:outline-none focus:border-white/50 transition-colors w-full"
+            style={{
+              backgroundColor: BG, border: `1px solid ${EDGE}`, color: '#ffffff',
+              fontFamily: BEBAS, fontSize: 56, textAlign: 'center',
+              padding: '10px 16px', width: '100%', outline: 'none',
+              letterSpacing: '0.05em',
+            }}
           />
-          <div className="text-white/25 text-[10px] font-mono text-center">1 – {max}</div>
+          <div style={{ color: '#1e3a58', fontSize: 10, fontFamily: BARLOW, fontWeight: 700, textAlign: 'center', letterSpacing: '0.12em' }}>
+            1 — {max}
+          </div>
           <button
             onClick={handleJump}
             disabled={!valid}
-            className="py-3.5 bg-white text-black font-nunito font-black text-sm uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/90 transition-colors"
+            className="disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+            style={{
+              padding: '12px', backgroundColor: ACCENT, color: '#000',
+              fontFamily: BARLOW, fontWeight: 700, fontSize: 15,
+              letterSpacing: '0.1em', textTransform: 'uppercase', borderRadius: 2,
+              cursor: valid ? 'pointer' : 'not-allowed',
+            }}
           >
             JUMP
           </button>
@@ -252,9 +319,14 @@ function RestoreInput({ onRestore }) {
       />
       <button
         onClick={() => ref.current?.click()}
-        className="w-full px-4 py-2.5 text-left font-nunito font-black text-xs tracking-wider text-white hover:bg-white/10 transition-colors border-b border-edge last:border-b-0"
+        className="w-full text-left hover:bg-white/5 transition-colors"
+        style={{
+          padding: '10px 14px', fontFamily: BARLOW, fontWeight: 700, fontSize: 13,
+          letterSpacing: '0.06em', color: TEXT, borderBottom: `1px solid ${EDGE}`,
+          display: 'block', backgroundColor: 'transparent', textTransform: 'uppercase',
+        }}
       >
-        RESTORE BACKUP
+        Restore Backup
       </button>
     </>
   );
@@ -485,8 +557,10 @@ export default function TrackerPage({ gameId, onBack }) {
 
   if (!game) {
     return (
-      <div className="h-svh bg-bg flex items-center justify-center text-white/20 text-xs font-mono">
-        LOADING...
+      <div className="h-svh flex items-center justify-center" style={{ backgroundColor: BG }}>
+        <span style={{ color: EDGE, fontFamily: BARLOW, fontWeight: 700, fontSize: 13, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
+          LOADING...
+        </span>
       </div>
     );
   }
@@ -498,70 +572,122 @@ export default function TrackerPage({ gameId, onBack }) {
   const filledRows   = plays?.filter(p => columns.some(c => p[c.id] != null)).length ?? 0;
 
   return (
-    <div className="h-svh bg-bg flex flex-col overflow-hidden">
+    <div className="h-svh flex flex-col overflow-hidden" style={{ backgroundColor: BG }}>
 
       {/* ── Header ── */}
-      <header className="flex items-center gap-2 px-3 py-1.5 border-b border-edge flex-shrink-0" style={{ backgroundColor: '#111111' }}>
+      <header style={{
+        backgroundColor: SURFACE,
+        borderBottom: `1px solid ${EDGE}`,
+        borderTop: `3px solid ${ACCENT}`,
+        display: 'flex', alignItems: 'center',
+        padding: '5px 10px', gap: 8, flexShrink: 0,
+      }}>
+
+        {/* Back / Cancel */}
         <button
           onClick={editMode ? cancelEditMode : onBack}
-          className="flex items-center gap-1 font-mono text-xs tracking-wide text-white/40 hover:text-white transition-colors shrink-0 py-1 pr-1"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 3,
+            fontFamily: BARLOW, fontWeight: 700, fontSize: 13,
+            letterSpacing: '0.06em', textTransform: 'uppercase',
+            color: DIM, padding: '4px 4px', flexShrink: 0, cursor: 'pointer',
+          }}
         >
-          <ChevronLeft size={15} />
+          <ChevronLeft size={14} color={DIM} />
           {editMode ? 'CANCEL' : 'BACK'}
         </button>
 
-        <div className="flex-1 min-w-0 text-center font-nunito font-black text-white text-sm truncate px-1">
-          {editMode
-            ? <span className="text-yellow-400 tracking-wider text-xs">✎ EDIT MODE</span>
-            : gameName
-          }
+        {/* Center */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minWidth: 0, overflow: 'hidden' }}>
+          {editMode ? (
+            <span style={{ color: '#ffe600', fontFamily: BARLOW, fontWeight: 700, fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              ✎ EDIT MODE
+            </span>
+          ) : (
+            <>
+              {/* Game name */}
+              <span style={{
+                color: TEXT, fontFamily: "'Nunito', sans-serif", fontWeight: 900, fontSize: 15,
+                letterSpacing: '0.04em', textTransform: 'uppercase',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {gameName}
+              </span>
+            </>
+          )}
         </div>
 
+        {/* Right controls */}
         {editMode ? (
           <button
             onClick={saveEditMode}
-            className="px-3 py-1.5 bg-white text-black font-nunito font-black text-xs tracking-wider shrink-0"
+            style={{
+              padding: '5px 13px', backgroundColor: ACCENT, color: '#000',
+              fontFamily: BARLOW, fontWeight: 700, fontSize: 13,
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+              borderRadius: 2, flexShrink: 0, cursor: 'pointer',
+            }}
           >
             SAVE
           </button>
         ) : (
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+
             {/* ··· menu */}
             <div className="relative">
               <button
                 onClick={() => setMenuOpen(o => !o)}
-                className="px-2.5 py-1.5 border font-mono text-white/50 hover:text-white transition-colors text-sm leading-none"
-                style={{ backgroundColor: '#1e1e1e', borderColor: '#3a3a3a' }}
+                style={{
+                  padding: '5px 10px', border: `1px solid ${EDGE}`, borderRadius: 3,
+                  backgroundColor: SURFACE, color: DIM,
+                  fontFamily: BARLOW, fontWeight: 700, fontSize: 15,
+                  letterSpacing: '0.1em', cursor: 'pointer',
+                }}
               >
                 ···
               </button>
               {menuOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                  <div
-                    className="absolute right-0 top-full mt-1 border z-50 min-w-[160px] overflow-hidden rounded-sm"
-                    style={{ backgroundColor: '#1e1e1e', borderColor: '#3a3a3a' }}
-                  >
+                  <div style={{
+                    position: 'absolute', right: 0, top: '100%', marginTop: 4,
+                    backgroundColor: SURFACE, border: `1px solid ${EDGE}`,
+                    borderRadius: 4, zIndex: 50, minWidth: 164, overflow: 'hidden',
+                  }}>
                     {[
-                      ['EDIT MODE',    enterEditMode],
-                      ['EXPORT XLSX',  handleExport],
-                      ['BACKUP DATA',  handleBackup],
+                      ['EDIT MODE',   enterEditMode],
+                      ['EXPORT XLSX', handleExport],
+                      ['BACKUP DATA', handleBackup],
                     ].map(([label, action]) => (
                       <button
                         key={label}
                         onClick={action}
-                        className="w-full px-4 py-2.5 text-left font-nunito font-black text-xs tracking-wider text-white hover:bg-white/10 transition-colors border-b border-edge last:border-b-0"
+                        className="w-full text-left hover:bg-white/5 transition-colors"
+                        style={{
+                          padding: '10px 14px', fontFamily: BARLOW, fontWeight: 700,
+                          fontSize: 13, letterSpacing: '0.06em', color: TEXT,
+                          borderBottom: `1px solid ${EDGE}`, display: 'block',
+                          backgroundColor: 'transparent', textTransform: 'uppercase',
+                          cursor: 'pointer',
+                        }}
                       >
                         {label}
                       </button>
                     ))}
                     <RestoreInput onRestore={handleRestore} />
-                    <div className="border-t border-edge" />
+                    <div style={{ borderTop: `1px solid ${EDGE}` }} />
                     {['HISTORY', 'STATS'].map(v => (
                       <button
                         key={v}
                         onClick={() => { setView(v.toLowerCase()); setMenuOpen(false); }}
-                        className="w-full px-4 py-2.5 text-left font-nunito font-black text-xs tracking-wider text-white hover:bg-white/10 transition-colors border-b border-edge last:border-b-0"
+                        className="w-full text-left hover:bg-white/5 transition-colors"
+                        style={{
+                          padding: '10px 14px', fontFamily: BARLOW, fontWeight: 700,
+                          fontSize: 13, letterSpacing: '0.06em', color: TEXT,
+                          borderBottom: `1px solid ${EDGE}`, display: 'block',
+                          backgroundColor: 'transparent', textTransform: 'uppercase',
+                          cursor: 'pointer',
+                        }}
                       >
                         {v}
                       </button>
@@ -571,22 +697,32 @@ export default function TrackerPage({ gameId, onBack }) {
               )}
             </div>
 
-            {/* ✕ ROW (yellow) — clears current row */}
+            {/* ✕ ROW (amber) */}
             <button
               onClick={handleClearRow}
               disabled={!currentRow || columns.every(c => currentRow[c.id] == null)}
-              className="px-2.5 py-1.5 border font-nunito font-black text-[11px] tracking-wider transition-colors disabled:opacity-25"
-              style={{ backgroundColor: '#1e1e1e', borderColor: '#3a3a3a', color: '#f59e0b' }}
+              className="disabled:opacity-25"
+              style={{
+                padding: '5px 10px', border: `1px solid ${EDGE}`, borderRadius: 3,
+                backgroundColor: SURFACE, color: '#f59e0b',
+                fontFamily: BARLOW, fontWeight: 700, fontSize: 12,
+                letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer',
+              }}
             >
               ✕ ROW
             </button>
 
-            {/* ✕ ALL (red) — clears all rows */}
+            {/* ✕ ALL (red) */}
             <button
               onClick={handleClearAll}
               disabled={filledRows === 0}
-              className="px-2.5 py-1.5 border font-nunito font-black text-[11px] tracking-wider transition-colors disabled:opacity-25"
-              style={{ backgroundColor: '#1e1e1e', borderColor: '#3a3a3a', color: '#ef4444' }}
+              className="disabled:opacity-25"
+              style={{
+                padding: '5px 10px', border: `1px solid ${EDGE}`, borderRadius: 3,
+                backgroundColor: SURFACE, color: '#ef4444',
+                fontFamily: BARLOW, fontWeight: 700, fontSize: 12,
+                letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer',
+              }}
             >
               ✕ ALL
             </button>
@@ -594,23 +730,25 @@ export default function TrackerPage({ gameId, onBack }) {
         )}
       </header>
 
-      {/* ── View selector ── */}
+      {/* ── View selector (History / Stats sub-header) ── */}
       {view !== 'tracker' && (
-        <div
-          className="flex items-center gap-3 px-3 py-2 border-b border-edge flex-shrink-0"
-          style={{ backgroundColor: '#111111' }}
-        >
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px',
+          borderBottom: `1px solid ${EDGE}`, flexShrink: 0, backgroundColor: SURFACE,
+        }}>
           <button
             onClick={() => setView('tracker')}
-            className="flex items-center gap-1 text-white/40 hover:text-white transition-colors font-mono text-xs tracking-wide"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4, color: DIM,
+              fontFamily: BARLOW, fontWeight: 700, fontSize: 13, letterSpacing: '0.06em',
+              textTransform: 'uppercase', cursor: 'pointer',
+            }}
           >
-            <ChevronLeft size={14} />
+            <ChevronLeft size={14} color={DIM} />
             TRACKER
           </button>
-          <span className="text-white/30 font-nunito font-black text-xs tracking-wider">
-            {view === 'history'
-              ? `HISTORY · ${filledRows} PLAYS`
-              : 'STATS'}
+          <span style={{ color: '#1e3a58', fontFamily: BARLOW, fontWeight: 700, fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            {view === 'history' ? `HISTORY · ${filledRows} PLAYS` : 'STATS'}
           </span>
         </div>
       )}
@@ -633,44 +771,53 @@ export default function TrackerPage({ gameId, onBack }) {
           />
 
           {/* ── Column card grid ── */}
-          <div className="flex-1 overflow-y-auto p-3">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {columns.map(col => (
-                <ColumnCard
-                  key={col.id}
-                  col={col}
-                  value={currentRow?.[col.id] ?? null}
-                  onDirectSelect={setColValue}
-                  onOpenModal={openModal}
-                  editMode={editMode}
-                  onRenameCol={editRenameCol}
-                  onDeleteCol={editDeleteCol}
-                  onMoveCol={(dir) => editMoveCol(col.id, dir)}
-                  onDeleteOption={editDeleteOption}
-                  onAddOption={(colId) => setAddOptFor(colId)}
-                />
-              ))}
+          <div style={{
+            flex: 1,
+            padding: 10,
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gridAutoRows: '1fr',
+            gap: 10,
+            backgroundColor: BG,
+            overflowY: 'auto',
+          }}>
+            {columns.map(col => (
+              <ColumnCard
+                key={col.id}
+                col={col}
+                value={currentRow?.[col.id] ?? null}
+                onDirectSelect={setColValue}
+                onOpenModal={openModal}
+                editMode={editMode}
+                onRenameCol={editRenameCol}
+                onDeleteCol={editDeleteCol}
+                onMoveCol={(dir) => editMoveCol(col.id, dir)}
+                onDeleteOption={editDeleteOption}
+                onAddOption={(colId) => setAddOptFor(colId)}
+              />
+            ))}
 
-              {/* Add Column button (edit mode only) */}
-              {editMode && (
-                <button
-                  onClick={() => setAddColOpen(true)}
-                  className="rounded-lg min-h-[120px] border border-dashed flex flex-col items-center justify-center gap-2 text-white/25 hover:text-white/50 transition-colors"
-                  style={{ borderColor: '#555555' }}
-                >
-                  <Plus size={20} />
-                  <span className="font-nunito font-black text-xs uppercase tracking-wider">Add Column</span>
-                </button>
-              )}
-            </div>
+            {/* Add Column button (edit mode only) */}
+            {editMode && (
+              <button
+                onClick={() => setAddColOpen(true)}
+                className="min-h-[120px] flex flex-col items-center justify-center gap-2 transition-colors"
+                style={{ borderRadius: 6, border: `1px dashed ${EDGE}`, color: EDGE, backgroundColor: 'transparent' }}
+              >
+                <Plus size={20} />
+                <span style={{ fontFamily: BARLOW, fontWeight: 700, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Add Column
+                </span>
+              </button>
+            )}
           </div>
 
           {/* ── Nav bar ── */}
           {!editMode && (
-            <nav className="flex border-t border-edge flex-shrink-0">
+            <nav style={{ display: 'flex', borderTop: `1px solid ${EDGE}`, flexShrink: 0 }}>
               <NavBtn onClick={handlePrev} disabled={isPrevDis}>← PREV</NavBtn>
-              <NavBtn onClick={handleAdd25}>+25</NavBtn>
-              <NavBtn onClick={handleNext} disabled={isNextDis}>NEXT →</NavBtn>
+              <NavBtn onClick={handleNew} primary>＋ NEW</NavBtn>
+              <NavBtn onClick={handleNext} disabled={isNextDis} noBorder>NEXT →</NavBtn>
             </nav>
           )}
         </>

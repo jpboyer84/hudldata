@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, Trash2, Plus, Pencil, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Trash2, Plus, Pencil } from 'lucide-react';
 
 // ─── Determine if an option button should appear selected ────────────────────
 
@@ -36,7 +36,7 @@ export function isOptionActive(col, opt, currentValue) {
 
 // ─── Single option button ────────────────────────────────────────────────────
 
-function OptionButton({ col, opt, currentValue, onDirectSelect, onOpenModal, editMode, onDeleteOption }) {
+function OptionButton({ col, opt, currentValue, onDirectSelect, onOpenModal, editMode, onDeleteOption, broadcast }) {
   const active = isOptionActive(col, opt, currentValue);
 
   function handleClick() {
@@ -64,19 +64,37 @@ function OptionButton({ col, opt, currentValue, onDirectSelect, onOpenModal, edi
     return opt.label;
   })();
 
+  const broadcastStyle = active ? {
+    backgroundColor: '#00d4ff',
+    border: '2px solid #00d4ff',
+    color: '#000000',
+    boxShadow: '0 0 14px rgba(0,212,255,0.4)',
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontWeight: 900,
+    fontSize: 17,
+  } : {
+    backgroundColor: '#060c18',
+    border: '1px solid #152338',
+    color: '#4a6a85',
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontWeight: 700,
+    fontSize: 17,
+  };
+
+  const classicStyle = {
+    backgroundColor: active ? '#ffffff' : '#2a2a2a',
+    border:          active ? '2px solid #ffffff' : '1px solid #444444',
+    color:           active ? '#000000' : '#ffffff',
+    fontWeight:      900,
+  };
+
   return (
     <div className="relative" style={{ aspectRatio: '1' }}>
       <button
         type="button"
         onClick={handleClick}
-        className="w-full h-full border font-nunito text-2xl uppercase tracking-wide transition-colors select-none touch-manipulation rounded-sm"
-        style={{
-          backgroundColor: active ? '#ffffff' : '#4a4a4a',
-          border:          active ? '2px solid #ffffff' : '2px solid #666666',
-          color:           active ? '#000000' : '#ffffff',
-          fontWeight:      900,
-          boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
-        }}
+        className={`w-full h-full uppercase transition-colors select-none touch-manipulation rounded-lg ${broadcast ? '' : 'font-nunito text-lg'}`}
+        style={broadcast ? broadcastStyle : classicStyle}
       >
         {btnLabel}
       </button>
@@ -107,6 +125,8 @@ export default function ColumnCard({
   onMoveCol,    // direction: -1 | 1
   onDeleteOption,
   onAddOption,
+  // theme
+  broadcast = false,
 }) {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(col.name);
@@ -118,34 +138,54 @@ export default function ColumnCard({
     else setNameInput(col.name);
   }
 
-  // ── modal-list card (single full-width button → scrollable list) ──
+  const cardBorderStyle = broadcast ? {
+    borderTop:    '1px solid #1a2e48',
+    borderRight:  '1px solid #1a2e48',
+    borderBottom: '1px solid #1a2e48',
+    borderLeft:   '3px solid #ff4713',
+  } : { border: '1px solid #555555' };
+
+  const bodyBg = broadcast ? '#060c18' : '#111111';
+
+  // Shared header props
+  const headerProps = {
+    col, value, editMode, broadcast, editingName, nameInput, setNameInput,
+    onEditStart:     () => { setEditingName(true); setNameInput(col.name); },
+    onCommitRename:  commitRename,
+    onDeleteCol:     () => onDeleteCol?.(col.id),
+    onMoveCol,
+  };
+
+  // ── modal-list card ──
   if (col.type === 'modal-list') {
     const hasValue = value != null;
+    const singleStyle = broadcast ? {
+      backgroundColor: hasValue ? '#00d4ff' : '#060c18',
+      border:          hasValue ? '2px solid #00d4ff' : '2px solid #152338',
+      color:           hasValue ? '#000000' : '#4a6a85',
+      boxShadow:       hasValue ? '0 0 16px rgba(0,212,255,0.35)' : 'none',
+      fontFamily:      "'Barlow Condensed', sans-serif",
+      fontWeight:      hasValue ? 900 : 700,
+      fontSize:        20,
+    } : {
+      backgroundColor: hasValue ? '#ffffff' : '#1e1e1e',
+      border:          hasValue ? '2px solid #ffffff' : '2px solid #666666',
+      color:           hasValue ? '#000000' : '#ffffff',
+      boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
+      fontFamily:      "'Nunito', sans-serif",
+      fontWeight:      900,
+      fontSize:        24,
+    };
+
     return (
-      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '2px solid #555555' }}>
-        {editMode && <CardHeader
-          col={col}
-          value={value}
-          editMode={editMode}
-          editingName={editingName}
-          nameInput={nameInput}
-          setNameInput={setNameInput}
-          onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
-          onCommitRename={commitRename}
-          onDeleteCol={() => onDeleteCol?.(col.id)}
-          onMoveCol={onMoveCol}
-        />}
-        <div className="p-2 flex-1" style={{ backgroundColor: '#111111' }}>
+      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={cardBorderStyle}>
+        <CardHeader {...headerProps} />
+        <div className="p-2 flex-1" style={{ backgroundColor: bodyBg }}>
           <button
             type="button"
             onClick={() => onOpenModal({ type: 'dropdown', columnId: col.id, options: col.listOptions, title: col.name })}
-            className="w-full h-full min-h-[72px] font-nunito font-black text-2xl uppercase tracking-wide transition-colors rounded-sm"
-            style={{
-              backgroundColor: hasValue ? '#ffffff' : '#1e1e1e',
-              border:          hasValue ? '2px solid #ffffff' : '2px solid #666666',
-              color:           hasValue ? '#000000' : '#ffffff',
-              boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
-            }}
+            className="w-full h-full min-h-[72px] uppercase tracking-wide transition-colors rounded-sm"
+            style={singleStyle}
           >
             {hasValue ? String(value) : col.name}
           </button>
@@ -154,34 +194,36 @@ export default function ColumnCard({
     );
   }
 
-  // ── modal-number card (single full-width button) ──
+  // ── modal-number card ──
   if (col.type === 'modal-number') {
     const hasValue = value != null;
+    const singleStyle = broadcast ? {
+      backgroundColor: hasValue ? '#00d4ff' : '#060c18',
+      border:          hasValue ? '2px solid #00d4ff' : '2px solid #152338',
+      color:           hasValue ? '#000000' : '#4a6a85',
+      boxShadow:       hasValue ? '0 0 16px rgba(0,212,255,0.35)' : 'none',
+      fontFamily:      "'Barlow Condensed', sans-serif",
+      fontWeight:      hasValue ? 900 : 700,
+      fontSize:        20,
+    } : {
+      backgroundColor: hasValue ? '#ffffff' : '#1e1e1e',
+      border:          hasValue ? '2px solid #ffffff' : '2px solid #666666',
+      color:           hasValue ? '#000000' : '#ffffff',
+      boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
+      fontFamily:      "'Nunito', sans-serif",
+      fontWeight:      900,
+      fontSize:        24,
+    };
+
     return (
-      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '2px solid #555555' }}>
-        {editMode && <CardHeader
-          col={col}
-          value={value}
-          editMode={editMode}
-          editingName={editingName}
-          nameInput={nameInput}
-          setNameInput={setNameInput}
-          onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
-          onCommitRename={commitRename}
-          onDeleteCol={() => onDeleteCol?.(col.id)}
-          onMoveCol={onMoveCol}
-        />}
-        <div className="p-2 flex-1" style={{ backgroundColor: '#111111' }}>
+      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={cardBorderStyle}>
+        <CardHeader {...headerProps} />
+        <div className="p-2 flex-1" style={{ backgroundColor: bodyBg }}>
           <button
             type="button"
             onClick={() => onOpenModal({ type: 'number', columnId: col.id, min: col.min, max: col.max, title: col.name })}
-            className="w-full h-full min-h-[72px] font-nunito font-black text-2xl uppercase tracking-wide transition-colors rounded-sm"
-            style={{
-              backgroundColor: hasValue ? '#ffffff' : '#1e1e1e',
-              border:          hasValue ? '2px solid #ffffff' : '2px solid #666666',
-              color:           hasValue ? '#000000' : '#ffffff',
-              boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
-            }}
+            className="w-full h-full min-h-[72px] uppercase tracking-wide transition-colors rounded-sm"
+            style={singleStyle}
           >
             {hasValue ? String(value) : col.name}
           </button>
@@ -192,23 +234,12 @@ export default function ColumnCard({
 
   // ── buttons card ──
   return (
-    <div className="rounded-lg overflow-hidden flex flex-col h-full" style={{ border: '2px solid #555555' }}>
-      {editMode && <CardHeader
-        col={col}
-        value={value}
-        editMode={editMode}
-        editingName={editingName}
-        nameInput={nameInput}
-        setNameInput={setNameInput}
-        onEditStart={() => { setEditingName(true); setNameInput(col.name); }}
-        onCommitRename={commitRename}
-        onDeleteCol={() => onDeleteCol?.(col.id)}
-        onMoveCol={onMoveCol}
-      />}
+    <div className="rounded-lg overflow-hidden flex flex-col h-full" style={cardBorderStyle}>
+      <CardHeader {...headerProps} />}
       <div
-        className="p-3 gap-3 flex-1"
+        className="p-2 gap-2 flex-1"
         style={{
-          backgroundColor: '#111111',
+          backgroundColor: bodyBg,
           display: 'grid',
           gridTemplateColumns: `repeat(${col.options.length + (editMode ? 1 : 0)}, 1fr)`,
         }}
@@ -223,6 +254,7 @@ export default function ColumnCard({
             onOpenModal={onOpenModal}
             editMode={editMode}
             onDeleteOption={() => onDeleteOption?.(col.id, idx)}
+            broadcast={broadcast}
           />
         ))}
         {editMode && (
@@ -241,11 +273,18 @@ export default function ColumnCard({
 
 // ─── Card header (shared) ────────────────────────────────────────────────────
 
-function CardHeader({ col, value, editMode, editingName, nameInput, setNameInput, onEditStart, onCommitRename, onDeleteCol, onMoveCol }) {
+function CardHeader({ col, value, editMode, broadcast, editingName, nameInput, setNameInput, onEditStart, onCommitRename, onDeleteCol, onMoveCol }) {
   return (
     <div
-      className="px-3 py-2.5 flex items-center gap-2 flex-shrink-0"
-      style={{ backgroundColor: '#1e1e1e' }}
+      style={{
+        backgroundColor: broadcast ? '#0a1828' : '#1e1e1e',
+        padding:         broadcast ? '5px 10px' : '7px 10px',
+        display:         'flex',
+        alignItems:      'center',
+        gap:             8,
+        flexShrink:      0,
+        borderBottom:    broadcast ? '1px solid #0f2038' : '1px solid #2a2a2a',
+      }}
     >
       {editMode && editingName ? (
         <input
@@ -257,16 +296,34 @@ function CardHeader({ col, value, editMode, editingName, nameInput, setNameInput
           className="flex-1 bg-transparent border-b border-white/40 text-white font-nunito font-black text-xs uppercase outline-none py-0.5"
         />
       ) : (
-        <span className="font-nunito font-black text-white uppercase tracking-wider leading-none flex-1" style={{ fontSize: 15 }}>
+        <span
+          style={broadcast ? {
+            color:          '#ff4713',
+            fontFamily:     "'Barlow Condensed', sans-serif",
+            fontWeight:     700,
+            fontSize:       11,
+            textTransform:  'uppercase',
+            letterSpacing:  '0.13em',
+            lineHeight:     1,
+            flex:           1,
+          } : {
+            color:          '#ffffff',
+            fontFamily:     "'Nunito', sans-serif",
+            fontWeight:     900,
+            fontSize:       15,
+            textTransform:  'uppercase',
+            letterSpacing:  '0.05em',
+            lineHeight:     1,
+            flex:           1,
+          }}
+        >
           {col.name}
         </span>
       )}
 
-      {/* Value badge — only when not in edit mode */}
-      {!editMode && value != null && (
-        <span className="text-white/35 font-mono text-[10px] leading-none ml-auto truncate max-w-[80px]">
-          {value}
-        </span>
+      {/* Dropdown arrow — classic non-edit mode only */}
+      {!editMode && !broadcast && (
+        <span style={{ color: '#666666', fontSize: 10, flexShrink: 0 }}>▼</span>
       )}
 
       {/* Edit controls */}

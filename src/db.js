@@ -36,6 +36,32 @@ db.version(4).stores({
   columnLibrary: '++id, createdAt',
 });
 
+// Version 5: remove yardLn, gainLoss, offForm from all templates and games
+const REMOVED_COL_IDS = new Set(['yardLn', 'gainLoss', 'offForm']);
+db.version(5).stores({
+  games: '++id, createdAt',
+  plays: '++id, gameId, [gameId+rowIndex]',
+  templates: '++id, createdAt',
+  columnLibrary: '++id, createdAt',
+}).upgrade(async tx => {
+  const templates = await tx.table('templates').toArray();
+  for (const t of templates) {
+    if (Array.isArray(t.columns)) {
+      await tx.table('templates').update(t.id, {
+        columns: t.columns.filter(c => !REMOVED_COL_IDS.has(c.id)),
+      });
+    }
+  }
+  const games = await tx.table('games').toArray();
+  for (const g of games) {
+    if (Array.isArray(g.config)) {
+      await tx.table('games').update(g.id, {
+        config: g.config.filter(c => !REMOVED_COL_IDS.has(c.id)),
+      });
+    }
+  }
+});
+
 // Seed on first open
 db.on('ready', async () => {
   // Seed ODK template

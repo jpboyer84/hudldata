@@ -93,19 +93,13 @@ export const DEFAULT_COLUMNS = [
     ],
   },
   {
-    id: 'yardLn',
-    name: 'YARD LN',
-    type: 'modal-list',
-    listOptions: YARD_LINE_OPTIONS,
-  },
-  {
     id: 'hash',
     name: 'Hash',
     type: 'buttons',
     options: [
-      { label: 'L', value: 'L' },
-      { label: 'M', value: 'M' },
-      { label: 'R', value: 'R' },
+      { label: 'L Hash', value: 'L Hash' },
+      { label: 'Mid',    value: 'Mid' },
+      { label: 'R Hash', value: 'R Hash' },
     ],
   },
   {
