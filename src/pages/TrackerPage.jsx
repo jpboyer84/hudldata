@@ -776,7 +776,7 @@ export default function TrackerPage({ gameId, onBack }) {
             padding: 10,
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gridAutoRows: '1fr',
+            gridAutoRows: 'auto',
             gap: 10,
             backgroundColor: BG,
             overflowY: 'auto',

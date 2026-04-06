@@ -89,12 +89,12 @@ function OptionButton({ col, opt, currentValue, onDirectSelect, onOpenModal, edi
   };
 
   return (
-    <div className="relative" style={{ aspectRatio: '1' }}>
+    <div className="relative">
       <button
         type="button"
         onClick={handleClick}
-        className={`w-full h-full uppercase transition-colors select-none touch-manipulation rounded-lg ${broadcast ? '' : 'font-nunito text-lg'}`}
-        style={broadcast ? broadcastStyle : classicStyle}
+        className={`w-full uppercase transition-colors select-none touch-manipulation rounded-lg flex items-center justify-center ${broadcast ? '' : 'font-nunito text-lg'}`}
+        style={{ ...(broadcast ? broadcastStyle : classicStyle), minHeight: 55, aspectRatio: '1', maxHeight: 70 }}
       >
         {btnLabel}
       </button>
@@ -241,7 +241,7 @@ export default function ColumnCard({
         style={{
           backgroundColor: bodyBg,
           display: 'grid',
-          gridTemplateColumns: `repeat(${col.options.length + (editMode ? 1 : 0)}, 1fr)`,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(55px, 1fr))',
         }}
       >
         {col.options.map((opt, idx) => (
