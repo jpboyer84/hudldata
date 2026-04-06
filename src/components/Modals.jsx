@@ -102,12 +102,18 @@ export function NumberModal({ title, min, max, currentValue, onConfirm, onClose 
 }
 
 // ─── Scrollable dropdown / sub-options modal ──────────────────────────────────
+// centerOn: if provided and no currentValue, scroll to this item on open
 
-export function DropdownModal({ title, options, currentValue, onSelect, onClose }) {
-  const activeRef = useRef(null);
+export function DropdownModal({ title, options, currentValue, onSelect, onClose, centerOn }) {
+  const activeRef  = useRef(null);
+  const centerRef  = useRef(null);
 
   useEffect(() => {
-    activeRef.current?.scrollIntoView({ block: 'center' });
+    if (activeRef.current) {
+      activeRef.current.scrollIntoView({ block: 'center' });
+    } else if (centerRef.current) {
+      centerRef.current.scrollIntoView({ block: 'center' });
+    }
   }, []);
 
   return (
@@ -125,10 +131,11 @@ export function DropdownModal({ title, options, currentValue, onSelect, onClose 
         )}
         {options.map(opt => {
           const active = opt === currentValue;
+          const isCenterTarget = !currentValue && centerOn === opt;
           return (
             <button
               key={opt}
-              ref={active ? activeRef : null}
+              ref={active ? activeRef : isCenterTarget ? centerRef : null}
               onClick={() => { onSelect(opt); onClose(); }}
               className="w-full px-4 py-4 text-left font-mono transition-colors"
               style={{

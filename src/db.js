@@ -62,6 +62,21 @@ db.version(5).stores({
   }
 });
 
+// Version 6: refresh default ODK template with updated DEFAULT_COLUMNS (adds back
+// yardLn, gainLoss, offForm which were removed in v5, plus updated DN/HASH/DIST)
+db.version(6).stores({
+  games: '++id, createdAt',
+  plays: '++id, gameId, [gameId+rowIndex]',
+  templates: '++id, createdAt',
+  columnLibrary: '++id, createdAt',
+}).upgrade(async tx => {
+  const all = await tx.table('templates').toArray();
+  const odk = all.find(t => t.isDefault);
+  if (odk) {
+    await tx.table('templates').update(odk.id, { columns: DEFAULT_COLUMNS });
+  }
+});
+
 // Seed on first open
 db.on('ready', async () => {
   // Seed ODK template

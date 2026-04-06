@@ -43,7 +43,7 @@ function OptionButton({ col, opt, currentValue, onDirectSelect, onOpenModal, edi
     if (opt.action === 'modal-number') {
       onOpenModal({ type: 'number', columnId: col.id, min: opt.min, max: opt.max, title: `${col.name} — ${opt.label}` });
     } else if (opt.action === 'modal-dropdown') {
-      onOpenModal({ type: 'dropdown', columnId: col.id, options: opt.dropdownOptions, title: opt.label });
+      onOpenModal({ type: 'dropdown', columnId: col.id, options: opt.dropdownOptions, title: opt.label, centerOn: opt.centerOn });
     } else if (opt.action === 'modal-suboptions') {
       onOpenModal({ type: 'dropdown', columnId: col.id, options: opt.subOptions, title: opt.label });
     } else {
@@ -183,7 +183,7 @@ export default function ColumnCard({
         <div className="p-2 flex-1" style={{ backgroundColor: bodyBg }}>
           <button
             type="button"
-            onClick={() => onOpenModal({ type: 'dropdown', columnId: col.id, options: col.listOptions, title: col.name })}
+            onClick={() => onOpenModal({ type: 'dropdown', columnId: col.id, options: col.listOptions, title: col.name, centerOn: col.centerOn })}
             className="w-full h-full min-h-[72px] uppercase tracking-wide transition-colors rounded-sm"
             style={singleStyle}
           >
@@ -235,7 +235,7 @@ export default function ColumnCard({
   // ── buttons card ──
   return (
     <div className="rounded-lg overflow-hidden flex flex-col h-full" style={cardBorderStyle}>
-      <CardHeader {...headerProps} />}
+      <CardHeader {...headerProps} />
       <div
         className="p-2 gap-2 flex-1"
         style={{

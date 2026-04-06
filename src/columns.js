@@ -1,14 +1,16 @@
 // Default "ODK" tracker column configuration.
 // - id:   IndexedDB field name (never changes, even if user renames the column)
 // - name: display label (editable in Edit Mode)
-// - type: 'buttons' | 'modal-number' | 'modal-list'
+// - type: 'buttons' | 'modal-list'
 // - options (for 'buttons'): array of { label, value?, action?, ...actionProps }
 //   - no action  → direct value button (toggles on/off)
-//   - action:'modal-number'     → opens NumberModal; min/max required
 //   - action:'modal-dropdown'   → opens DropdownModal; dropdownOptions required
 //   - action:'modal-suboptions' → opens DropdownModal with subOptions; subOptions required
-// - type 'modal-number': entire card is one button that opens the number modal
-// - type 'modal-list':   entire card is one button that opens a DropdownModal list; listOptions required
+// - type 'modal-list': entire card is one button that opens a DropdownModal list; listOptions required
+//   - centerOn: optional string value to center the list on when no selection exists
+
+// Gain/Loss and custom distance: -99 to 99
+export const GAIN_LOSS_OPTIONS = Array.from({ length: 199 }, (_, i) => String(i - 99));
 
 // Yard line: -1 … -49 (own side), 50 (midfield), 49 … 1 (opponent side)
 export const YARD_LINE_OPTIONS = [
@@ -42,6 +44,19 @@ export const STK_SET = new Set(STK_OPTIONS);
 // Direct quick-button values for Result (used by isOptionActive logic)
 export const RESULT_DIRECT = ['Rush', 'Incomplete', 'Complete'];
 
+// OFF FORM generic button definitions
+const OFF_FORM_BUTTONS = [
+  { label: 'Form 1', subs: Array.from({ length: 6  }, (_, i) => `Variation ${i + 1}`).sort() },
+  { label: 'Form 2', subs: Array.from({ length: 4  }, (_, i) => `Variation ${i + 1}`).sort() },
+  { label: 'Form 3', subs: Array.from({ length: 6  }, (_, i) => `Variation ${i + 1}`).sort() },
+  { label: 'Form 4', subs: Array.from({ length: 4  }, (_, i) => `Variation ${i + 1}`).sort() },
+  { label: 'Form 5', subs: Array.from({ length: 2  }, (_, i) => `Variation ${i + 1}`).sort() },
+  { label: 'Form 6', subs: Array.from({ length: 14 }, (_, i) => `Variation ${i + 1}`).sort() },
+  { label: 'Form 7', subs: Array.from({ length: 8  }, (_, i) => `Variation ${i + 1}`).sort() },
+  { label: 'Special', subs: Array.from({ length: 4 }, (_, i) => `Variation ${i + 1}`).sort() },
+  { label: 'Scout',  subs: ['Scout'] },
+];
+
 export const DEFAULT_COLUMNS = [
   {
     id: 'odk',
@@ -70,45 +85,52 @@ export const DEFAULT_COLUMNS = [
     name: 'DN',
     type: 'buttons',
     options: [
-      { label: 'DN1', value: 'DN1' },
-      { label: 'DN2', value: 'DN2' },
-      { label: 'DN3', value: 'DN3' },
-      { label: 'DN4', value: 'DN4' },
+      { label: '1', value: '1' },
+      { label: '2', value: '2' },
+      { label: '3', value: '3' },
+      { label: '4', value: '4' },
     ],
   },
   {
     id: 'dist',
-    name: 'Dist',
+    name: 'DIST',
     type: 'buttons',
     options: [
-      { label: '1-3',  value: '1-3' },
-      { label: '4-6',  value: '4-6' },
-      { label: '7-9',  value: '7-9' },
-      { label: '10+',  value: '10+' },
+      { label: '1-3', value: '1-3' },
+      { label: '4-6', value: '4-6' },
+      { label: '7-9', value: '7-9' },
+      { label: '10+', value: '10+' },
       {
         label: '+',
         action: 'modal-dropdown',
-        dropdownOptions: Array.from({ length: 25 }, (_, i) => String(i + 1)),
+        dropdownOptions: GAIN_LOSS_OPTIONS,
+        centerOn: '0',
       },
     ],
   },
   {
+    id: 'yardLn',
+    name: 'YARD LN',
+    type: 'modal-list',
+    listOptions: YARD_LINE_OPTIONS,
+  },
+  {
     id: 'hash',
-    name: 'Hash',
+    name: 'HASH',
     type: 'buttons',
     options: [
-      { label: 'L Hash', value: 'L Hash' },
-      { label: 'Mid',    value: 'Mid' },
-      { label: 'R Hash', value: 'R Hash' },
+      { label: 'L', value: 'L' },
+      { label: 'M', value: 'M' },
+      { label: 'R', value: 'R' },
     ],
   },
   {
     id: 'playType',
-    name: 'Play Type',
+    name: 'PLAY TYPE',
     type: 'buttons',
     options: [
-      { label: 'Run',  value: 'Run' },
-      { label: 'Pass', value: 'Pass' },
+      { label: 'RUN',  value: 'Run' },
+      { label: 'PASS', value: 'Pass' },
       {
         label: 'STK',
         action: 'modal-dropdown',
@@ -118,17 +140,34 @@ export const DEFAULT_COLUMNS = [
   },
   {
     id: 'result',
-    name: 'Result',
+    name: 'RESULT',
     type: 'buttons',
     options: [
-      { label: 'Rush',     value: 'Rush' },
-      { label: 'Incomp',   value: 'Incomplete' }, // LABEL_MAP: displays "Incomp", stores "Incomplete"
-      { label: 'Complete', value: 'Complete' },
+      { label: 'RUSH',     value: 'Rush' },
+      { label: 'INCOMP',   value: 'Incomplete' }, // LABEL_MAP: displays "INCOMP", stores "Incomplete"
+      { label: 'COMPLETE', value: 'Complete' },
       {
         label: '▼',
         action: 'modal-dropdown',
         dropdownOptions: RESULT_DROPDOWN,
       },
     ],
+  },
+  {
+    id: 'gainLoss',
+    name: 'GAIN/LOSS',
+    type: 'modal-list',
+    listOptions: GAIN_LOSS_OPTIONS,
+    centerOn: '0',
+  },
+  {
+    id: 'offForm',
+    name: 'OFF FORM',
+    type: 'buttons',
+    options: OFF_FORM_BUTTONS.map(({ label, subs }) => ({
+      label,
+      action: 'modal-suboptions',
+      subOptions: subs,
+    })),
   },
 ];

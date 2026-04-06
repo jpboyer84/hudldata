@@ -843,6 +843,7 @@ export default function TrackerPage({ gameId, onBack }) {
           currentValue={currentRow?.[modal.columnId] ?? null}
           onSelect={handleModalConfirm}
           onClose={closeModal}
+          centerOn={modal.centerOn}
         />
       )}
 
