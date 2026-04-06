@@ -82,10 +82,13 @@ function OptionButton({ col, opt, currentValue, onDirectSelect, onOpenModal, edi
   };
 
   const classicStyle = {
-    backgroundColor: active ? '#ffffff' : '#2a2a2a',
+    backgroundColor: active ? '#ffffff' : '#1e1e1e',
     border:          active ? '2px solid #ffffff' : '1px solid #444444',
     color:           active ? '#000000' : '#ffffff',
+    fontFamily:      "'Nunito', sans-serif",
     fontWeight:      900,
+    fontSize:        14,
+    lineHeight:      1.2,
   };
 
   return (
@@ -93,7 +96,7 @@ function OptionButton({ col, opt, currentValue, onDirectSelect, onOpenModal, edi
       <button
         type="button"
         onClick={handleClick}
-        className={`w-full uppercase transition-colors select-none touch-manipulation rounded-lg flex items-center justify-center ${broadcast ? '' : 'font-nunito text-lg'}`}
+        className="w-full uppercase select-none touch-manipulation rounded-lg flex items-center justify-center overflow-hidden"
         style={{ ...(broadcast ? broadcastStyle : classicStyle), minHeight: 55, aspectRatio: '1', maxHeight: 70 }}
       >
         {btnLabel}
@@ -171,21 +174,20 @@ export default function ColumnCard({
       backgroundColor: hasValue ? '#ffffff' : '#1e1e1e',
       border:          hasValue ? '2px solid #ffffff' : '2px solid #666666',
       color:           hasValue ? '#000000' : '#ffffff',
-      boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
       fontFamily:      "'Nunito', sans-serif",
       fontWeight:      900,
-      fontSize:        24,
+      fontSize:        20,
     };
 
     return (
-      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={cardBorderStyle}>
+      <div className="rounded-lg overflow-hidden flex flex-col" style={cardBorderStyle}>
         <CardHeader {...headerProps} />
-        <div className="p-2 flex-1" style={{ backgroundColor: bodyBg }}>
+        <div className="p-2" style={{ backgroundColor: bodyBg }}>
           <button
             type="button"
             onClick={() => onOpenModal({ type: 'dropdown', columnId: col.id, options: col.listOptions, title: col.name, centerOn: col.centerOn })}
-            className="w-full h-full min-h-[72px] uppercase tracking-wide transition-colors rounded-sm"
-            style={singleStyle}
+            className="w-full uppercase select-none touch-manipulation rounded-sm"
+            style={{ ...singleStyle, minHeight: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             {hasValue ? String(value) : col.name}
           </button>
@@ -209,21 +211,20 @@ export default function ColumnCard({
       backgroundColor: hasValue ? '#ffffff' : '#1e1e1e',
       border:          hasValue ? '2px solid #ffffff' : '2px solid #666666',
       color:           hasValue ? '#000000' : '#ffffff',
-      boxShadow:       '0 2px 6px rgba(0,0,0,0.4)',
       fontFamily:      "'Nunito', sans-serif",
       fontWeight:      900,
-      fontSize:        24,
+      fontSize:        20,
     };
 
     return (
-      <div className="rounded-lg overflow-hidden flex flex-col h-full" style={cardBorderStyle}>
+      <div className="rounded-lg overflow-hidden flex flex-col" style={cardBorderStyle}>
         <CardHeader {...headerProps} />
-        <div className="p-2 flex-1" style={{ backgroundColor: bodyBg }}>
+        <div className="p-2" style={{ backgroundColor: bodyBg }}>
           <button
             type="button"
             onClick={() => onOpenModal({ type: 'number', columnId: col.id, min: col.min, max: col.max, title: col.name })}
-            className="w-full h-full min-h-[72px] uppercase tracking-wide transition-colors rounded-sm"
-            style={singleStyle}
+            className="w-full uppercase select-none touch-manipulation rounded-sm"
+            style={{ ...singleStyle, minHeight: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             {hasValue ? String(value) : col.name}
           </button>
@@ -233,15 +234,19 @@ export default function ColumnCard({
   }
 
   // ── buttons card ──
+  // Cap columns: ≥7 buttons → 3 per row; 5–6 → 4 per row; ≤4 → exact count
+  const btnCount = col.options.length + (editMode ? 1 : 0);
+  const gridCols = btnCount >= 7 ? 3 : btnCount >= 5 ? 4 : btnCount;
+
   return (
-    <div className="rounded-lg overflow-hidden flex flex-col h-full" style={cardBorderStyle}>
+    <div className="rounded-lg overflow-hidden flex flex-col" style={cardBorderStyle}>
       <CardHeader {...headerProps} />
       <div
-        className="p-2 gap-2 flex-1"
+        className="p-2 gap-2"
         style={{
           backgroundColor: bodyBg,
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(55px, 1fr))',
+          gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
         }}
       >
         {col.options.map((opt, idx) => (
