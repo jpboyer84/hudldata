@@ -1,0 +1,2368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Hudl Data</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Nunito:wght@800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #111111;
+  --surface: #1e1e1e;
+  --surface2: #2a2a2a;
+  --border: #3a3a3a;
+  --col-border: #555555;
+  --text: #ffffff;
+  --muted: #777777;
+  --sel-bg: #ffffff;
+  --sel-text: #000000;
+  --red: #ff4444;
+  --yellow: #ffb400;
+  --radius: 8px;
+  --font-ui: 'IBM Plex Mono', monospace;
+  --font-btn: 'Nunito', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ── VIEWS ── */
+.view { display: none; flex-direction: column; height: 100dvh; overflow: hidden; }
+.view.active { display: flex; }
+
+/* ── HEADER ── */
+.hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 12px; height: 50px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; gap: 8px;
+}
+.hdr-title {
+  font-family: var(--font-btn); font-weight: 900; font-size: 15px;
+  color: var(--text); letter-spacing: 0.06em; text-align: center; flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hdr-btn {
+  font-family: var(--font-ui); font-size: 10px; font-weight: 600;
+  padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text); cursor: pointer;
+  white-space: nowrap; letter-spacing: 0.04em; flex-shrink: 0;
+}
+.hdr-btn:active { opacity: 0.7; }
+.hdr-btn.red { color: var(--red); border-color: rgba(255,68,68,0.4); background: rgba(255,68,68,0.08); }
+.hdr-btn.yellow { color: var(--yellow); border-color: rgba(255,180,0,0.4); background: rgba(255,180,0,0.08); }
+.hdr-btn.white { background: #fff; color: #000; border-color: #fff; }
+
+/* ════════════════════════════════════════
+   LANDING PAGE
+════════════════════════════════════════ */
+#view-landing .lbody {
+  flex: 1; overflow-y: auto; padding: 20px 16px 30px;
+  display: flex; flex-direction: column; gap: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.landing-logo {
+  font-family: var(--font-btn); font-weight: 900; font-size: 32px;
+  letter-spacing: 0.12em; text-align: center; padding: 16px 0 24px;
+}
+
+.lcard {
+  background: var(--surface); border: 1.5px solid var(--col-border);
+  border-radius: 12px; padding: 20px; cursor: pointer;
+  display: flex; align-items: center; gap: 16px;
+  user-select: none; transition: background 0.1s;
+}
+.lcard:active { background: var(--surface2); }
+.lcard-icon { font-size: 26px; width: 40px; text-align: center; flex-shrink: 0; }
+.lcard-title {
+  font-family: var(--font-btn); font-weight: 900; font-size: 17px;
+  letter-spacing: 0.06em; margin-bottom: 3px;
+}
+.lcard-sub { font-size: 11px; color: var(--muted); }
+
+/* ════════════════════════════════════════
+   SPREADSHEET BAR
+════════════════════════════════════════ */
+.sheet-bar {
+  display: flex; overflow-x: auto;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; -webkit-overflow-scrolling: touch;
+}
+.sheet-bar::-webkit-scrollbar { display: none; }
+
+.s-cell {
+  display: flex; flex-direction: column; padding: 5px 10px;
+  border-right: 1px solid var(--border); min-width: 56px; flex-shrink: 0;
+  cursor: pointer; user-select: none; align-items: center; text-align: center;
+}
+.s-cell:active { background: var(--surface2); }
+.s-cell.play-cell { min-width: 42px; background: var(--surface2); cursor: pointer; }
+.s-cell-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; line-height: 1; margin-bottom: 2px; }
+.s-cell-val { font-family: var(--font-btn); font-weight: 900; font-size: 15px; color: var(--text); line-height: 1; min-height: 15px; }
+.s-cell.play-cell .s-cell-val { font-size: 15px; }
+
+/* ════════════════════════════════════════
+   TRACKER BODY
+════════════════════════════════════════ */
+.tracker-body {
+  flex: 1; overflow-y: auto; padding: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.col-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+
+/* COLUMN CARD */
+.col-card {
+  background: var(--surface); border: 1.5px solid var(--col-border);
+  border-radius: 10px; overflow: hidden;
+}
+.col-card-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.col-card-name {
+  font-family: var(--font-btn); font-weight: 900; font-size: 12px;
+  color: var(--text); letter-spacing: 0.08em;
+}
+.col-card-arrow { color: var(--muted); font-size: 9px; }
+.col-card-body { padding: 7px; background: var(--bg); }
+
+/* BUTTON GRID INSIDE COLUMN */
+.btn-grid { display: grid; gap: 6px; }
+.bg-2 { grid-template-columns: 1fr 1fr; }
+.bg-3 { grid-template-columns: 1fr 1fr 1fr; }
+.bg-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.bg-1 { grid-template-columns: 1fr; }
+
+/* TRACKER BUTTON */
+.t-btn {
+  font-family: var(--font-btn); font-weight: 900; font-size: 18px;
+  color: var(--text); background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 7px; height: 72px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; user-select: none; transition: transform 0.1s;
+  letter-spacing: 0.02em; padding: 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+.t-btn:active { transform: scale(0.94); }
+.t-btn.sel { background: var(--sel-bg) !important; color: var(--sel-text) !important; border-color: var(--sel-bg) !important; font-weight: 900; }
+.t-btn.list-open { font-size: 18px; color: var(--text); }
+.t-btn.list-open.has-val { color: var(--text); font-size: 18px; }
+.t-btn.sm { font-size: 16px; }
+
+/* ════════════════════════════════════════
+   NAV BAR
+════════════════════════════════════════ */
+.nav-bar {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  height: 60px; flex-shrink: 0; border-top: 1px solid var(--border);
+}
+.nav-btn {
+  font-family: var(--font-btn); font-weight: 900; font-size: 14px;
+  letter-spacing: 0.05em; cursor: pointer; border: none;
+  display: flex; align-items: center; justify-content: center;
+  user-select: none;
+}
+.nav-btn:active { opacity: 0.8; }
+.nav-prev { background: #222; color: #ccc; border-right: 1px solid var(--border); }
+.nav-new { background: #ffffff; color: #000000; }
+.nav-next { background: #222; color: #ccc; border-left: 1px solid var(--border); }
+
+/* ════════════════════════════════════════
+   MODALS
+════════════════════════════════════════ */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.78); z-index: 200;
+  align-items: center; justify-content: center; padding: 16px;
+}
+.overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface); border: 1px solid var(--col-border);
+  border-radius: 14px; width: 100%; max-width: 420px;
+  max-height: 82dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+.modal-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.modal-title { font-family: var(--font-btn); font-weight: 900; font-size: 16px; letter-spacing: 0.06em; }
+.modal-x { font-size: 18px; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+.modal-x:active { background: var(--border); }
+
+.modal-body { flex: 1; overflow-y: auto; padding: 16px 18px; -webkit-overflow-scrolling: touch; }
+.modal-foot { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0; }
+
+/* FORM */
+.fg { margin-bottom: 14px; }
+.fl { display: block; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+.fi {
+  width: 100%; background: #111; border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 13px; color: var(--text); font-family: var(--font-ui); font-size: 14px; outline: none;
+}
+.fi:focus { border-color: var(--col-border); }
+select.fi { cursor: pointer; -webkit-appearance: none; }
+
+/* BUTTONS */
+.btn { font-family: var(--font-btn); font-weight: 900; font-size: 13px; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; letter-spacing: 0.04em; }
+.btn:active { opacity: 0.8; }
+.btn-primary { background: #fff; color: #000; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-full { width: 100%; padding: 15px; margin-top: 16px; background: #fff; color: #000; border: none; border-radius: 10px; font-family: var(--font-btn); font-weight: 900; font-size: 15px; letter-spacing: 0.06em; cursor: pointer; }
+.btn-full:active { opacity: 0.85; }
+
+/* LIST PICKER */
+.list-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.list-item {
+  padding: 13px 20px; font-family: var(--font-btn); font-weight: 900; font-size: 18px;
+  color: var(--text); text-align: center; cursor: pointer; border-bottom: 1px solid var(--border);
+}
+.list-item:active { background: var(--surface2); }
+.list-item.sel { background: var(--sel-bg); color: var(--sel-text); }
+
+/* DROPDOWN ITEMS */
+.dd-item {
+  padding: 13px 18px; font-family: var(--font-btn); font-weight: 900; font-size: 15px;
+  color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border);
+}
+.dd-item:active { background: var(--surface2); }
+.dd-item.sel { background: var(--sel-bg); color: var(--sel-text); }
+
+/* ════════════════════════════════════════
+   GAME ARCHIVE
+════════════════════════════════════════ */
+.abody { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch; }
+
+.arch-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 16px; display: flex;
+  align-items: center; justify-content: space-between; cursor: pointer;
+}
+.arch-card:active { background: var(--surface2); }
+.arch-title { font-family: var(--font-btn); font-weight: 900; font-size: 16px; margin-bottom: 3px; }
+.arch-meta { font-size: 11px; color: var(--muted); }
+.arch-arrow { font-size: 20px; color: var(--muted); }
+
+.empty-msg { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 12px; line-height: 2.2; }
+
+/* ════════════════════════════════════════
+   TEMPLATE BUILDER
+════════════════════════════════════════ */
+#view-template-builder .tbody { flex: 1; overflow-y: auto; padding: 16px; -webkit-overflow-scrolling: touch; }
+
+.col-pick {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 13px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 13px; cursor: pointer; user-select: none;
+}
+.col-pick.sel { border-color: var(--col-border); background: #252525; }
+.col-pick:active { opacity: 0.8; }
+.col-pick-check {
+  width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 5px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px;
+}
+.col-pick.sel .col-pick-check { background: var(--text); border-color: var(--text); color: #000; }
+.col-pick-name { font-family: var(--font-btn); font-weight: 900; font-size: 15px; letter-spacing: 0.04em; }
+.col-pick-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* DRAG HANDLE */
+.drag-handle {
+  width: 36px; height: 100%; min-height: 56px; margin-left: auto; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 18px; cursor: grab; touch-action: none;
+  letter-spacing: 0.05em;
+}
+.drag-handle:active { cursor: grabbing; }
+.col-pick.dragging { opacity: 0.4; }
+.col-pick.drag-over { border-color: #fff; background: #2e2e2e; }
+.arch-card.dragging { opacity: 0.4; }
+.arch-card.drag-over { border-color: #fff; background: #2e2e2e; }
+
+.sec-label { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 2px 10px; }
+
+/* ════════════════════════════════════════
+   COLUMN BUILDER
+════════════════════════════════════════ */
+#view-column-builder .cbbody { flex: 1; overflow-y: auto; padding: 16px; -webkit-overflow-scrolling: touch; }
+
+.btn-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.btn-input {
+  flex: 1; background: #111; border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 13px; color: var(--text); font-family: var(--font-ui); font-size: 14px; outline: none;
+}
+.btn-input:focus { border-color: var(--col-border); }
+.btn-rm {
+  width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,68,68,0.3);
+  background: rgba(255,68,68,0.08); color: var(--red); font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.btn-rm:active { opacity: 0.7; }
+.add-btn-row {
+  width: 100%; padding: 10px; border: 1.5px dashed var(--border); border-radius: 8px;
+  background: transparent; color: var(--muted); font-family: var(--font-ui); font-size: 12px;
+  cursor: pointer; text-align: center; margin-top: 4px;
+}
+.add-btn-row:active { background: var(--surface2); }
+
+/* PLAY NAV GRID */
+.play-nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.pn-item {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 13px 4px; text-align: center; font-family: var(--font-btn); font-weight: 900;
+  font-size: 16px; cursor: pointer;
+}
+.pn-item:active { opacity: 0.7; }
+.pn-item.cur { background: var(--text); color: var(--bg); border-color: var(--text); }
+.pn-item.filled { color: var(--text); }
+.pn-item.empty { color: var(--muted); }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 76px; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #333; color: var(--text); font-family: var(--font-ui); font-size: 12px;
+  padding: 8px 18px; border-radius: 20px; opacity: 0;
+  transition: all 0.2s; pointer-events: none; z-index: 999; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+#view-import-export .abody { padding: 16px; }
+#view-import-export .sec-label { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     LANDING
+══════════════════════════════════════ -->
+<div class="view active" id="view-landing">
+  <div class="lbody">
+    <div class="landing-logo">HUDL DATA</div>
+
+    <div class="lcard" onclick="openNewGameModal()">
+      <div class="lcard-icon">🏈</div>
+      <div>
+        <div class="lcard-title">NEW GAME</div>
+        <div class="lcard-sub">Start tracking a new game</div>
+      </div>
+    </div>
+
+    <div class="lcard" onclick="goArchive()">
+      <div class="lcard-icon">📋</div>
+      <div>
+        <div class="lcard-title">GAME ARCHIVE</div>
+        <div class="lcard-sub" id="arch-sub">View previous games</div>
+      </div>
+    </div>
+
+    <div class="lcard" onclick="goTemplates()">
+      <div class="lcard-icon">📐</div>
+      <div>
+        <div class="lcard-title">TEMPLATES</div>
+        <div class="lcard-sub" id="tmpl-sub">Create & edit templates</div>
+      </div>
+    </div>
+
+    <div class="lcard" onclick="goColumns()">
+      <div class="lcard-icon">＋</div>
+      <div>
+        <div class="lcard-title">COLUMNS</div>
+        <div class="lcard-sub" id="col-sub">Create & edit columns</div>
+      </div>
+    </div>
+
+    <div class="lcard" onclick="goImportExport()">
+      <div class="lcard-icon">⇅</div>
+      <div>
+        <div class="lcard-title">IMPORT / EXPORT</div>
+        <div class="lcard-sub">Backup, restore & transfer data</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TRACKER
+══════════════════════════════════════ -->
+<div class="view" id="view-tracker">
+  <div class="hdr">
+    <button class="hdr-btn" onclick="leaveTracker()">← BACK</button>
+    <div class="hdr-title" id="tracker-title">GAME</div>
+    <div style="display:flex;gap:5px">
+      <button class="hdr-btn" id="layout-btn" onclick="toggleLayout()">▤ 1COL</button>
+      <button class="hdr-btn white" onclick="saveAsTemplate()">+ TMPL</button>
+      <button class="hdr-btn" onclick="exportGame()">⬇ XLSX</button>
+      <button class="hdr-btn yellow" onclick="clearRow()">✕ ROW</button>
+      <button class="hdr-btn red" onclick="clearAll()">✕ ALL</button>
+    </div>
+  </div>
+  <div class="sheet-bar" id="sheet-bar"></div>
+  <div class="tracker-body" id="tracker-body"></div>
+  <div class="nav-bar">
+    <button class="nav-btn nav-prev" onclick="prevPlay()">← PREV</button>
+    <button class="nav-btn nav-new" onclick="addRows()">+ ADD ROWS</button>
+    <button class="nav-btn nav-next" onclick="nextPlay()">NEXT →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     GAME ARCHIVE
+══════════════════════════════════════ -->
+<div class="view" id="view-archive">
+  <div class="hdr">
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
+    <div class="hdr-title">GAME ARCHIVE</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="abody" id="arch-body"></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TEMPLATE LIST
+══════════════════════════════════════ -->
+<div class="view" id="view-templates">
+  <div class="hdr">
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
+    <div class="hdr-title">TEMPLATES</div>
+    <button class="hdr-btn white" onclick="goTemplateBuilder()">+ NEW</button>
+  </div>
+  <div class="abody" id="tmpl-list-body"></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TEMPLATE BUILDER
+══════════════════════════════════════ -->
+<div class="view" id="view-template-builder">
+  <div class="hdr">
+    <button class="hdr-btn" onclick="showView('view-templates')">← BACK</button>
+    <div class="hdr-title" id="tmpl-builder-title">NEW TEMPLATE</div>
+    <button class="hdr-btn white" onclick="saveTemplate()">SAVE</button>
+  </div>
+  <div class="tbody">
+    <div class="fg" style="padding-bottom:4px">
+      <label class="fl">Template Name</label>
+      <input class="fi" id="tmpl-name" placeholder="e.g. ODK, Game Day…" />
+    </div>
+    <div class="sec-label">Selected Columns <span id="tmpl-sel-count" style="color:var(--text)"></span></div>
+    <div id="col-selected-list"></div>
+    <div class="sec-label" style="margin-top:12px">Available Columns</div>
+    <div id="col-pick-list"></div>
+    <button class="btn-full" onclick="saveTemplate()">CREATE TEMPLATE</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     COLUMN LIST
+══════════════════════════════════════ -->
+<div class="view" id="view-columns">
+  <div class="hdr">
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
+    <div class="hdr-title">COLUMNS</div>
+    <button class="hdr-btn white" onclick="goColumnBuilder()">+ NEW</button>
+  </div>
+  <div class="abody" id="col-list-body"></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     COLUMN BUILDER
+══════════════════════════════════════ -->
+<div class="view" id="view-column-builder">
+  <div class="hdr">
+    <button class="hdr-btn" onclick="showView('view-columns')">← BACK</button>
+    <div class="hdr-title" id="col-builder-title">NEW COLUMN</div>
+    <button class="hdr-btn white" onclick="saveColumn()">SAVE</button>
+  </div>
+  <div class="cbbody">
+    <div class="fg">
+      <label class="fl">Column Name</label>
+      <input class="fi" id="cb-name" placeholder="e.g. FORMATION, COVERAGE…" />
+    </div>
+    <div class="sec-label">Buttons</div>
+    <div id="cb-btn-list"></div>
+    <button class="add-btn-row" onclick="cbAddBtn()">＋ ADD BUTTON</button>
+    <button class="btn-full" onclick="saveColumn()">SAVE COLUMN</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: NEW GAME
+══════════════════════════════════════ -->
+<div class="overlay" id="m-new-game">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">NEW GAME</div>
+      <div class="modal-x" onclick="closeModal('m-new-game')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Home Team</label><input class="fi" id="ng-home" placeholder="Home team" /></div>
+      <div class="fg"><label class="fl">Away Team</label><input class="fi" id="ng-away" placeholder="Away team" /></div>
+      <div style="display:flex;gap:10px">
+        <div class="fg" style="flex:0 0 110px"><label class="fl">Week <span style="color:var(--muted);font-size:9px">(optional)</span></label><input class="fi" id="ng-week" placeholder="e.g. 5" type="number" min="1" max="20" /></div>
+        <div class="fg" style="flex:1"><label class="fl">Date <span style="color:var(--muted);font-size:9px">(optional)</span></label><input class="fi" id="ng-date" placeholder="e.g. 10/4/2025" /></div>
+      </div>
+      <div class="fg"><label class="fl">Template</label><select class="fi" id="ng-tmpl"></select></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('m-new-game')">Cancel</button>
+      <button class="btn btn-primary" onclick="startGame()">START GAME</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: LIST PICKER
+══════════════════════════════════════ -->
+<div class="overlay" id="m-list">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="m-list-title">SELECT</div>
+      <div class="modal-x" onclick="closeModal('m-list')">✕</div>
+    </div>
+    <div class="list-scroll" id="m-list-scroll"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: DROPDOWN
+══════════════════════════════════════ -->
+<div class="overlay" id="m-dd">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="m-dd-title">SELECT</div>
+      <div class="modal-x" onclick="closeModal('m-dd')">✕</div>
+    </div>
+    <div class="list-scroll" id="m-dd-list"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: PLAY NAVIGATOR
+══════════════════════════════════════ -->
+<div class="overlay" id="m-playnav">
+  <div class="modal" style="max-width:280px">
+    <div class="modal-hdr">
+      <div class="modal-title">GO TO PLAY</div>
+      <div class="modal-x" onclick="closeModal('m-playnav')">✕</div>
+    </div>
+    <div class="modal-body" style="padding:20px 18px">
+      <label class="fl" style="margin-bottom:8px">Play number (1–200)</label>
+      <input class="fi" id="pn-input" type="number" min="1" max="200"
+             placeholder="e.g. 13"
+             style="font-size:24px;text-align:center;padding:14px"
+             onkeydown="if(event.key==='Enter') goToPlay()" />
+      <button class="btn-full" style="margin-top:12px" onclick="goToPlay()">GO</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: CONFIRM
+══════════════════════════════════════ -->
+<div class="overlay" id="m-confirm">
+  <div class="modal" style="max-width:300px">
+    <div class="modal-hdr">
+      <div class="modal-title" id="m-confirm-title">Are you sure?</div>
+    </div>
+    <div class="modal-body" style="padding:14px 18px;font-size:13px;color:var(--muted)" id="m-confirm-msg"></div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('m-confirm')">Cancel</button>
+      <button class="btn btn-primary" id="m-confirm-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: SAVE AS TEMPLATE
+══════════════════════════════════════ -->
+<div class="overlay" id="m-save-tmpl">
+  <div class="modal" style="max-width:320px">
+    <div class="modal-hdr">
+      <div class="modal-title">SAVE AS TEMPLATE</div>
+      <div class="modal-x" onclick="closeModal('m-save-tmpl')">✕</div>
+    </div>
+    <div class="modal-body" style="padding:16px 18px">
+      <label class="fl" style="margin-bottom:6px">Template Name</label>
+      <input class="fi" id="sat-name" placeholder="e.g. ODK, Game Day…"
+             style="font-size:16px;padding:12px 13px"
+             onkeydown="if(event.key==='Enter') confirmSaveAsTemplate()" />
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('m-save-tmpl')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmSaveAsTemplate()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     IMPORT / EXPORT
+══════════════════════════════════════ -->
+<div class="view" id="view-import-export">
+  <div class="hdr">
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
+    <div class="hdr-title">IMPORT / EXPORT</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="abody" style="gap:16px">
+
+    <div class="sec-label" style="padding:0 2px 4px">EXPORT</div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">📊 Export Game as XLSX</div>
+      <div class="arch-meta">Export any saved game's plays to a spreadsheet. Edit on your computer, then import back.</div>
+      <select class="fi" id="ie-game-sel" style="width:100%;margin-top:2px"></select>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="exportSelectedGameXlsx()">EXPORT GAME →</button>
+    </div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">📦 Export Backup (JSON)</div>
+      <div class="arch-meta">Save all your data to a single file for safekeeping or moving to another device.</div>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="exportBackupAll()">EXPORT ALL DATA →</button>
+    </div>
+
+    <div class="sec-label" style="padding:4px 2px 4px">IMPORT</div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">📥 Import Game from XLSX</div>
+      <div class="arch-meta">Load a spreadsheet back into the tracker. You'll be asked how to handle unrecognized columns.</div>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="triggerXlsxImport()">CHOOSE XLSX FILE →</button>
+      <input type="file" id="ie-xlsx-input" accept=".xlsx,.xls" style="display:none" />
+    </div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">📦 Import Backup (JSON)</div>
+      <div class="arch-meta">Restore from a backup file. You'll choose what to import and whether to merge or overwrite.</div>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="triggerJsonImport()">CHOOSE JSON FILE →</button>
+      <input type="file" id="ie-json-input" accept=".json" style="display:none" />
+    </div>
+
+    <div class="sec-label" style="padding:4px 2px 4px">GOOGLE DRIVE</div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">☁️ Save Backup to Drive</div>
+      <div class="arch-meta">Export all data and save directly to your Google Drive as a JSON backup file.</div>
+      <button class="btn btn-primary" style="width:100%;padding:12px" id="drive-save-btn" onclick="driveSaveBackup()">SAVE TO GOOGLE DRIVE →</button>
+    </div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">☁️ Load Backup from Drive</div>
+      <div class="arch-meta">Pick a Hudl Data backup file from your Google Drive to restore from.</div>
+      <button class="btn btn-primary" style="width:100%;padding:12px" id="drive-load-btn" onclick="driveLoadBackup()">LOAD FROM GOOGLE DRIVE →</button>
+    </div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">☁️ Save Game XLSX to Drive</div>
+      <div class="arch-meta">Export the selected game as a spreadsheet and save directly to Google Drive.</div>
+      <select class="fi" id="ie-drive-game-sel" style="width:100%;margin-top:2px"></select>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="driveSaveGameXlsx()">SAVE XLSX TO DRIVE →</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: XLSX IMPORT — OVERWRITE OR NEW
+══════════════════════════════════════ -->
+<div class="overlay" id="m-xlsx-dest">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-hdr">
+      <div class="modal-title">IMPORT SPREADSHEET</div>
+      <div class="modal-x" onclick="closeModal('m-xlsx-dest')">✕</div>
+    </div>
+    <div class="modal-body" style="padding:16px 18px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px" id="xlsx-dest-info"></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn btn-primary" style="padding:14px" onclick="xlsxImportAsNew()">CREATE NEW GAME</button>
+        <div style="font-size:11px;color:var(--muted);text-align:center">— or overwrite an existing game —</div>
+        <select class="fi" id="xlsx-dest-game-sel"></select>
+        <button class="btn btn-secondary" style="padding:14px" onclick="xlsxImportOverwrite()">OVERWRITE SELECTED GAME</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: XLSX COLUMN MAPPING
+══════════════════════════════════════ -->
+<div class="overlay" id="m-col-map">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">UNRECOGNIZED COLUMNS</div>
+    </div>
+    <div class="modal-body" style="padding:16px 18px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">These columns from your spreadsheet weren't recognized. Map each one to an existing column or skip it.</div>
+      <div id="col-map-rows"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="finishColMapping()">CONTINUE →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: JSON IMPORT OPTIONS
+══════════════════════════════════════ -->
+<div class="overlay" id="m-json-import">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-hdr">
+      <div class="modal-title">IMPORT BACKUP</div>
+      <div class="modal-x" onclick="closeModal('m-json-import')">✕</div>
+    </div>
+    <div class="modal-body" style="padding:16px 18px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px" id="json-import-info"></div>
+      <div class="sec-label" style="margin-bottom:8px">What to import</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="ji-games" checked style="width:18px;height:18px;cursor:pointer" />
+          <span style="font-family:var(--font-btn);font-weight:900;font-size:14px" id="ji-games-lbl">Games</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="ji-cols" checked style="width:18px;height:18px;cursor:pointer" />
+          <span style="font-family:var(--font-btn);font-weight:900;font-size:14px" id="ji-cols-lbl">Columns</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="ji-tmpls" checked style="width:18px;height:18px;cursor:pointer" />
+          <span style="font-family:var(--font-btn);font-weight:900;font-size:14px" id="ji-tmpls-lbl">Templates</span>
+        </label>
+      </div>
+      <div class="sec-label" style="margin-bottom:8px">How to handle conflicts</div>
+      <select class="fi" id="ji-merge-mode">
+        <option value="merge">Merge — add to existing data (keep both)</option>
+        <option value="overwrite">Overwrite — replace all existing data</option>
+      </select>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('m-json-import')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmJsonImport()">IMPORT</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════
+// DATA DEFINITIONS
+// ════════════════════════════════════════
+
+function yardLineList() {
+  const l = [];
+  for (let i = 1; i <= 49; i++) l.push({lb:`-${i}`, v:`-${i}`});
+  l.push({lb:'50', v:'50'});
+  for (let i = 49; i >= 1; i--) l.push({lb:`${i}`, v:`${i}`});
+  return l;
+}
+
+function numList(min, max) {
+  const l = [];
+  for (let i = min; i <= max; i++) l.push({lb:`${i}`, v:`${i}`});
+  return l;
+}
+
+function defaultColumns() {
+  return [
+    {
+      id:'odk', name:'ODK', type:'buttons',
+      btns:[{l:'O',v:'O'},{l:'D',v:'D'},{l:'K',v:'K'},{l:'S',v:'S'}]
+    },
+    {
+      id:'qtr', name:'QTR', type:'buttons',
+      btns:[{l:'1Q',v:'1'},{l:'2Q',v:'2'},{l:'3Q',v:'3'},{l:'4Q',v:'4'}]
+    },
+    {
+      id:'dn', name:'DN', type:'buttons',
+      btns:[{l:'DN1',v:'1'},{l:'DN2',v:'2'},{l:'DN3',v:'3'},{l:'DN4',v:'4'}]
+    },
+    {
+      id:'hash', name:'HASH', type:'buttons',
+      btns:[{l:'L',v:'L'},{l:'M',v:'M'},{l:'R',v:'R'}]
+    },
+    {
+      id:'yardln', name:'YARD LN', type:'list',
+      list: yardLineList()
+    },
+    {
+      id:'dist', name:'DIST', type:'buttons', dataKey:'dist',
+      btns:[{l:'1-3',v:'1-3'},{l:'4-6',v:'4-6'},{l:'7-9',v:'7-9'},{l:'10+',v:'10+'}]
+    },
+    {
+      id:'dist2', name:'DIST', type:'list', dataKey:'dist2',
+      list: numList(-99,99)
+    },
+    {
+      id:'playtype', name:'PLAY TYPE', type:'btns_dd',
+      btns:[{l:'RUN',v:'Run'},{l:'PASS',v:'Pass'}],
+      ddLbl:'STK',
+      dd:['2 Pt.','2 Pt. Defend','Extra Pt.','Extra Pt. Block','Fake FG','Fake Punt','FG','FG Block','KO','KO Rec','Onside Kick','Onside Kick Rec','Pass','Punt','Punt Rec','Run']
+    },
+    {
+      id:'result', name:'RESULT', type:'btns_dd',
+      btns:[{l:'RUSH',v:'Rush'},{l:'INCOMP',v:'Incomplete'},{l:'COMPLETE',v:'Complete'}],
+      ddLbl:'▼',
+      dd:['1st DN','Batted Down','Block','Blocked Def TD','Complete','Complete Fumble','Complete TD','COP','Def TD','Downed','Dropped','Fair Catch','Fumble','Fumble Def TD','Good','Incomplete','Interception','Interception Def TD','Interception Fumble','No Good','No Good Def TD','Offsetting Penalties','Out of Bounds','Penalty','Penalty Safety','Recovered','Return','Rush','Rush Safety','Rush TD','Sack','Sack Fumble','Sack Fumble Def TD','Sack Safety','Safety','Scramble','Scramble TD','TD','Timeout','Tipped','Touchback']
+    },
+    {
+      id:'gainloss', name:'GAIN/LOSS', type:'list',
+      list: numList(-99,99)
+    },
+    {
+      id:'series', name:'SERIES', type:'list',
+      list: numList(1,20)
+    },
+    {
+      id:'offform', name:'OFF FORM', type:'btn_dds',
+      btns:[
+        {l:'Form 1', opts:['Variation 1','Variation 2','Variation 3','Variation 4','Variation 5','Variation 6']},
+        {l:'Form 2', opts:['Variation 1','Variation 2','Variation 3','Variation 4']},
+        {l:'Form 3', opts:['Variation 1','Variation 2','Variation 3','Variation 4','Variation 5','Variation 6']},
+        {l:'Form 4', opts:['Variation 1','Variation 2','Variation 3','Variation 4']},
+        {l:'Form 5', opts:['Variation 1','Variation 2']},
+        {l:'Form 6', opts:['Variation 1','Variation 2','Variation 3','Variation 4','Variation 5','Variation 6','Variation 7','Variation 8','Variation 9','Variation 10','Variation 11','Variation 12','Variation 13','Variation 14']},
+        {l:'Form 7', opts:['Variation 1','Variation 2','Variation 3','Variation 4','Variation 5','Variation 6','Variation 7','Variation 8']},
+        {l:'Special', opts:['Variation 1','Variation 2','Variation 3','Variation 4']},
+        {l:'Scout', opts:['Scout']},
+      ]
+    }
+  ];
+}
+
+function defaultTemplate() {
+  return {
+    id:'odk-default', name:'ODK',
+    colIds:['odk','qtr','dn','dist','dist2','yardln','hash','playtype','result','gainloss','offform']
+  };
+}
+
+// ════════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════════
+function getCols()  { return JSON.parse(localStorage.getItem('hd_cols')  || 'null') || defaultColumns(); }
+function saveCols(d){ localStorage.setItem('hd_cols',  JSON.stringify(d)); }
+function getTmpls() { return JSON.parse(localStorage.getItem('hd_tmpls') || 'null') || [defaultTemplate()]; }
+function saveTmpls(d){ localStorage.setItem('hd_tmpls', JSON.stringify(d)); }
+function getGames() { return JSON.parse(localStorage.getItem('hd_games') || '[]'); }
+function saveGames(d){ localStorage.setItem('hd_games', JSON.stringify(d)); }
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let game = null;          // active game object
+let playIdx = 0;          // current play index
+let activeCols = [];      // resolved columns for current game
+let autoTimer = null;
+let layoutCols = 1;       // 1 or 2 column layout
+
+function toggleLayout() {
+  layoutCols = layoutCols === 2 ? 1 : 2;
+  const btn = document.getElementById('layout-btn');
+  btn.textContent = layoutCols === 2 ? '⊞ 2COL' : '▤ 1COL';
+  renderBody();
+}
+
+// ════════════════════════════════════════
+// VIEW ROUTING
+// ════════════════════════════════════════
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goArchive() {
+  renderArchive();
+  showView('view-archive');
+}
+
+let editingTmplId = null;
+
+function goTemplates() {
+  renderTemplateList();
+  showView('view-templates');
+}
+
+function renderTemplateList() {
+  const tmpls = getTmpls();
+  const body = document.getElementById('tmpl-list-body');
+  const sub = document.getElementById('tmpl-sub');
+  sub.textContent = `${tmpls.length} template${tmpls.length!==1?'s':''}`;
+  if (tmpls.length === 0) {
+    body.innerHTML = '<div class="empty-msg">No templates yet.<br>Tap + NEW to create one.</div>';
+    return;
+  }
+  let h = '';
+  tmpls.forEach((t, i) => {
+    const allCols = getCols();
+    const colNames = t.colIds.map(id => allCols.find(c=>c.id===id)?.name||id).join(', ');
+    h += `<div class="arch-card" data-idx="${i}" style="flex-direction:column;align-items:flex-start;gap:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+        <div class="arch-title" style="flex:1">${t.name}</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="hdr-btn white" onclick="editTemplate('${t.id}')">EDIT</button>
+          <button class="hdr-btn red" onclick="deleteTemplate('${t.id}')">DELETE</button>
+          <div class="drag-handle tmpl-drag" data-idx="${i}" style="margin-left:4px">⠿</div>
+        </div>
+      </div>
+      <div class="arch-meta">${colNames}</div>
+    </div>`;
+  });
+  body.innerHTML = h;
+  initTmplDragDrop(body);
+}
+
+function initTmplDragDrop(container) {
+  const items = () => [...container.querySelectorAll('.arch-card[data-idx]')];
+  let dragEl = null, dragIdx = null;
+
+  // ── MOUSE ──
+  items().forEach(el => {
+    const handle = el.querySelector('.tmpl-drag');
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      dragEl = el;
+      dragIdx = parseInt(el.dataset.idx);
+      el.classList.add('dragging');
+    });
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragEl) return;
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const target = under?.closest('.arch-card[data-idx]');
+    items().forEach(i => i.classList.remove('drag-over'));
+    if (target && target !== dragEl) target.classList.add('drag-over');
+  });
+
+  document.addEventListener('mouseup', e => {
+    if (!dragEl) return;
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const target = under?.closest('.arch-card[data-idx]');
+    if (target && target !== dragEl) {
+      reorderTemplate(dragIdx, parseInt(target.dataset.idx));
+    }
+    dragEl.classList.remove('dragging');
+    items().forEach(i => i.classList.remove('drag-over'));
+    dragEl = null; dragIdx = null;
+  });
+
+  // ── TOUCH ──
+  items().forEach(el => {
+    const handle = el.querySelector('.tmpl-drag');
+    handle.addEventListener('touchstart', e => {
+      e.preventDefault();
+      dragEl = el;
+      dragIdx = parseInt(el.dataset.idx);
+      el.classList.add('dragging');
+    }, { passive: false });
+  });
+
+  container.addEventListener('touchmove', e => {
+    if (!dragEl) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const under = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = under?.closest('.arch-card[data-idx]');
+    items().forEach(i => i.classList.remove('drag-over'));
+    if (target && target !== dragEl) target.classList.add('drag-over');
+  }, { passive: false });
+
+  container.addEventListener('touchend', e => {
+    if (!dragEl) return;
+    const touch = e.changedTouches[0];
+    const under = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = under?.closest('.arch-card[data-idx]');
+    if (target && target !== dragEl) {
+      reorderTemplate(dragIdx, parseInt(target.dataset.idx));
+    } else {
+      dragEl.classList.remove('dragging');
+      items().forEach(i => i.classList.remove('drag-over'));
+      dragEl = null; dragIdx = null;
+    }
+  });
+}
+
+function reorderTemplate(from, to) {
+  const tmpls = getTmpls();
+  const [moved] = tmpls.splice(from, 1);
+  tmpls.splice(to, 0, moved);
+  saveTmpls(tmpls);
+  renderTemplateList();
+}
+
+function deleteTemplate(id) {
+  showConfirm('Delete Template?', 'This cannot be undone.', () => {
+    const tmpls = getTmpls().filter(t => t.id !== id);
+    saveTmpls(tmpls);
+    renderTemplateList();
+    showToast('Deleted');
+  });
+}
+
+function editTemplate(id) {
+  const tmpls = getTmpls();
+  const t = tmpls.find(t => t.id === id);
+  if (!t) return;
+  editingTmplId = id;
+  selectedColIds = [...t.colIds];
+  document.getElementById('tmpl-name').value = t.name;
+  document.getElementById('tmpl-builder-title').textContent = 'EDIT TEMPLATE';
+  renderColPickList();
+  showView('view-template-builder');
+}
+
+function goTemplateBuilder() {
+  editingTmplId = null;
+  initTemplatePicker();
+  showView('view-template-builder');
+}
+
+let editingColId = null;
+
+function goColumns() {
+  renderColumnList();
+  showView('view-columns');
+}
+
+function renderColumnList() {
+  const cols = getCols().slice().sort((a,b) => a.name.localeCompare(b.name));
+  const body = document.getElementById('col-list-body');
+  const sub = document.getElementById('col-sub');
+  sub.textContent = `${cols.length} column${cols.length!==1?'s':''}`;
+  let h = '';
+  cols.forEach(col => {
+    // Built-in columns can be edited but not deleted
+    const isBuiltIn = !col.id.startsWith('custom_');
+    h += `<div class="arch-card">
+      <div class="arch-title">${col.name}</div>
+      <div style="display:flex;gap:8px">
+        <button class="hdr-btn white" onclick="editColumn('${col.id}')">EDIT</button>
+        ${!isBuiltIn ? `<button class="hdr-btn red" onclick="deleteColumn('${col.id}')">DELETE</button>` : ''}
+      </div>
+    </div>`;
+  });
+  body.innerHTML = h || '<div class="empty-msg">No columns yet.</div>';
+}
+
+function deleteColumn(id) {
+  showConfirm('Delete Column?', 'This cannot be undone.', () => {
+    const cols = getCols().filter(c => c.id !== id);
+    saveCols(cols);
+    renderColumnList();
+    showToast('Deleted');
+  });
+}
+
+function editColumn(id) {
+  const cols = getCols();
+  const col = cols.find(c => c.id === id);
+  if (!col) return;
+  editingColId = id;
+  cbButtons = col.btns ? col.btns.map(b => b.l) : [];
+  if (col.type === 'btns_dd' && col.ddLbl) cbButtons.push(col.ddLbl);
+  document.getElementById('cb-name').value = col.name;
+  document.getElementById('col-builder-title').textContent = 'EDIT COLUMN';
+  renderCbBtns();
+  showView('view-column-builder');
+}
+
+function goColumnBuilder() {
+  editingColId = null;
+  initColumnBuilder();
+  showView('view-column-builder');
+}
+
+function updateLanding() {
+  const games = getGames();
+  const tmpls = getTmpls();
+  const cols = getCols();
+  document.getElementById('arch-sub').textContent =
+    games.length > 0 ? `${games.length} game${games.length!==1?'s':''} saved` : 'View previous games';
+  document.getElementById('tmpl-sub').textContent =
+    `${tmpls.length} template${tmpls.length!==1?'s':''} · tap to edit`;
+  document.getElementById('col-sub').textContent =
+    `${cols.length} column${cols.length!==1?'s':''} · tap to edit`;
+}
+
+// ════════════════════════════════════════
+// NEW GAME MODAL
+// ════════════════════════════════════════
+function openNewGameModal() {
+  const tmpls = getTmpls();
+  const sel = document.getElementById('ng-tmpl');
+  sel.innerHTML = tmpls.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  const today = new Date();
+  document.getElementById('ng-date').value = `${today.getMonth()+1}/${today.getDate()}/${today.getFullYear()}`;
+  document.getElementById('ng-home').value = '';
+  document.getElementById('ng-away').value = '';
+  document.getElementById('ng-week').value = '';
+  openModal('m-new-game');
+  setTimeout(() => document.getElementById('ng-home').focus(), 100);
+}
+
+function startGame() {
+  const home = document.getElementById('ng-home').value.trim() || 'HOME';
+  const away = document.getElementById('ng-away').value.trim() || 'AWAY';
+  const date = document.getElementById('ng-date').value.trim();
+  const week = document.getElementById('ng-week').value.trim();
+  const tmplId = document.getElementById('ng-tmpl').value;
+  const plays = Array.from({length: 200}, () => ({}));
+  const g = {
+    id: Date.now().toString(),
+    home, away, date, week, tmplId,
+    plays,
+    createdAt: new Date().toISOString()
+  };
+  const games = getGames();
+  games.unshift(g);
+  saveGames(games);
+  closeModal('m-new-game');
+  loadTracker(g.id);
+}
+
+// ════════════════════════════════════════
+// TRACKER CORE
+// ════════════════════════════════════════
+function loadTracker(gameId) {
+  const games = getGames();
+  game = JSON.parse(JSON.stringify(games.find(g => g.id === gameId)));
+  if (!game) return;
+  if (!game.plays || game.plays.length === 0) game.plays = [{}];
+
+  const tmpls = getTmpls();
+  const tmpl = tmpls.find(t => t.id === game.tmplId) || tmpls[0];
+  const allCols = getCols();
+  activeCols = tmpl.colIds.map(id => allCols.find(c => c.id === id)).filter(Boolean);
+
+  playIdx = 0;
+  const weekStr = game.week ? ` · WK ${game.week}` : '';
+  document.getElementById('tracker-title').textContent =
+    `${game.home.toUpperCase()} VS ${game.away.toUpperCase()}${weekStr}`;
+
+  showView('view-tracker');
+  renderTracker();
+}
+
+function persist() {
+  if (!game) return;
+  const games = getGames();
+  const i = games.findIndex(g => g.id === game.id);
+  if (i !== -1) games[i] = game; else games.unshift(game);
+  saveGames(games);
+}
+
+function renderTracker() {
+  renderSheetBar();
+  renderBody();
+}
+
+// ── SHEET BAR ──
+function renderSheetBar() {
+  const bar = document.getElementById('sheet-bar');
+  const play = game.plays[playIdx] || {};
+  let h = `<div class="s-cell play-cell" onclick="openPlayNav()">
+    <div class="s-cell-lbl">PLAY</div>
+    <div class="s-cell-val">${playIdx+1}</div>
+  </div>`;
+  activeCols.forEach(col => {
+    const key = col.dataKey || col.id;
+    const raw = play[key] || '';
+    const v = raw.includes('|') ? raw.split('|')[1] : raw;
+    h += `<div class="s-cell"><div class="s-cell-lbl">${col.name}</div><div class="s-cell-val">${v||'·'}</div></div>`;
+  });
+  bar.innerHTML = h;
+}
+
+// ── TRACKER BODY ──
+function renderBody() {
+  const body = document.getElementById('tracker-body');
+  const play = game.plays[playIdx] || {};
+  const gridStyle = layoutCols === 1 ? 'grid-template-columns:1fr' : 'grid-template-columns:1fr 1fr';
+  let h = `<div class="col-grid" style="${gridStyle}">`;
+  activeCols.forEach(col => { h += renderCard(col, play[col.dataKey || col.id]||''); });
+  h += '</div>';
+  body.innerHTML = h;
+}
+
+function renderCard(col, val) {
+  return `<div class="col-card">
+    <div class="col-card-body" style="padding:7px">${renderColInner(col, val)}</div>
+  </div>`;
+}
+
+function gridCls(n) {
+  if (n <= 2) return 'bg-2';
+  if (n === 3) return 'bg-3';
+  return 'bg-4';
+}
+
+function esc(s) { return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+function renderColInner(col, val) {
+  switch(col.type) {
+    case 'buttons':     return renderBtns(col, val);
+    case 'list':        return renderListBtn(col, val);
+    case 'btns_list':   return renderBtnsList(col, val);
+    case 'btns_dd':     return renderBtnsDd(col, val);
+    case 'btn_dds':     return renderBtnDds(col, val);
+    default:            return renderBtns(col, val);
+  }
+}
+
+function renderBtns(col, val) {
+  const gc = gridCls(col.btns.length);
+  let h = `<div class="btn-grid ${gc}">`;
+  col.btns.forEach(b => {
+    const sel = val===b.v ? ' sel':'';
+    h += `<div class="t-btn${sel}" onclick="setVal('${col.id}','${esc(b.v)}')">${b.l}</div>`;
+  });
+  return h + '</div>';
+}
+
+function renderListBtn(col, val) {
+  const hasVal = !!val;
+  const display = hasVal ? val : col.name;
+  return `<div class="btn-grid bg-1">
+    <div class="t-btn list-open${hasVal?' has-val sel':''}"
+         onclick="openList('${col.id}')">${display}</div>
+  </div>`;
+}
+
+function renderBtnsList(col, val) {
+  const isList = val && !col.btns.find(b => b.v===val);
+  const gc = gridCls(col.btns.length + 1);
+  let h = `<div class="btn-grid ${gc}">`;
+  col.btns.forEach(b => {
+    const sel = val===b.v ? ' sel':'';
+    h += `<div class="t-btn${sel}" onclick="setVal('${col.id}','${esc(b.v)}')">${b.l}</div>`;
+  });
+  const lSel = isList ? ' sel has-val':'';
+  const lDisplay = isList ? val : col.listLbl;
+  h += `<div class="t-btn list-open${lSel}" onclick="openList('${col.id}')">${lDisplay}</div>`;
+  return h + '</div>';
+}
+
+function renderBtnsDd(col, val) {
+  const isDd = val && !col.btns.find(b => b.v===val);
+  const gc = gridCls(col.btns.length + 1);
+  let h = `<div class="btn-grid ${gc}">`;
+  col.btns.forEach(b => {
+    const sel = val===b.v ? ' sel':'';
+    h += `<div class="t-btn${sel}" onclick="setVal('${col.id}','${esc(b.v)}')">${b.l}</div>`;
+  });
+  const dSel = isDd ? ' sel has-val':'';
+  const dDisplay = isDd ? val : col.ddLbl;
+  h += `<div class="t-btn list-open${dSel}" onclick="openDd('${col.id}')">${dDisplay}</div>`;
+  return h + '</div>';
+}
+
+function renderBtnDds(col, val) {
+  // val stored as "Form 1|Variation 1" — only the matching parent button highlights
+  const parentLabel = val ? val.split('|')[0] : '';
+  const gc = 'bg-3';
+  let h = `<div class="btn-grid ${gc}">`;
+  col.btns.forEach(b => {
+    const sel = parentLabel === b.l ? ' sel' : '';
+    h += `<div class="t-btn${sel}" onclick="openBtnDd('${col.id}','${esc(b.l)}')">${b.l}</div>`;
+  });
+  return h + '</div>';
+}
+
+// ════════════════════════════════════════
+// VALUE SETTING + AUTO ADVANCE
+// ════════════════════════════════════════
+function setVal(colId, value) {
+  if (!game) return;
+  if (!game.plays[playIdx]) game.plays[playIdx] = {};
+  const col = activeCols.find(c => c.id === colId);
+  const key = (col && col.dataKey) ? col.dataKey : colId;
+  game.plays[playIdx][key] = value;
+  persist();
+  renderTracker();
+  checkAutoAdvance();
+}
+
+function checkAutoAdvance() {
+  if (autoTimer) clearTimeout(autoTimer);
+  const play = game.plays[playIdx] || {};
+  const allDone = activeCols.every(c => {
+    const key = c.dataKey || c.id;
+    return play[key] && play[key] !== '';
+  });
+  if (allDone) {
+    autoTimer = setTimeout(() => {
+      if (playIdx < game.plays.length - 1) nextPlay();
+      else newPlay();
+    }, 400);
+  }
+}
+
+// ════════════════════════════════════════
+// PLAY NAVIGATION
+// ════════════════════════════════════════
+function addRows() {
+  for (let i = 0; i < 25; i++) game.plays.push({});
+  persist();
+  showToast('25 rows added');
+}
+
+function newPlay() {
+  if (playIdx < game.plays.length - 1) playIdx++;
+  else { game.plays.push({}); playIdx = game.plays.length - 1; persist(); }
+  renderTracker();
+}
+
+function prevPlay() {
+  if (playIdx > 0) { playIdx--; renderTracker(); }
+}
+
+function nextPlay() {
+  if (playIdx < game.plays.length - 1) { playIdx++; renderTracker(); }
+}
+
+function showConfirm(title, msg, onOk) {
+  document.getElementById('m-confirm-title').textContent = title;
+  document.getElementById('m-confirm-msg').textContent = msg;
+  document.getElementById('m-confirm-ok').onclick = () => { closeModal('m-confirm'); onOk(); };
+  openModal('m-confirm');
+}
+
+function clearRow() {
+  showConfirm('Clear Play?', `Clear all data for play #${playIdx+1}?`, () => {
+    game.plays[playIdx] = {};
+    persist(); renderTracker();
+  });
+}
+
+function clearAll() {
+  showConfirm('Clear All Plays?', 'This will erase all play data. Cannot be undone.', () => {
+    game.plays = Array.from({length:200}, () => ({}));
+    playIdx = 0;
+    persist(); renderTracker();
+  });
+}
+
+function leaveTracker() {
+  showView('view-landing');
+  updateLanding();
+}
+
+// ── PLAY NAV ──
+function openPlayNav() {
+  document.getElementById('pn-input').value = '';
+  openModal('m-playnav');
+  setTimeout(() => document.getElementById('pn-input').focus(), 120);
+}
+
+function goToPlay() {
+  const val = parseInt(document.getElementById('pn-input').value);
+  if (isNaN(val) || val < 1 || val > game.plays.length) {
+    showToast(`Enter a number between 1 and ${game.plays.length}`);
+    return;
+  }
+  closeModal('m-playnav');
+  playIdx = val - 1;
+  renderTracker();
+}
+
+// ════════════════════════════════════════
+// LIST PICKER MODAL
+// ════════════════════════════════════════
+let listColId = null;
+
+function openList(colId) {
+  listColId = colId;
+  const col = activeCols.find(c => c.id === colId);
+  const key = col.dataKey || col.id;
+  const curVal = (game.plays[playIdx]||{})[key] || '';
+  document.getElementById('m-list-title').textContent = col.name;
+  const scr = document.getElementById('m-list-scroll');
+  let h = '';
+  col.list.forEach(item => {
+    const sel = curVal === item.v ? ' sel':'';
+    h += `<div class="list-item${sel}" onclick="pickList('${esc(item.v)}')">${item.lb}</div>`;
+  });
+  scr.innerHTML = h;
+  openModal('m-list');
+  setTimeout(() => {
+    const s = scr.querySelector('.sel');
+    if (s) { s.scrollIntoView({block:'center'}); return; }
+    const fifty = Array.from(scr.querySelectorAll('.list-item')).find(el => el.textContent.trim()==='50');
+    const zero = Array.from(scr.querySelectorAll('.list-item')).find(el => el.textContent.trim()==='0');
+    const target = col.id === 'yardln' ? fifty : zero;
+    if (target) target.scrollIntoView({block:'center'});
+  }, 60);
+}
+
+function pickList(v) {
+  closeModal('m-list');
+  setVal(listColId, v);
+}
+
+// ════════════════════════════════════════
+// DROPDOWN MODAL (STK, RESULT ▼)
+// ════════════════════════════════════════
+let ddColId = null;
+
+function openDd(colId) {
+  ddColId = colId;
+  const col = activeCols.find(c => c.id === colId);
+  const curVal = (game.plays[playIdx]||{})[colId] || '';
+  document.getElementById('m-dd-title').textContent = col.ddLbl || col.name;
+  const list = document.getElementById('m-dd-list');
+  let h = '';
+  col.dd.forEach(opt => {
+    const sel = curVal === opt ? ' sel':'';
+    h += `<div class="dd-item${sel}" onclick="pickDd('${esc(opt)}')">${opt}</div>`;
+  });
+  list.innerHTML = h;
+  openModal('m-dd');
+  setTimeout(() => {
+    const s = list.querySelector('.sel');
+    if (s) s.scrollIntoView({block:'center'});
+  }, 60);
+}
+
+function pickDd(v) {
+  closeModal('m-dd');
+  setVal(ddColId, v);
+}
+
+// ════════════════════════════════════════
+// BUTTON DROPDOWNS (OFF FORM)
+// ════════════════════════════════════════
+let btnDdColId = null;
+
+function openBtnDd(colId, btnLabel) {
+  btnDdColId = colId;
+  const col = activeCols.find(c => c.id === colId);
+  const btn = col.btns.find(b => b.l === btnLabel);
+  if (!btn || !btn.opts) return;
+  if (btn.opts.length === 1) { setVal(colId, `${btnLabel}|${btn.opts[0]}`); return; }
+
+  const curVal = (game.plays[playIdx]||{})[col.dataKey || col.id] || '';
+  const curOpt = curVal.startsWith(btnLabel+'|') ? curVal.split('|')[1] : '';
+  document.getElementById('m-dd-title').textContent = btn.l;
+  const list = document.getElementById('m-dd-list');
+  let h = '';
+  btn.opts.forEach(opt => {
+    const sel = curOpt === opt ? ' sel':'';
+    h += `<div class="dd-item${sel}" onclick="pickBtnDdOpt('${esc(btnLabel)}','${esc(opt)}')">${opt}</div>`;
+  });
+  list.innerHTML = h;
+  ddColId = colId;
+  openModal('m-dd');
+  setTimeout(() => {
+    const s = list.querySelector('.sel');
+    if (s) s.scrollIntoView({block:'center'});
+  }, 60);
+}
+
+function pickBtnDdOpt(parentLabel, opt) {
+  closeModal('m-dd');
+  setVal(ddColId, `${parentLabel}|${opt}`);
+}
+// ════════════════════════════════════════
+function saveAsTemplate() {
+  if (!game) return;
+  const suggested = `${game.home} vs ${game.away}`.trim();
+  document.getElementById('sat-name').value = suggested;
+  openModal('m-save-tmpl');
+  setTimeout(() => {
+    const inp = document.getElementById('sat-name');
+    inp.focus(); inp.select();
+  }, 120);
+}
+
+function confirmSaveAsTemplate() {
+  const name = document.getElementById('sat-name').value.trim();
+  if (!name) { showToast('Enter a template name'); return; }
+  const colIds = activeCols.map(c => c.id);
+  const tmpls = getTmpls();
+  tmpls.push({ id: 'tmpl_'+Date.now(), name, colIds });
+  saveTmpls(tmpls);
+  closeModal('m-save-tmpl');
+  showToast(`"${name}" saved as template!`);
+}
+
+function exportGame() {
+  if (!game) return;
+  exportGameToXlsx(game);
+}
+
+// ════════════════════════════════════════
+// GAME ARCHIVE
+// ════════════════════════════════════════
+function renderArchive() {
+  const games = getGames();
+  const body = document.getElementById('arch-body');
+  if (games.length === 0) {
+    body.innerHTML = '<div class="empty-msg">No games yet.<br>Start a NEW GAME to see it here.</div>';
+    return;
+  }
+  let h = '';
+  games.forEach(g => {
+    const plays = g.plays ? g.plays.filter(p => Object.keys(p).length > 0).length : 0;
+    const weekStr = g.week ? `Wk ${g.week} · ` : '';
+    const dateStr = g.date ? `${g.date} · ` : '';
+    h += `<div class="arch-card" onclick="loadTracker('${g.id}')">
+      <div>
+        <div class="arch-title">${g.home} vs ${g.away}</div>
+        <div class="arch-meta">${weekStr}${dateStr}${plays} play${plays!==1?'s':''}</div>
+      </div>
+      <div class="arch-arrow">›</div>
+    </div>`;
+  });
+  body.innerHTML = h;
+}
+
+// ════════════════════════════════════════
+// TEMPLATE BUILDER
+// ════════════════════════════════════════
+let selectedColIds = [];
+
+function initTemplatePicker() {
+  editingTmplId = null;
+  selectedColIds = [...defaultTemplate().colIds];
+  document.getElementById('tmpl-name').value = '';
+  document.getElementById('tmpl-builder-title').textContent = 'NEW TEMPLATE';
+  renderColPickList();
+}
+
+// ── DRAG STATE ──
+let dragSrcIdx = null;
+
+function renderColPickList() {
+  const allCols = getCols();
+  const colMap = Object.fromEntries(allCols.map(c => [c.id, c]));
+
+  // ── SELECTED (ordered, draggable) ──
+  const selList = document.getElementById('col-selected-list');
+  const count = document.getElementById('tmpl-sel-count');
+  count.textContent = selectedColIds.length ? `(${selectedColIds.length})` : '';
+  if (selectedColIds.length === 0) {
+    selList.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px 2px">No columns selected yet.</div>';
+  } else {
+    let sh = '';
+    selectedColIds.forEach((id, i) => {
+      const col = colMap[id]; if (!col) return;
+      const preview = col.btns ? col.btns.slice(0,4).map(b=>b.l||b).join(', ')+(col.btns.length>4?'…':'') : col.type;
+      sh += `<div class="col-pick sel" data-idx="${i}" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:13px;flex:1;min-width:0">
+          <div class="col-pick-check" onclick="toggleCol('${id}')" style="cursor:pointer;flex-shrink:0">✓</div>
+          <div style="min-width:0">
+            <div class="col-pick-name">${col.name}</div>
+            <div class="col-pick-sub">${preview}</div>
+          </div>
+        </div>
+        <div class="drag-handle" data-idx="${i}">⠿</div>
+      </div>`;
+    });
+    selList.innerHTML = sh;
+    initDragDrop(selList);
+  }
+
+  // ── AVAILABLE (unselected, alphabetical) ──
+  const available = allCols.filter(c => !selectedColIds.includes(c.id))
+                            .sort((a,b) => a.name.localeCompare(b.name));
+  const list = document.getElementById('col-pick-list');
+  if (available.length === 0) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px 2px">All columns selected.</div>';
+  } else {
+    let h = '';
+    available.forEach(col => {
+      const preview = col.btns ? col.btns.slice(0,4).map(b=>b.l||b).join(', ')+(col.btns.length>4?'…':'') : col.type;
+      h += `<div class="col-pick" onclick="toggleCol('${col.id}')">
+        <div class="col-pick-check"></div>
+        <div>
+          <div class="col-pick-name">${col.name}</div>
+          <div class="col-pick-sub">${preview}</div>
+        </div>
+      </div>`;
+    });
+    list.innerHTML = h;
+  }
+}
+
+function initDragDrop(container) {
+  const items = () => [...container.querySelectorAll('.col-pick[data-idx]')];
+  let dragEl = null, touchY = 0;
+
+  // ── MOUSE drag ──
+  items().forEach(el => {
+    const handle = el.querySelector('.drag-handle');
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      dragEl = el;
+      dragSrcIdx = parseInt(el.dataset.idx);
+      el.classList.add('dragging');
+    });
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragEl) return;
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const target = under?.closest('.col-pick[data-idx]');
+    items().forEach(i => i.classList.remove('drag-over'));
+    if (target && target !== dragEl) target.classList.add('drag-over');
+  });
+
+  document.addEventListener('mouseup', e => {
+    if (!dragEl) return;
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const target = under?.closest('.col-pick[data-idx]');
+    if (target && target !== dragEl) {
+      const destIdx = parseInt(target.dataset.idx);
+      reorderCol(dragSrcIdx, destIdx);
+    }
+    dragEl.classList.remove('dragging');
+    items().forEach(i => i.classList.remove('drag-over'));
+    dragEl = null; dragSrcIdx = null;
+  });
+
+  // ── TOUCH drag ──
+  items().forEach(el => {
+    const handle = el.querySelector('.drag-handle');
+    handle.addEventListener('touchstart', e => {
+      e.preventDefault();
+      dragEl = el;
+      dragSrcIdx = parseInt(el.dataset.idx);
+      el.classList.add('dragging');
+      touchY = e.touches[0].clientY;
+    }, { passive: false });
+  });
+
+  container.addEventListener('touchmove', e => {
+    if (!dragEl) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const under = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = under?.closest('.col-pick[data-idx]');
+    items().forEach(i => i.classList.remove('drag-over'));
+    if (target && target !== dragEl) target.classList.add('drag-over');
+  }, { passive: false });
+
+  container.addEventListener('touchend', e => {
+    if (!dragEl) return;
+    const touch = e.changedTouches[0];
+    const under = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = under?.closest('.col-pick[data-idx]');
+    if (target && target !== dragEl) {
+      const destIdx = parseInt(target.dataset.idx);
+      reorderCol(dragSrcIdx, destIdx);
+    } else {
+      dragEl.classList.remove('dragging');
+      items().forEach(i => i.classList.remove('drag-over'));
+      dragEl = null; dragSrcIdx = null;
+    }
+  });
+}
+
+function reorderCol(from, to) {
+  const name = document.getElementById('tmpl-name').value;
+  const [moved] = selectedColIds.splice(from, 1);
+  selectedColIds.splice(to, 0, moved);
+  renderColPickList();
+  document.getElementById('tmpl-name').value = name;
+}
+
+function toggleCol(id) {
+  const name = document.getElementById('tmpl-name').value;
+  const i = selectedColIds.indexOf(id);
+  if (i === -1) selectedColIds.push(id);
+  else selectedColIds.splice(i, 1);
+  renderColPickList();
+  document.getElementById('tmpl-name').value = name;
+}
+
+function saveTemplate() {
+  const name = document.getElementById('tmpl-name').value.trim();
+  if (!name) { showToast('Enter a template name'); return; }
+  if (selectedColIds.length === 0) { showToast('Select at least one column'); return; }
+  const tmpls = getTmpls();
+  if (editingTmplId) {
+    const i = tmpls.findIndex(t => t.id === editingTmplId);
+    if (i !== -1) { tmpls[i].name = name; tmpls[i].colIds = [...selectedColIds]; }
+    saveTmpls(tmpls);
+    showToast(`"${name}" updated!`);
+  } else {
+    tmpls.push({ id: 'tmpl_'+Date.now(), name, colIds: [...selectedColIds] });
+    saveTmpls(tmpls);
+    showToast(`"${name}" saved!`);
+  }
+  renderTemplateList();
+  showView('view-templates');
+}
+
+// ════════════════════════════════════════
+// COLUMN BUILDER
+// ════════════════════════════════════════
+let cbButtons = [];
+
+function initColumnBuilder() {
+  editingColId = null;
+  cbButtons = ['', '', ''];
+  document.getElementById('cb-name').value = '';
+  document.getElementById('col-builder-title').textContent = 'NEW COLUMN';
+  renderCbBtns();
+}
+
+function renderCbBtns() {
+  const list = document.getElementById('cb-btn-list');
+  let h = '';
+  cbButtons.forEach((v, i) => {
+    h += `<div class="btn-row">
+      <input class="btn-input" value="${v}" placeholder="Button label"
+             oninput="cbButtons[${i}]=this.value" />
+      <div class="btn-rm" onclick="cbRm(${i})">✕</div>
+    </div>`;
+  });
+  list.innerHTML = h;
+}
+
+function cbAddBtn() { cbButtons.push(''); renderCbBtns(); }
+function cbRm(i) { cbButtons.splice(i,1); renderCbBtns(); }
+
+function saveColumn() {
+  const name = document.getElementById('cb-name').value.trim().toUpperCase();
+  if (!name) { showToast('Enter a column name'); return; }
+  const btns = cbButtons.map(b=>b.trim()).filter(Boolean).map(b=>({l:b,v:b}));
+  if (btns.length === 0) { showToast('Add at least one button'); return; }
+  const cols = getCols();
+  if (editingColId) {
+    const i = cols.findIndex(c => c.id === editingColId);
+    if (i !== -1) {
+      cols[i].name = name;
+      if (cols[i].type === 'btns_dd') {
+        cols[i].ddLbl = btns[btns.length - 1].l;
+        cols[i].btns = btns.slice(0, -1);
+      } else {
+        cols[i].btns = btns;
+      }
+    }
+    saveCols(cols);
+    showToast(`"${name}" updated!`);
+  } else {
+    cols.push({ id:'custom_'+Date.now(), name, type:'buttons', btns });
+    saveCols(cols);
+    showToast(`"${name}" saved!`);
+  }
+  renderColumnList();
+  showView('view-columns');
+}
+
+// ════════════════════════════════════════
+// IMPORT / EXPORT VIEW
+// ════════════════════════════════════════
+function goImportExport() {
+  const games = getGames();
+  const gameOptions = games.length === 0
+    ? '<option value="">No saved games</option>'
+    : games.map(g => {
+        const wk = g.week ? `Wk ${g.week} · ` : '';
+        const dt = g.date ? `${g.date} · ` : '';
+        return `<option value="${g.id}">${g.home} vs ${g.away} (${wk}${dt})</option>`;
+      }).join('');
+  document.getElementById('ie-game-sel').innerHTML = gameOptions;
+  document.getElementById('ie-drive-game-sel').innerHTML = gameOptions;
+  showView('view-import-export');
+}
+
+// ── XLSX EXPORT (from import/export page) ──
+function exportSelectedGameXlsx() {
+  const gameId = document.getElementById('ie-game-sel').value;
+  if (!gameId) { showToast('No game selected'); return; }
+  const games = getGames();
+  const g = games.find(x => x.id === gameId);
+  if (!g) return;
+  exportGameToXlsx(g);
+}
+
+function exportGameToXlsx(g) {
+  const tmpls = getTmpls();
+  const tmpl = tmpls.find(t => t.id === g.tmplId) || tmpls[0];
+  const allCols = getCols();
+  const gameCols = tmpl ? tmpl.colIds.map(id => allCols.find(c => c.id === id)).filter(Boolean) : allCols;
+
+  const seenNames = new Set();
+  const exportCols = gameCols.filter(c => {
+    if (seenNames.has(c.name)) return false;
+    seenNames.add(c.name); return true;
+  });
+  const nameToKeys = {};
+  gameCols.forEach(c => {
+    const k = c.dataKey || c.id;
+    if (!nameToKeys[c.name]) nameToKeys[c.name] = [];
+    if (!nameToKeys[c.name].includes(k)) nameToKeys[c.name].push(k);
+  });
+  const headers = ['Play', ...exportCols.map(c => c.name)];
+  const rows = g.plays.map((p, i) => [
+    i + 1,
+    ...exportCols.map(c => {
+      const keys = nameToKeys[c.name] || [c.dataKey || c.id];
+      const raw = keys.map(k => p[k] || '').find(v => v !== '') || '';
+      return raw.includes('|') ? raw.split('|')[1] : raw;
+    })
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  const sheetName = `${g.home}_vs_${g.away}`.replace(/[^a-z0-9_]/gi,'_').slice(0,31);
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  const wkStr = g.week ? `_wk${g.week}` : '';
+  const dtStr = g.date ? `_${g.date.replace(/\//g,'-')}` : '';
+  XLSX.writeFile(wb, `${sheetName}${wkStr}${dtStr}.xlsx`);
+  showToast('Exported!');
+}
+
+// ── JSON EXPORT ──
+function exportBackupAll() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    games: getGames(),
+    columns: getCols(),
+    templates: getTmpls()
+  };
+  downloadJson(data, `hudldata_backup_${datestamp()}.json`);
+  showToast('Backup exported!');
+}
+
+function exportBackupSeparate() {
+  const files = [
+    { data: { version:1, exportedAt: new Date().toISOString(), games: getGames() },     name: `hudldata_games_${datestamp()}.json` },
+    { data: { version:1, exportedAt: new Date().toISOString(), columns: getCols() },    name: `hudldata_columns_${datestamp()}.json` },
+    { data: { version:1, exportedAt: new Date().toISOString(), templates: getTmpls() }, name: `hudldata_templates_${datestamp()}.json` }
+  ];
+  files.forEach((f, i) => setTimeout(() => downloadJson(f.data, f.name), i * 400));
+  showToast('3 files exported!');
+}
+
+function downloadJson(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function datestamp() {
+  return new Date().toISOString().slice(0,10);
+}
+
+// ── XLSX IMPORT ──
+let xlsxImportData = null; // { headers, rows, gameLabel }
+
+function triggerXlsxImport() {
+  document.getElementById('ie-xlsx-input').value = '';
+  document.getElementById('ie-xlsx-input').click();
+}
+
+function handleXlsxImport(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (!data || data.length < 2) { showToast('Spreadsheet appears empty'); return; }
+      const headers = data[0].map(h => String(h).trim());
+      const rows = data.slice(1);
+      xlsxImportData = { headers, rows, gameLabel: file.name.replace(/\.xlsx?$/i,'') };
+      // Check for unrecognized columns
+      checkUnrecognizedColumns();
+    } catch(err) {
+      showToast('Could not read file');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// State for column mapping
+let colMapPending = []; // [{xlsxName, mappedTo}] — mappedTo = colId or '' (skip)
+let colMapResolved = false;
+
+function checkUnrecognizedColumns() {
+  const allCols = getCols();
+  const knownNames = new Set(allCols.map(c => c.name.toUpperCase()));
+  const unrecognized = xlsxImportData.headers.filter(h =>
+    h && h.toUpperCase() !== 'PLAY' && !knownNames.has(h.toUpperCase())
+  );
+
+  if (unrecognized.length === 0) {
+    colMapPending = [];
+    showXlsxDestModal();
+    return;
+  }
+
+  // Build mapping UI
+  colMapPending = unrecognized.map(name => ({ xlsxName: name, mappedTo: '' }));
+  const allColsSorted = allCols.slice().sort((a,b) => a.name.localeCompare(b.name));
+  let h = '';
+  colMapPending.forEach((item, i) => {
+    h += `<div style="margin-bottom:14px">
+      <div style="font-family:var(--font-btn);font-weight:900;font-size:14px;margin-bottom:6px">"${item.xlsxName}"</div>
+      <select class="fi" id="colmap-${i}" onchange="colMapPending[${i}].mappedTo=this.value">
+        <option value="">⊘ Skip this column</option>
+        ${allColsSorted.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+      </select>
+    </div>`;
+  });
+  document.getElementById('col-map-rows').innerHTML = h;
+  openModal('m-col-map');
+}
+
+function finishColMapping() {
+  closeModal('m-col-map');
+  showXlsxDestModal();
+}
+
+function showXlsxDestModal() {
+  const games = getGames();
+  const info = document.getElementById('xlsx-dest-info');
+  const plays = xlsxImportData.rows.filter(r => r.some(c => c !== '')).length;
+  info.textContent = `Found ${plays} plays across ${xlsxImportData.headers.length} columns.`;
+
+  const sel = document.getElementById('xlsx-dest-game-sel');
+  if (games.length === 0) {
+    sel.innerHTML = '<option value="">No saved games</option>';
+  } else {
+    sel.innerHTML = games.map(g => {
+      const wk = g.week ? `Wk ${g.week} · ` : '';
+      return `<option value="${g.id}">${g.home} vs ${g.away} (${wk}${g.date||''})</option>`;
+    }).join('');
+  }
+  openModal('m-xlsx-dest');
+}
+
+function xlsxImportAsNew() {
+  closeModal('m-xlsx-dest');
+  const label = xlsxImportData.gameLabel;
+  const tmpls = getTmpls();
+  const g = {
+    id: Date.now().toString(),
+    home: label, away: '', date: '', week: '',
+    tmplId: tmpls[0]?.id || '',
+    plays: buildPlaysFromXlsx(),
+    createdAt: new Date().toISOString()
+  };
+  const games = getGames();
+  games.unshift(g);
+  saveGames(games);
+  showToast('Imported as new game!');
+  goImportExport();
+}
+
+function xlsxImportOverwrite() {
+  const gameId = document.getElementById('xlsx-dest-game-sel').value;
+  if (!gameId) { showToast('Select a game to overwrite'); return; }
+  closeModal('m-xlsx-dest');
+  const games = getGames();
+  const idx = games.findIndex(g => g.id === gameId);
+  if (idx === -1) return;
+  games[idx].plays = buildPlaysFromXlsx();
+  saveGames(games);
+  showToast('Game updated from spreadsheet!');
+  goImportExport();
+}
+
+function buildPlaysFromXlsx() {
+  const allCols = getCols();
+  const nameToId = {};
+  allCols.forEach(c => { nameToId[c.name.toUpperCase()] = c.dataKey || c.id; });
+
+  // Apply manual mappings for unrecognized columns
+  colMapPending.forEach(item => {
+    if (item.mappedTo) {
+      const col = allCols.find(c => c.id === item.mappedTo);
+      if (col) nameToId[item.xlsxName.toUpperCase()] = col.dataKey || col.id;
+    }
+  });
+
+  const headers = xlsxImportData.headers;
+  const rows = xlsxImportData.rows;
+  const plays = [];
+
+  rows.forEach(row => {
+    if (!row.some(c => c !== '')) return; // skip blank rows
+    const play = {};
+    headers.forEach((h, i) => {
+      const upper = h.toUpperCase();
+      if (upper === 'PLAY') return; // skip play number column
+      const colKey = nameToId[upper];
+      if (colKey && row[i] !== '') play[colKey] = String(row[i]);
+    });
+    plays.push(play);
+  });
+
+  // Pad to at least 200
+  while (plays.length < 200) plays.push({});
+  return plays;
+}
+
+// ── JSON IMPORT ──
+let jsonImportData = null;
+
+function triggerJsonImport() {
+  document.getElementById('ie-json-input').value = '';
+  document.getElementById('ie-json-input').click();
+}
+
+function handleJsonImport(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      jsonImportData = data;
+      // Show what's in the file
+      const gCount = data.games?.length ?? 0;
+      const cCount = data.columns?.length ?? 0;
+      const tCount = data.templates?.length ?? 0;
+      const info = document.getElementById('json-import-info');
+      const parts = [];
+      if (gCount > 0) parts.push(`${gCount} game${gCount!==1?'s':''}`);
+      if (cCount > 0) parts.push(`${cCount} column${cCount!==1?'s':''}`);
+      if (tCount > 0) parts.push(`${tCount} template${tCount!==1?'s':''}`);
+      info.textContent = `File contains: ${parts.join(', ') || 'nothing recognizable'}.`;
+
+      // Toggle checkboxes based on what's available
+      document.getElementById('ji-games').disabled = gCount === 0;
+      document.getElementById('ji-cols').disabled = cCount === 0;
+      document.getElementById('ji-tmpls').disabled = tCount === 0;
+      document.getElementById('ji-games-lbl').textContent = `Games (${gCount})`;
+      document.getElementById('ji-cols-lbl').textContent = `Columns (${cCount})`;
+      document.getElementById('ji-tmpls-lbl').textContent = `Templates (${tCount})`;
+
+      openModal('m-json-import');
+    } catch(err) {
+      showToast('Could not read backup file');
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function confirmJsonImport() {
+  if (!jsonImportData) return;
+  const doGames = document.getElementById('ji-games').checked && !document.getElementById('ji-games').disabled;
+  const doCols  = document.getElementById('ji-cols').checked  && !document.getElementById('ji-cols').disabled;
+  const doTmpls = document.getElementById('ji-tmpls').checked && !document.getElementById('ji-tmpls').disabled;
+  const mode    = document.getElementById('ji-merge-mode').value; // 'merge' or 'overwrite'
+
+  if (doGames) {
+    if (mode === 'overwrite') {
+      saveGames(jsonImportData.games);
+    } else {
+      const existing = getGames();
+      const existingIds = new Set(existing.map(g => g.id));
+      const newGames = jsonImportData.games.filter(g => !existingIds.has(g.id));
+      saveGames([...newGames, ...existing]);
+    }
+  }
+
+  if (doCols) {
+    if (mode === 'overwrite') {
+      saveCols(jsonImportData.columns);
+    } else {
+      const existing = getCols();
+      const existingIds = new Set(existing.map(c => c.id));
+      const newCols = jsonImportData.columns.filter(c => !existingIds.has(c.id));
+      saveCols([...existing, ...newCols]);
+    }
+  }
+
+  if (doTmpls) {
+    if (mode === 'overwrite') {
+      saveTmpls(jsonImportData.templates);
+    } else {
+      const existing = getTmpls();
+      const existingIds = new Set(existing.map(t => t.id));
+      const newTmpls = jsonImportData.templates.filter(t => !existingIds.has(t.id));
+      saveTmpls([...existing, ...newTmpls]);
+    }
+  }
+
+  closeModal('m-json-import');
+  updateLanding();
+  goImportExport();
+  showToast('Import complete!');
+}
+
+// ════════════════════════════════════════
+// MODAL HELPERS
+// ════════════════════════════════════════
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════
+let toastTmr;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ════════════════════════════════════════
+// GOOGLE DRIVE
+// ════════════════════════════════════════
+const DRIVE_CLIENT_ID = '84897695205-bmhd3g2etbd4i2nulei934df12tss6qd.apps.googleusercontent.com';
+const DRIVE_API_KEY   = 'AIzaSyAiYqcor_m9KpfvbNol5aWuOaJTCouxYgg';
+const DRIVE_SCOPES    = 'https://www.googleapis.com/auth/drive.file';
+
+let driveTokenClient  = null;
+let driveAccessToken  = null;
+let driveApiReady     = false;
+let drivePickerReady  = false;
+let driveGsiReady     = false;
+let drivePendingAction = null; // function to call after auth
+
+// Ensure we have a token, then run action
+function driveEnsureAuth(action) {
+  if (!driveGsiReady || !driveApiReady) {
+    showToast('Connecting to Google…');
+    // Retry once after 2 seconds
+    setTimeout(() => {
+      if (!driveGsiReady || !driveApiReady) {
+        showToast('Google APIs unavailable — check connection');
+      } else {
+        driveEnsureAuth(action);
+      }
+    }, 2000);
+    return;
+  }
+  drivePendingAction = action;
+  if (driveAccessToken) { action(); drivePendingAction = null; return; }
+  driveTokenClient.requestAccessToken({ prompt: '' });
+}
+
+// ── SAVE BACKUP TO DRIVE ──
+function driveSaveBackup() {
+  driveEnsureAuth(() => {
+    const data = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      games: getGames(),
+      columns: getCols(),
+      templates: getTmpls()
+    };
+    const filename = `hudldata_backup_${datestamp()}.json`;
+    const content = JSON.stringify(data, null, 2);
+    driveUploadFile(filename, 'application/json', content, () => {
+      showToast('Saved to Google Drive!');
+    });
+  });
+}
+
+// ── SAVE GAME XLSX TO DRIVE ──
+function driveSaveGameXlsx() {
+  const gameId = document.getElementById('ie-drive-game-sel').value;
+  if (!gameId) { showToast('No game selected'); return; }
+  const games = getGames();
+  const g = games.find(x => x.id === gameId);
+  if (!g) return;
+  driveEnsureAuth(() => {
+    const tmpls = getTmpls();
+    const tmpl = tmpls.find(t => t.id === g.tmplId) || tmpls[0];
+    const allCols = getCols();
+    const gameCols = tmpl ? tmpl.colIds.map(id => allCols.find(c => c.id === id)).filter(Boolean) : allCols;
+    const seenNames = new Set();
+    const exportCols = gameCols.filter(c => { if (seenNames.has(c.name)) return false; seenNames.add(c.name); return true; });
+    const nameToKeys = {};
+    gameCols.forEach(c => {
+      const k = c.dataKey || c.id;
+      if (!nameToKeys[c.name]) nameToKeys[c.name] = [];
+      if (!nameToKeys[c.name].includes(k)) nameToKeys[c.name].push(k);
+    });
+    const headers = ['Play', ...exportCols.map(c => c.name)];
+    const rows = g.plays.map((p, i) => [
+      i + 1,
+      ...exportCols.map(c => {
+        const keys = nameToKeys[c.name] || [c.dataKey || c.id];
+        const raw = keys.map(k => p[k] || '').find(v => v !== '') || '';
+        return raw.includes('|') ? raw.split('|')[1] : raw;
+      })
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const wb = XLSX.utils.book_new();
+    const sheetName = `${g.home}_vs_${g.away}`.replace(/[^a-z0-9_]/gi,'_').slice(0,31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    const wkStr = g.week ? `_wk${g.week}` : '';
+    const dtStr = g.date ? `_${g.date.replace(/\//g,'-')}` : '';
+    const filename = `${sheetName}${wkStr}${dtStr}.xlsx`;
+    // SheetJS exports as array buffer
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    driveUploadFileBlob(filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', blob, () => {
+      showToast('XLSX saved to Google Drive!');
+    });
+  });
+}
+
+// ── UPLOAD HELPERS ──
+function driveUploadFile(filename, mimeType, fileContent, onDone) {
+  const metadata = { name: filename, mimeType };
+  const boundary = '-------hudldata_boundary';
+  const body = `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n${fileContent}\r\n--${boundary}--`;
+  fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${driveAccessToken}`,
+      'Content-Type': `multipart/related; boundary=${boundary}`
+    },
+    body
+  })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(() => onDone())
+  .catch(() => { driveAccessToken = null; showToast('Drive upload failed — try again'); });
+}
+
+function driveUploadFileBlob(filename, mimeType, blob, onDone) {
+  const metadata = { name: filename, mimeType };
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+  form.append('file', blob);
+  fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${driveAccessToken}` },
+    body: form
+  })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(() => onDone())
+  .catch(() => { driveAccessToken = null; showToast('Drive upload failed — try again'); });
+}
+
+// ── LOAD BACKUP FROM DRIVE (PICKER) ──
+function driveLoadBackup() {
+  driveEnsureAuth(() => {
+    if (!drivePickerReady) { showToast('Picker not ready yet'); return; }
+    const picker = new google.picker.PickerBuilder()
+      .addView(new google.picker.DocsView()
+        .setIncludeFolders(false)
+        .setMimeTypes('application/json'))
+      .setOAuthToken(driveAccessToken)
+      .setDeveloperKey(DRIVE_API_KEY)
+      .setCallback(pickerCallback)
+      .build();
+    picker.setVisible(true);
+  });
+}
+
+function pickerCallback(data) {
+  if (data[google.picker.Response.ACTION] !== google.picker.Action.PICKED) return;
+  const fileId = data[google.picker.Response.DOCUMENTS][0][google.picker.Document.ID];
+  fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { 'Authorization': `Bearer ${driveAccessToken}` }
+  })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+  .then(text => {
+    try {
+      const parsed = JSON.parse(text);
+      jsonImportData = parsed;
+      const gCount = parsed.games?.length ?? 0;
+      const cCount = parsed.columns?.length ?? 0;
+      const tCount = parsed.templates?.length ?? 0;
+      const parts = [];
+      if (gCount > 0) parts.push(`${gCount} game${gCount!==1?'s':''}`);
+      if (cCount > 0) parts.push(`${cCount} column${cCount!==1?'s':''}`);
+      if (tCount > 0) parts.push(`${tCount} template${tCount!==1?'s':''}`);
+
+      const info     = document.getElementById('json-import-info');
+      const jiGames  = document.getElementById('ji-games');
+      const jiCols   = document.getElementById('ji-cols');
+      const jiTmpls  = document.getElementById('ji-tmpls');
+      const jiGamesL = document.getElementById('ji-games-lbl');
+      const jiColsL  = document.getElementById('ji-cols-lbl');
+      const jiTmplsL = document.getElementById('ji-tmpls-lbl');
+
+      if (info)     info.textContent     = `File contains: ${parts.join(', ') || 'nothing recognizable'}.`;
+      if (jiGames)  jiGames.disabled     = gCount === 0;
+      if (jiCols)   jiCols.disabled      = cCount === 0;
+      if (jiTmpls)  jiTmpls.disabled     = tCount === 0;
+      if (jiGamesL) jiGamesL.textContent = `Games (${gCount})`;
+      if (jiColsL)  jiColsL.textContent  = `Columns (${cCount})`;
+      if (jiTmplsL) jiTmplsL.textContent = `Templates (${tCount})`;
+
+      openModal('m-json-import');
+    } catch(e) {
+      showToast('Could not parse Drive file');
+    }
+  })
+  .catch(() => { driveAccessToken = null; showToast('Could not load file from Drive'); });
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+if (localStorage.getItem('hd_ver') !== '7') {
+  localStorage.removeItem('hd_cols');
+  localStorage.removeItem('hd_tmpls');
+  localStorage.setItem('hd_ver', '7');
+}
+if (!localStorage.getItem('hd_cols'))  saveCols(defaultColumns());
+if (!localStorage.getItem('hd_tmpls')) saveTmpls([defaultTemplate()]);
+updateLanding();
+
+// File input listeners — addEventListener prevents accidental cross-trigger
+document.getElementById('ie-xlsx-input').addEventListener('change', function() { handleXlsxImport(this); });
+document.getElementById('ie-json-input').addEventListener('change', function() { handleJsonImport(this); });
+
+// Init Google APIs after scripts load
+function tryInitGoogle() {
+  if (typeof gapi !== 'undefined' && !driveApiReady) {
+    gapi.load('client:picker', () => {
+      gapi.client.init({
+        apiKey: DRIVE_API_KEY,
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+      })
+      .then(() => { driveApiReady = true; drivePickerReady = true; })
+      .catch(e => console.warn('gapi init error', e));
+    });
+  }
+  if (typeof google !== 'undefined' && google.accounts && !driveGsiReady) {
+    driveTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: DRIVE_CLIENT_ID,
+      scope: DRIVE_SCOPES,
+      callback: resp => {
+        if (resp.error) { showToast('Google sign-in failed'); return; }
+        driveAccessToken = resp.access_token;
+        if (drivePendingAction) { const fn = drivePendingAction; drivePendingAction = null; fn(); }
+      }
+    });
+    driveGsiReady = true;
+  }
+  if (!driveApiReady || !driveGsiReady) setTimeout(tryInitGoogle, 500);
+}
+setTimeout(tryInitGoogle, 500);
+</script>
+</body>
+</html>
