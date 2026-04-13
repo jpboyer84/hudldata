@@ -383,8 +383,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
 /* CHAT */
 .chat-messages {
-  flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
-  padding: 14px; -webkit-overflow-scrolling: touch; min-height: 120px;
+  overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+  padding: 14px; -webkit-overflow-scrolling: touch;
+  max-height: 180px; min-height: 60px; flex-shrink: 0;
 }
 .chat-msg {
   max-width: 88%; padding: 10px 14px; border-radius: 10px;
