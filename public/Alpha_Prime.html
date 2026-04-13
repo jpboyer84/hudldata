@@ -2759,7 +2759,7 @@ ${buildDataSummary()}`;
         'anthropic-dangerous-client-side-api-key-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1024,
         system: systemPrompt,
         messages: chatHistory
@@ -2767,6 +2767,7 @@ ${buildDataSummary()}`;
     });
 
     const data = await resp.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
     const reply = data.content?.[0]?.text || 'Sorry, I couldn\'t get a response.';
     chatHistory.push({ role: 'assistant', content: reply });
 
@@ -2775,7 +2776,7 @@ ${buildDataSummary()}`;
     messages.scrollTop = messages.scrollHeight;
   } catch(e) {
     document.getElementById('thinking-msg')?.remove();
-    messages.innerHTML += `<div class="chat-msg assistant">Error reaching Claude API. Check your connection.</div>`;
+    messages.innerHTML += `<div class="chat-msg assistant">Error: ${e.message}</div>`;
     messages.scrollTop = messages.scrollHeight;
     chatHistory.pop();
   }
