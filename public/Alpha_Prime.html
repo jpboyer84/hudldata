@@ -409,6 +409,18 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   padding: 10px 16px; cursor: pointer; flex-shrink: 0;
 }
 .chat-send:active { opacity: 0.8; }
+
+/* Hudl cutup checklist */
+.cutup-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+.cutup-item:last-child { border-bottom: none; }
+.cutup-item:active { background: var(--surface2); }
+.cutup-item input[type=checkbox] { width:16px; height:16px; flex-shrink:0; accent-color:#fff; cursor:pointer; }
+.cutup-item-label { font-family:var(--font-btn); font-weight:900; font-size:13px; flex:1; }
+.cutup-item-count { font-size:10px; color:var(--muted); flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -851,13 +863,28 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <select class="fi" id="stats-game-sel" onchange="renderStats()" style="width:100%"></select>
   </div>
 
+
   <!-- Hudl cutup selector -->
   <div style="padding:8px 14px 0;flex-shrink:0;display:none" id="stats-hudl-sel-wrap">
-    <div style="display:flex;gap:8px">
-      <select class="fi" id="stats-hudl-sel" style="flex:1"></select>
-      <button class="hdr-btn white" onclick="loadHudlCutup()" style="padding:8px 14px;white-space:nowrap">LOAD →</button>
+    <!-- Filter row -->
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <input class="btn-input" id="hudl-filter-text" placeholder="Filter by name…"
+        oninput="filterHudlList()"
+        style="flex:1;font-size:12px;padding:7px 10px;background:#111;border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none" />
+      <button class="hdr-btn" id="hudl-type-all"      onclick="setHudlTypeFilter('all')"          style="padding:6px 8px;font-size:10px">ALL</button>
+      <button class="hdr-btn" id="hudl-type-cutup"    onclick="setHudlTypeFilter('CutupItem')"    style="padding:6px 8px;font-size:10px">CUTUP</button>
+      <button class="hdr-btn" id="hudl-type-playlist" onclick="setHudlTypeFilter('PlaylistItem')" style="padding:6px 8px;font-size:10px">PLAYLIST</button>
     </div>
-    <div style="font-size:10px;color:var(--muted);padding:5px 2px 0" id="hudl-load-status">Tap LOAD to fetch cutup data</div>
+    <!-- Scrollable multi-select list -->
+    <div id="hudl-cutup-list"
+      style="max-height:150px;overflow-y:auto;background:#111;border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
+      <div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>
+    </div>
+    <!-- Status + load button -->
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="font-size:10px;color:var(--muted);flex:1" id="hudl-load-status">Loading cutups…</div>
+      <button class="hdr-btn white" onclick="loadHudlCutup()" style="padding:7px 14px;white-space:nowrap">LOAD SELECTED →</button>
+    </div>
   </div>
 
   <div class="sbody" id="stats-body">
@@ -2476,6 +2503,8 @@ function setStatsSource(src) {
   document.getElementById('src-local-btn').classList.toggle('white', src === 'local');
   document.getElementById('src-hudl-btn').classList.toggle('white', src === 'hudl');
   if (src === 'hudl') {
+    // Init type filter buttons
+    setHudlTypeFilter('all');
     loadHudlLibrary();
   } else {
     renderStats();
@@ -2483,70 +2512,152 @@ function setStatsSource(src) {
 }
 
 // ── HUDL LIBRARY ──
+let hudlTypeFilter = 'all';
+
+function setHudlTypeFilter(type) {
+  hudlTypeFilter = type;
+  ['all','cutup','playlist'].forEach(t => {
+    const btn = document.getElementById(`hudl-type-${t}`);
+    if (btn) btn.classList.toggle('white', (t === 'all' ? 'all' : t === 'cutup' ? 'CutupItem' : 'PlaylistItem') === type || (type === 'all' && t === 'all'));
+  });
+  filterHudlList();
+}
+
+function filterHudlList() {
+  if (!hudlLibrary) return;
+  const keyword = (document.getElementById('hudl-filter-text')?.value || '').toLowerCase();
+  const filtered = hudlLibrary.filter(i => {
+    const typeMatch = hudlTypeFilter === 'all' || i.type === hudlTypeFilter;
+    const nameMatch = !keyword || i.title.toLowerCase().includes(keyword);
+    return typeMatch && nameMatch;
+  });
+  renderHudlList(filtered);
+}
+
 async function loadHudlLibrary() {
   const status = document.getElementById('hudl-load-status');
-  const sel = document.getElementById('stats-hudl-sel');
-  if (hudlLibrary) {
-    // Already loaded — just re-populate
-    populateHudlSel(hudlLibrary);
-    return;
-  }
+  if (hudlLibrary) { filterHudlList(); return; }
   status.textContent = 'Loading cutups from Hudl…';
-  sel.innerHTML = '<option value="">Loading…</option>';
+  document.getElementById('hudl-cutup-list').innerHTML =
+    '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>';
   try {
     const resp = await fetch(`${HUDL_API}/api/library?count=200`);
     if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
     const data = await resp.json();
     hudlLibrary = data.items;
-    populateHudlSel(hudlLibrary);
-    status.textContent = `${hudlLibrary.length} cutups found — select one and tap LOAD`;
+    filterHudlList();
+    status.textContent = `${hudlLibrary.length} cutups found — check ones to load`;
   } catch(e) {
     status.textContent = `Could not reach Hudl server: ${e.message}`;
-    sel.innerHTML = '<option value="">Error loading cutups</option>';
+    document.getElementById('hudl-cutup-list').innerHTML =
+      '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Error loading cutups</div>';
   }
 }
 
-function populateHudlSel(items) {
-  const sel = document.getElementById('stats-hudl-sel');
-  sel.innerHTML = items.map(i =>
-    `<option value="${i.internalId}">${i.title}${i.clip_count ? ` (${i.clip_count})` : ''}</option>`
-  ).join('');
+function renderHudlList(items) {
+  const container = document.getElementById('hudl-cutup-list');
+  if (items.length === 0) {
+    container.innerHTML = '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">No cutups match filter</div>';
+    return;
+  }
+  container.innerHTML = items.map(i => `
+    <div class="cutup-item" onclick="toggleCutupCheck('${i.internalId}')">
+      <input type="checkbox" id="chk-${i.internalId}" value="${i.internalId}"
+        onclick="event.stopPropagation();updateHudlSelStatus()" />
+      <div class="cutup-item-label">${i.title}</div>
+      <div class="cutup-item-count">${i.clip_count ?? '?'} clips</div>
+    </div>`).join('');
+  updateHudlSelStatus();
+}
+
+function toggleCutupCheck(id) {
+  const chk = document.getElementById(`chk-${id}`);
+  if (chk) { chk.checked = !chk.checked; updateHudlSelStatus(); }
+}
+
+function updateHudlSelStatus() {
+  const checked = [...document.querySelectorAll('#hudl-cutup-list input[type=checkbox]:checked')];
+  const status = document.getElementById('hudl-load-status');
+  if (checked.length === 0) {
+    status.textContent = 'Check cutups to load';
+  } else {
+    status.textContent = `${checked.length} cutup${checked.length > 1 ? 's' : ''} selected`;
+  }
 }
 
 async function loadHudlCutup() {
-  const sel = document.getElementById('stats-hudl-sel');
-  const id = sel.value;
-  if (!id) { showToast('Select a cutup first'); return; }
-  const title = sel.options[sel.selectedIndex]?.text || 'Hudl Cutup';
+  const checked = [...document.querySelectorAll('#hudl-cutup-list input[type=checkbox]:checked')];
+  if (checked.length === 0) { showToast('Check at least one cutup'); return; }
+
   const status = document.getElementById('hudl-load-status');
-  status.textContent = 'Loading clips…';
+  status.textContent = `Loading ${checked.length} cutup${checked.length > 1 ? 's' : ''}…`;
   document.getElementById('stats-body').innerHTML =
     '<div class="empty-msg">Loading Hudl data…</div>';
-  try {
-    const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
-    if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
-    const data = await resp.json();
-    // Convert Hudl clip format to the same shape renderStats expects
-    statsGameData = data.clips.map(c => ({
-      odk:      c.odk      || '',
-      qtr:      c.quarter  || '',
-      dn:       c.down     || '',
-      dist:     c.distance || '',
-      yardln:   c.yard_line || '',
-      hash:     c.hash     || '',
-      playtype: c.play_type || '',
-      result:   c.result   || '',
-      gainloss: c.gain_loss || '',
-      offform:  c.off_form  || '',
-    }));
-    statsLabel = title;
-    status.textContent = `${data.count} clips loaded from "${title}"`;
-    renderStatsFromData(statsGameData, statsLabel);
-    showToast(`Loaded ${data.count} clips`);
-  } catch(e) {
-    status.textContent = `Failed to load: ${e.message}`;
-    document.getElementById('stats-body').innerHTML =
-      `<div class="empty-msg">Error: ${e.message}</div>`;
+
+  // Fetch all selected cutups in parallel
+  const results = await Promise.all(checked.map(async chk => {
+    const id = chk.value;
+    const label = chk.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || id;
+    try {
+      const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
+      if (!resp.ok) throw new Error(`${resp.status}`);
+      const data = await resp.json();
+      return { id, label, clips: data.clips, error: null };
+    } catch(e) {
+      return { id, label, clips: [], error: e.message };
+    }
+  }));
+
+  // Normalize Hudl clip format to Alpha Prime play format
+  const normalize = c => ({
+    odk:      c.odk       || '',
+    qtr:      c.quarter   || '',
+    dn:       c.down      || '',
+    dist:     c.distance  || '',
+    yardln:   c.yard_line || '',
+    hash:     c.hash      || '',
+    playtype: c.play_type || '',
+    result:   c.result    || '',
+    gainloss: c.gain_loss || '',
+    offform:  c.off_form  || '',
+  });
+
+  // Build combined dataset + per-cutup breakdown
+  const allPlays = [];
+  const breakdown = [];
+  results.forEach(r => {
+    const plays = r.clips.map(normalize);
+    allPlays.push(...plays);
+    breakdown.push({ label: r.label, count: plays.length, error: r.error });
+  });
+
+  statsGameData = allPlays;
+  statsLabel = checked.length === 1
+    ? results[0].label
+    : `${checked.length} cutups combined`;
+
+  const totalLoaded = allPlays.length;
+  status.textContent = `${totalLoaded} total clips loaded`;
+  showToast(`Loaded ${totalLoaded} clips`);
+
+  const body = document.getElementById('stats-body');
+  const breakdownHtml = breakdown.length > 1 ? `<div class="stat-card">
+    <div class="stat-card-title">Cutup Breakdown</div>
+    <div class="stat-big-row" style="flex-wrap:wrap">
+      ${breakdown.map(b => `
+        <div class="stat-big" style="min-width:100px">
+          <div class="stat-big-val">${b.error ? '!' : b.count}</div>
+          <div class="stat-big-lbl" style="font-size:9px;word-break:break-word">${b.label}</div>
+        </div>`).join('')}
+    </div>
+  </div>` : '';
+
+  // Render breakdown card first, then append stat charts
+  if (breakdownHtml) {
+    body.innerHTML = breakdownHtml;
+    renderStatsFromData(allPlays, statsLabel, true);
+  } else {
+    renderStatsFromData(allPlays, statsLabel, false);
   }
 }
 
@@ -2580,10 +2691,10 @@ function renderStats() {
   renderStatsFromData(plays, getStatsLabel());
 }
 
-function renderStatsFromData(plays, label) {
+function renderStatsFromData(plays, label, append = false) {
   const body = document.getElementById('stats-body');
   if (!plays || plays.length === 0) {
-    body.innerHTML = '<div class="empty-msg">No play data found.</div>';
+    if (!append) body.innerHTML = '<div class="empty-msg">No play data found.</div>';
     return;
   }
 
@@ -2686,7 +2797,11 @@ function renderStatsFromData(plays, label) {
     </div>`;
   }
 
-  body.innerHTML = html;
+  if (append) {
+    body.innerHTML += html;
+  } else {
+    body.innerHTML = html;
+  }
 }
 
 function barRow(label, count, total) {
