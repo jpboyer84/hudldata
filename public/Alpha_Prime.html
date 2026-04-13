@@ -2442,7 +2442,6 @@ function pickerCallback(data) {
 // ════════════════════════════════════════
 // STATS & ANALYSIS
 // ════════════════════════════════════════
-const CLAUDE_API_KEY = 'sk-ant-api03-BlDhjrmV-ep3iiN5DSd7St8KnfcoG4dS3jGNGexnIS-ntmjSGzuWF-' + 'GNL5w7fExATEvM-Aa2LZjYlBs0eWI-nw-W4o0uwAA';
 const HUDL_API = 'https://hudl-mcp-production.up.railway.app';
 
 let chatHistory = [];
@@ -2750,14 +2749,9 @@ Play data:
 ${buildDataSummary()}`;
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch(`${HUDL_API}/api/claude`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-client-side-api-key-access': 'true'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
