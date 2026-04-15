@@ -2521,7 +2521,8 @@ function getCutupCategory(title) {
   if (t.endsWith('(game)'))     return 'game';
   if (t.endsWith('(scout)'))    return 'scout';
   if (t.endsWith('(jv)'))       return 'jv';
-  return 'other';
+  if (t.endsWith('(other)'))    return 'other';
+  return 'untagged';
 }
 
 function setHudlCat(cat) {
@@ -2538,7 +2539,7 @@ function filterHudlList() {
   const keyword = (document.getElementById('hudl-filter-text')?.value || '').toLowerCase();
   const filtered = hudlLibrary.filter(i => {
     const cat = getCutupCategory(i.title);
-    if (cat === 'practice') return false; // always hide practice
+    if (cat === 'practice' || cat === 'untagged') return false;
     const catMatch = hudlCat === 'all' || cat === hudlCat;
     const nameMatch = !keyword || i.title.toLowerCase().includes(keyword);
     return catMatch && nameMatch;
