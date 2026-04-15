@@ -868,12 +868,14 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   <div style="padding:8px 14px 0;flex-shrink:0;display:none" id="stats-hudl-sel-wrap">
     <!-- Filter row -->
     <div style="display:flex;gap:6px;margin-bottom:6px">
-      <input class="btn-input" id="hudl-filter-text" placeholder="Filter by name…"
+      <input class="btn-input" id="hudl-filter-text" placeholder="Search cutups…"
         oninput="filterHudlList()"
         style="flex:1;font-size:12px;padding:7px 10px;background:#111;border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none" />
-      <button class="hdr-btn" id="hudl-type-all"      onclick="setHudlTypeFilter('all')"          style="padding:6px 8px;font-size:10px">ALL</button>
-      <button class="hdr-btn" id="hudl-type-cutup"    onclick="setHudlTypeFilter('CutupItem')"    style="padding:6px 8px;font-size:10px">CUTUP</button>
-      <button class="hdr-btn" id="hudl-type-playlist" onclick="setHudlTypeFilter('PlaylistItem')" style="padding:6px 8px;font-size:10px">PLAYLIST</button>
+      <button class="hdr-btn white" id="hudl-cat-all"   onclick="setHudlCat('all')"   style="padding:6px 10px;font-size:10px">ALL</button>
+      <button class="hdr-btn"       id="hudl-cat-game"  onclick="setHudlCat('game')"  style="padding:6px 10px;font-size:10px">GAME</button>
+      <button class="hdr-btn"       id="hudl-cat-scout" onclick="setHudlCat('scout')" style="padding:6px 10px;font-size:10px">SCOUT</button>
+      <button class="hdr-btn"       id="hudl-cat-jv"    onclick="setHudlCat('jv')"    style="padding:6px 10px;font-size:10px">JV</button>
+      <button class="hdr-btn"       id="hudl-cat-other" onclick="setHudlCat('other')" style="padding:6px 10px;font-size:10px">OTHER</button>
     </div>
     <!-- Scrollable multi-select list -->
     <div id="hudl-cutup-list"
@@ -2503,8 +2505,7 @@ function setStatsSource(src) {
   document.getElementById('src-local-btn').classList.toggle('white', src === 'local');
   document.getElementById('src-hudl-btn').classList.toggle('white', src === 'hudl');
   if (src === 'hudl') {
-    // Init type filter buttons
-    setHudlTypeFilter('all');
+    setHudlCat('all');
     loadHudlLibrary();
   } else {
     renderStats();
@@ -2512,13 +2513,22 @@ function setStatsSource(src) {
 }
 
 // ── HUDL LIBRARY ──
-let hudlTypeFilter = 'all';
+let hudlCat = 'all'; // 'all' | 'game' | 'scout'
 
-function setHudlTypeFilter(type) {
-  hudlTypeFilter = type;
-  ['all','cutup','playlist'].forEach(t => {
-    const btn = document.getElementById(`hudl-type-${t}`);
-    if (btn) btn.classList.toggle('white', (t === 'all' ? 'all' : t === 'cutup' ? 'CutupItem' : 'PlaylistItem') === type || (type === 'all' && t === 'all'));
+function getCutupCategory(title) {
+  const t = title.trim().toLowerCase();
+  if (t.endsWith('(practice)')) return 'practice';
+  if (t.endsWith('(game)'))     return 'game';
+  if (t.endsWith('(scout)'))    return 'scout';
+  if (t.endsWith('(jv)'))       return 'jv';
+  return 'other';
+}
+
+function setHudlCat(cat) {
+  hudlCat = cat;
+  ['all','game','scout','jv','other'].forEach(c => {
+    const btn = document.getElementById(`hudl-cat-${c}`);
+    if (btn) btn.classList.toggle('white', c === cat);
   });
   filterHudlList();
 }
@@ -2527,10 +2537,16 @@ function filterHudlList() {
   if (!hudlLibrary) return;
   const keyword = (document.getElementById('hudl-filter-text')?.value || '').toLowerCase();
   const filtered = hudlLibrary.filter(i => {
-    const typeMatch = hudlTypeFilter === 'all' || i.type === hudlTypeFilter;
+    const cat = getCutupCategory(i.title);
+    if (cat === 'practice') return false; // always hide practice
+    const catMatch = hudlCat === 'all' || cat === hudlCat;
     const nameMatch = !keyword || i.title.toLowerCase().includes(keyword);
-    return typeMatch && nameMatch;
+    return catMatch && nameMatch;
   });
+  const status = document.getElementById('hudl-load-status');
+  status.textContent = filtered.length === 0
+    ? 'No cutups match'
+    : `${filtered.length} cutup${filtered.length !== 1 ? 's' : ''} — check ones to load`;
   renderHudlList(filtered);
 }
 
@@ -2541,12 +2557,12 @@ async function loadHudlLibrary() {
   document.getElementById('hudl-cutup-list').innerHTML =
     '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>';
   try {
-    const resp = await fetch(`${HUDL_API}/api/library?count=200`);
+    const resp = await fetch(`${HUDL_API}/api/library?count=250`);
     if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
     const data = await resp.json();
+    // Store all — filtering happens client-side
     hudlLibrary = data.items;
     filterHudlList();
-    status.textContent = `${hudlLibrary.length} cutups found — check ones to load`;
   } catch(e) {
     status.textContent = `Could not reach Hudl server: ${e.message}`;
     document.getElementById('hudl-cutup-list').innerHTML =
