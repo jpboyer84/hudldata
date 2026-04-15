@@ -2558,7 +2558,7 @@ async function loadHudlLibrary() {
   document.getElementById('hudl-cutup-list').innerHTML =
     '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>';
   try {
-    const resp = await fetch(`${HUDL_API}/api/library?count=250`);
+    const resp = await fetch(`${HUDL_API}/api/library?count=1000`);
     if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
     const data = await resp.json();
     // Store all — filtering happens client-side
