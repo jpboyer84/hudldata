@@ -2838,25 +2838,82 @@ function barRow(label, count, total) {
 function buildDataSummary() {
   const active = (statsGameData || []).filter(p => Object.keys(p).length > 0);
   if (active.length === 0) return 'No play data available.';
+
+  // For large datasets send pre-aggregated stats instead of raw plays
+  // This keeps token count manageable regardless of play count
+  const THRESHOLD = 300;
+
+  if (active.length <= THRESHOLD) {
+    // Small dataset — send raw plays (most detail)
+    const summary = {
+      label: getStatsLabel(),
+      totalPlays: active.length,
+      plays: active.map(p => {
+        const out = {};
+        if (p.odk)      out.odk       = p.odk;
+        if (p.qtr)      out.qtr       = p.qtr;
+        if (p.dn)       out.down      = p.dn;
+        if (p.dist)     out.dist      = p.dist;
+        if (p.yardln)   out.yardLine  = p.yardln;
+        if (p.hash)     out.hash      = p.hash;
+        if (p.playtype) out.playType  = p.playtype;
+        if (p.result)   out.result    = p.result;
+        if (p.gainloss) out.gainLoss  = p.gainloss;
+        if (p.offform)  out.formation = p.offform.includes('|') ? p.offform.split('|')[1] : p.offform;
+        return out;
+      })
+    };
+    return JSON.stringify(summary);
+  }
+
+  // Large dataset — pre-aggregate into counts Claude can reason about
+  const count = (arr, fn) => arr.filter(fn).length;
+  const tally = (arr, key) => {
+    const m = {};
+    arr.forEach(p => { const v = p[key]; if (v) m[v] = (m[v]||0)+1; });
+    return m;
+  };
+
+  const off = active.filter(p => p.odk === 'O');
+  const def = active.filter(p => p.odk === 'D');
+  const st  = active.filter(p => p.odk === 'K' || p.odk === 'S');
+
   const summary = {
     label: getStatsLabel(),
     totalPlays: active.length,
-    plays: active.map(p => {
-      const out = {};
-      if (p.odk)      out.odk       = p.odk;
-      if (p.qtr)      out.qtr       = p.qtr;
-      if (p.dn)       out.down      = p.dn;
-      if (p.dist)     out.dist      = p.dist;
-      if (p.dist2)    out.distExact = p.dist2;
-      if (p.yardln)   out.yardLine  = p.yardln;
-      if (p.hash)     out.hash      = p.hash;
-      if (p.playtype) out.playType  = p.playtype;
-      if (p.result)   out.result    = p.result;
-      if (p.gainloss) out.gainLoss  = p.gainloss;
-      if (p.offform)  out.formation = p.offform.includes('|') ? p.offform.split('|')[1] : p.offform;
-      if (p.series)   out.series    = p.series;
-      return out;
-    })
+    note: `Large dataset (${active.length} plays) — pre-aggregated for efficiency`,
+    byODK: { offense: off.length, defense: def.length, specialTeams: st.length },
+    offense: {
+      total: off.length,
+      byDown: tally(off, 'dn'),
+      byQuarter: tally(off, 'qtr'),
+      byPlayType: tally(off, 'playtype'),
+      byFormation: (() => {
+        const m = {};
+        off.forEach(p => {
+          if (p.offform) {
+            const f = p.offform.includes('|') ? p.offform.split('|')[1] : p.offform;
+            if (f) m[f] = (m[f]||0)+1;
+          }
+        });
+        return m;
+      })(),
+      byResult: tally(off, 'result'),
+      byHash: tally(off, 'hash'),
+      runPlays: count(off, p => p.playtype?.toLowerCase().includes('run')),
+      passPlays: count(off, p => p.playtype?.toLowerCase().includes('pass')),
+    },
+    defense: {
+      total: def.length,
+      byDown: tally(def, 'dn'),
+      byQuarter: tally(def, 'qtr'),
+      byResult: tally(def, 'result'),
+    },
+    allPlays: {
+      byDown: tally(active, 'dn'),
+      byQuarter: tally(active, 'qtr'),
+      byHash: tally(active, 'hash'),
+    }
   };
   return JSON.stringify(summary);
 }
