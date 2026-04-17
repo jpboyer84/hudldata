@@ -871,11 +871,14 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   <div class="hdr">
     <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
     <div class="hdr-title">STATS & ANALYSIS</div>
-    <button class="hdr-btn white" onclick="refreshStats()">↺</button>
+    <div style="display:flex;gap:5px">
+      <button class="hdr-btn white" id="stats-filter-btn" onclick="toggleFilterDrawer()">FILTER ▼</button>
+      <button class="hdr-btn" onclick="refreshStats()">↺</button>
+    </div>
   </div>
 
-  <!-- ── PICKER (always visible) ── -->
-  <div style="flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border)">
+  <!-- ── FILTER DRAWER (hidden by default) ── -->
+  <div id="stats-filter-drawer" style="display:none;flex-shrink:0;background:var(--surface);border-bottom:2px solid var(--col-border)">
 
     <!-- Source toggle -->
     <div style="display:flex;gap:8px;padding:10px 12px 8px">
@@ -894,29 +897,21 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
     <!-- HUDL: smart filters + checklist + load -->
     <div id="stats-hudl-sel-wrap" style="display:none">
-
-      <!-- Season -->
       <div class="sf-row" style="padding:0 12px 6px">
         <span class="sf-label">SEASON</span>
         <button class="sf-btn" id="sf-s-2024" onclick="toggleSmartFilter('season','2024')">2024</button>
         <button class="sf-btn" id="sf-s-2025" onclick="toggleSmartFilter('season','2025')">2025</button>
       </div>
-
-      <!-- Location -->
       <div class="sf-row" style="padding:0 12px 6px">
         <span class="sf-label">LOCATION</span>
         <button class="sf-btn" id="sf-l-home" onclick="toggleSmartFilter('location','home')">HOME</button>
         <button class="sf-btn" id="sf-l-away" onclick="toggleSmartFilter('location','away')">AWAY</button>
       </div>
-
-      <!-- Group -->
       <div class="sf-row" style="padding:0 12px 6px">
         <span class="sf-label">GROUP</span>
         <button class="sf-btn" id="sf-g-conference" onclick="toggleSmartFilter('group','conference')">CONFERENCE</button>
         <button class="sf-btn" id="sf-g-big3" onclick="toggleSmartFilter('group','big3')">BIG 3</button>
       </div>
-
-      <!-- Type + search -->
       <div class="sf-row" style="padding:0 12px 6px">
         <span class="sf-label">TYPE</span>
         <button class="sf-btn on" id="hudl-cat-all"   onclick="setHudlCat('all')"   >ALL</button>
@@ -925,28 +920,28 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         <button class="sf-btn"    id="hudl-cat-jv"    onclick="setHudlCat('jv')"    >JV</button>
         <button class="sf-btn"    id="hudl-cat-other" onclick="setHudlCat('other')" >OTHER</button>
       </div>
-
       <div style="padding:0 12px 6px">
         <input id="hudl-filter-text" oninput="filterHudlList()" placeholder="Search cutups…"
           style="width:100%;background:#111;border:1px solid var(--border);border-radius:8px;
                  padding:7px 11px;color:var(--text);font-family:var(--font-ui);font-size:12px;outline:none" />
       </div>
-
-      <!-- Checklist -->
       <div id="hudl-cutup-list"
-        style="max-height:120px;overflow-y:auto;background:#111;
+        style="max-height:160px;overflow-y:auto;background:#111;
                border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
         <div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>
       </div>
-
-      <!-- Status + load -->
       <div style="display:flex;align-items:center;gap:8px;padding:8px 12px">
         <div style="font-size:10px;color:var(--muted);flex:1" id="hudl-load-status">Loading cutups…</div>
         <button class="btn btn-primary" onclick="loadAndShowStats()"
           style="padding:7px 16px;font-size:11px;white-space:nowrap">LOAD →</button>
       </div>
     </div>
+  </div>
 
+  <!-- Active data label -->
+  <div id="stats-active-label" style="display:none;padding:6px 14px;background:var(--surface2);
+    border-bottom:1px solid var(--border);flex-shrink:0">
+    <div style="font-size:10px;color:var(--muted)" id="stats-active-text"></div>
   </div>
 
   <!-- Tab bar -->
@@ -957,13 +952,13 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
   <!-- ── TAB: STATS ── -->
   <div id="stats-tab-stats" class="tab-panel sbody">
-    <div class="empty-msg">Load data above to see stats.</div>
+    <div class="empty-msg">Tap FILTER to load data.</div>
   </div>
 
   <!-- ── TAB: ASK AI ── -->
   <div id="stats-tab-ai" class="tab-panel" style="display:none;flex-direction:column">
     <div class="chat-messages" id="chat-messages">
-      <div class="chat-msg assistant">Hi Coach! Load a game or Hudl cutup above, then ask me anything — run/pass tendencies, down &amp; distance, formation breakdowns, you name it.</div>
+      <div class="chat-msg assistant">Hi Coach! Load data using the FILTER button, then ask me anything about your plays.</div>
     </div>
     <div class="chat-input-row">
       <input class="chat-input" id="chat-input"
@@ -2553,6 +2548,31 @@ function setStatsTab(tab) {
   });
 }
 
+function toggleFilterDrawer() {
+  const drawer = document.getElementById('stats-filter-drawer');
+  const btn = document.getElementById('stats-filter-btn');
+  const open = drawer.style.display !== 'none';
+  drawer.style.display = open ? 'none' : 'flex';
+  drawer.style.flexDirection = 'column';
+  btn.textContent = open ? 'FILTER ▼' : 'FILTER ▲';
+  btn.classList.toggle('white', !open);
+}
+
+function closeFilterDrawer() {
+  const drawer = document.getElementById('stats-filter-drawer');
+  const btn = document.getElementById('stats-filter-btn');
+  drawer.style.display = 'none';
+  btn.textContent = 'FILTER ▼';
+  btn.classList.remove('white');
+}
+
+function updateActiveLabel(text) {
+  const wrap = document.getElementById('stats-active-label');
+  const lbl = document.getElementById('stats-active-text');
+  if (text) { wrap.style.display = ''; lbl.textContent = text; }
+  else { wrap.style.display = 'none'; }
+}
+
 function refreshStats() {
   if (statsSource === 'local') {
     renderStats();
@@ -2569,6 +2589,8 @@ async function loadAndShowStats() {
     renderStats();
     setStatsTab('stats');
   }
+  closeFilterDrawer();
+  updateActiveLabel(getStatsLabel() || 'Data loaded');
 }
 
 // ── SMART FILTERS ──
@@ -2640,6 +2662,13 @@ function goStats() {
   setStatsSource('local');
   setStatsTab('stats');
   showView('view-stats');
+  // Open filter drawer automatically on first visit
+  setTimeout(() => {
+    const drawer = document.getElementById('stats-filter-drawer');
+    if (drawer.style.display === 'none' || !drawer.style.display) {
+      toggleFilterDrawer();
+    }
+  }, 50);
 }
 
 function setStatsSource(src) {
@@ -2822,6 +2851,7 @@ async function loadHudlCutup() {
     renderStatsFromData(allPlays, statsLabel, false);
   }
   setStatsTab('stats');
+  updateActiveLabel(`${statsLabel} · ${totalLoaded} plays`);
 }
 
 // ── LOCAL GAME DATA ──
