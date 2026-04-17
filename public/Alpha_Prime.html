@@ -384,8 +384,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 /* CHAT */
 .chat-messages {
   overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
-  padding: 14px; -webkit-overflow-scrolling: touch;
-  max-height: 180px; min-height: 60px; flex-shrink: 0;
+  padding: 10px 14px; -webkit-overflow-scrolling: touch;
+  max-height: 220px; flex-shrink: 0;
 }
 .chat-msg {
   max-width: 88%; padding: 10px 14px; border-radius: 10px;
@@ -844,65 +844,76 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
      STATS & ANALYSIS
 ══════════════════════════════════════ -->
 <div class="view" id="view-stats">
+
+  <!-- Header -->
   <div class="hdr">
     <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
     <div class="hdr-title">STATS & ANALYSIS</div>
-    <button class="hdr-btn white" onclick="renderStats()">↺ REFRESH</button>
+    <button class="hdr-btn white" onclick="renderStats()">↺</button>
   </div>
 
   <!-- Source toggle -->
-  <div style="display:flex;padding:10px 14px 0;gap:8px;flex-shrink:0">
+  <div style="display:flex;gap:8px;padding:10px 14px 0;flex-shrink:0">
     <button class="hdr-btn" id="src-local-btn" onclick="setStatsSource('local')"
-      style="flex:1;padding:8px;font-size:11px">📋 LOCAL GAMES</button>
+      style="flex:1;padding:9px;font-size:11px;letter-spacing:0.04em">📋 LOCAL GAMES</button>
     <button class="hdr-btn" id="src-hudl-btn" onclick="setStatsSource('hudl')"
-      style="flex:1;padding:8px;font-size:11px">🎬 HUDL CUTUPS</button>
+      style="flex:1;padding:9px;font-size:11px;letter-spacing:0.04em">🎬 HUDL CUTUPS</button>
   </div>
 
-  <!-- Local game selector -->
-  <div style="padding:8px 14px 0;flex-shrink:0" id="stats-local-sel-wrap">
+  <!-- Local selector -->
+  <div id="stats-local-sel-wrap" style="padding:8px 14px 0;flex-shrink:0">
     <select class="fi" id="stats-game-sel" onchange="renderStats()" style="width:100%"></select>
   </div>
 
-
-  <!-- Hudl cutup selector -->
-  <div style="padding:8px 14px 0;flex-shrink:0;display:none" id="stats-hudl-sel-wrap">
-    <!-- Filter row -->
-    <div style="display:flex;gap:6px;margin-bottom:6px">
-      <input class="btn-input" id="hudl-filter-text" placeholder="Search cutups…"
-        oninput="filterHudlList()"
-        style="flex:1;font-size:12px;padding:7px 10px;background:#111;border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none" />
-      <button class="hdr-btn white" id="hudl-cat-all"   onclick="setHudlCat('all')"   style="padding:6px 10px;font-size:10px">ALL</button>
-      <button class="hdr-btn"       id="hudl-cat-game"  onclick="setHudlCat('game')"  style="padding:6px 10px;font-size:10px">GAME</button>
-      <button class="hdr-btn"       id="hudl-cat-scout" onclick="setHudlCat('scout')" style="padding:6px 10px;font-size:10px">SCOUT</button>
-      <button class="hdr-btn"       id="hudl-cat-jv"    onclick="setHudlCat('jv')"    style="padding:6px 10px;font-size:10px">JV</button>
-      <button class="hdr-btn"       id="hudl-cat-other" onclick="setHudlCat('other')" style="padding:6px 10px;font-size:10px">OTHER</button>
+  <!-- Hudl selector -->
+  <div id="stats-hudl-sel-wrap" style="padding:8px 14px 0;flex-shrink:0;display:none">
+    <!-- Search + category filters -->
+    <input id="hudl-filter-text" oninput="filterHudlList()" placeholder="Search cutups…"
+      style="width:100%;background:#111;border:1px solid var(--border);border-radius:8px;
+             padding:8px 12px;color:var(--text);font-family:var(--font-ui);font-size:12px;
+             outline:none;margin-bottom:7px" />
+    <div style="display:flex;gap:5px;margin-bottom:7px;flex-wrap:nowrap;overflow-x:auto">
+      <button class="hdr-btn white" id="hudl-cat-all"   onclick="setHudlCat('all')"   style="font-size:10px;padding:5px 10px;flex-shrink:0">ALL</button>
+      <button class="hdr-btn"       id="hudl-cat-game"  onclick="setHudlCat('game')"  style="font-size:10px;padding:5px 10px;flex-shrink:0">GAME</button>
+      <button class="hdr-btn"       id="hudl-cat-scout" onclick="setHudlCat('scout')" style="font-size:10px;padding:5px 10px;flex-shrink:0">SCOUT</button>
+      <button class="hdr-btn"       id="hudl-cat-jv"    onclick="setHudlCat('jv')"    style="font-size:10px;padding:5px 10px;flex-shrink:0">JV</button>
+      <button class="hdr-btn"       id="hudl-cat-other" onclick="setHudlCat('other')" style="font-size:10px;padding:5px 10px;flex-shrink:0">OTHER</button>
     </div>
-    <!-- Scrollable multi-select list -->
+    <!-- Checklist -->
     <div id="hudl-cutup-list"
-      style="max-height:150px;overflow-y:auto;background:#111;border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
-      <div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>
+      style="max-height:140px;overflow-y:auto;background:#111;
+             border:1px solid var(--border);border-radius:8px;margin-bottom:7px">
+      <div style="padding:14px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>
     </div>
-    <!-- Status + load button -->
+    <!-- Status + load -->
     <div style="display:flex;align-items:center;gap:8px">
       <div style="font-size:10px;color:var(--muted);flex:1" id="hudl-load-status">Loading cutups…</div>
-      <button class="hdr-btn white" onclick="loadHudlCutup()" style="padding:7px 14px;white-space:nowrap">LOAD SELECTED →</button>
+      <button class="btn btn-primary" onclick="loadHudlCutup()"
+        style="padding:8px 16px;font-size:11px;white-space:nowrap">LOAD SELECTED →</button>
     </div>
   </div>
 
+  <!-- Scrollable charts area -->
   <div class="sbody" id="stats-body">
     <div class="empty-msg">Select a source above to see stats.</div>
   </div>
 
-  <!-- AI Chat -->
-  <div style="background:var(--surface);border-top:1px solid var(--border);flex-shrink:0">
-    <div style="padding:10px 14px 4px">
-      <div style="font-family:var(--font-btn);font-weight:900;font-size:11px;letter-spacing:0.1em;color:var(--muted)">ASK CLAUDE ABOUT YOUR DATA</div>
+  <!-- Pinned chat at bottom -->
+  <div id="stats-chat-panel" style="background:var(--surface);border-top:1px solid var(--border);flex-shrink:0">
+    <div style="padding:8px 14px 0;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-family:var(--font-btn);font-weight:900;font-size:10px;
+                  letter-spacing:0.1em;color:var(--muted)">ASK CLAUDE</div>
+      <button onclick="toggleChat()" id="chat-toggle-btn"
+        style="font-size:10px;color:var(--muted);background:none;border:none;
+               cursor:pointer;font-family:var(--font-ui);padding:2px 0">▲ EXPAND</button>
     </div>
-    <div class="chat-messages" id="chat-messages">
-      <div class="chat-msg assistant">Hi Coach! Select a game or Hudl cutup above and ask me anything about your play data — run/pass tendencies, down & distance patterns, formation breakdowns, you name it.</div>
+    <div class="chat-messages" id="chat-messages" style="display:none">
+      <div class="chat-msg assistant">Hi Coach! Select a game or Hudl cutup above and ask me anything — run/pass tendencies, down &amp; distance, formation breakdowns, you name it.</div>
     </div>
     <div class="chat-input-row">
-      <input class="chat-input" id="chat-input" placeholder="e.g. What was our run/pass ratio on 3rd down?" onkeydown="if(event.key==='Enter')sendChat()" />
+      <input class="chat-input" id="chat-input"
+        placeholder="Ask about your play data…"
+        onkeydown="if(event.key==='Enter')sendChat()" />
       <button class="chat-send" onclick="sendChat()">ASK →</button>
     </div>
   </div>
@@ -2474,7 +2485,23 @@ function pickerCallback(data) {
 // ════════════════════════════════════════
 const HUDL_API = 'https://hudl-mcp-production.up.railway.app';
 
-let chatHistory = [];
+let chatExpanded = false;
+function toggleChat() {
+  chatExpanded = !chatExpanded;
+  const msgs = document.getElementById('chat-messages');
+  const btn = document.getElementById('chat-toggle-btn');
+  msgs.style.display = chatExpanded ? 'flex' : 'none';
+  btn.textContent = chatExpanded ? '▼ COLLAPSE' : '▲ EXPAND';
+}
+
+function formatChatResponse(text) {
+  return text
+    .replace(/^#{1,3}\s+(.+)$/gm, '<strong>$1</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n{2,}/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
 let statsGameData = null;
 let statsSource = 'local';   // 'local' or 'hudl'
 let statsLabel = '';
@@ -2491,8 +2518,13 @@ function goStats() {
   });
   sel.innerHTML = opts.join('');
   chatHistory = [];
+  chatExpanded = false;
+  const msgs = document.getElementById('chat-messages');
+  if (msgs) msgs.style.display = 'none';
+  const btn = document.getElementById('chat-toggle-btn');
+  if (btn) btn.textContent = '▲ EXPAND';
   document.getElementById('chat-messages').innerHTML =
-    '<div class="chat-msg assistant">Hi Coach! Select a game or Hudl cutup above and ask me anything about your play data — run/pass tendencies, down & distance patterns, formation breakdowns, you name it.</div>';
+    '<div class="chat-msg assistant">Hi Coach! Select a game or Hudl cutup above and ask me anything — run/pass tendencies, down &amp; distance, formation breakdowns, you name it.</div>';
   setStatsSource('local');
   showView('view-stats');
   renderStats();
@@ -2867,15 +2899,30 @@ async function sendChat() {
 
   const messages = document.getElementById('chat-messages');
 
+  // Auto-expand chat when user sends a message
+  if (!chatExpanded) toggleChat();
+
   // Add user message
   chatHistory.push({ role: 'user', content: msg });
   messages.innerHTML += `<div class="chat-msg user">${msg}</div>`;
   messages.innerHTML += `<div class="chat-msg assistant thinking" id="thinking-msg">Analyzing your data…</div>`;
   messages.scrollTop = messages.scrollHeight;
 
+  const label = getStatsLabel();
+  const gameLocation = (() => {
+    const l = label.toLowerCase();
+    if (l.includes('@')) return 'AWAY game (title contains @)';
+    if (l.includes(' vs ')) return 'HOME game (title contains vs)';
+    return 'unknown location';
+  })();
+  const seasonMatch = label.match(/'(\d{2})/);
+  const season = seasonMatch ? `20${seasonMatch[1]}` : 'unknown';
+
   const systemPrompt = `You are a football analytics assistant for a coaching staff. You have access to play-by-play data from their games. Analyze the data and answer coaching questions concisely and directly. Use football terminology. When referencing numbers, be specific. Keep answers under 200 words unless a detailed breakdown is requested.
 
-Current game/dataset: ${getStatsLabel()}
+Current game/dataset: ${label}
+Game location: ${gameLocation}
+Season: ${season}
 Play data:
 ${buildDataSummary()}`;
 
@@ -2901,7 +2948,7 @@ ${buildDataSummary()}`;
     chatHistory.push({ role: 'assistant', content: reply });
 
     document.getElementById('thinking-msg')?.remove();
-    messages.innerHTML += `<div class="chat-msg assistant">${reply.replace(/\n/g,'<br>')}</div>`;
+    messages.innerHTML += `<div class="chat-msg assistant">${formatChatResponse(reply)}</div>`;
     messages.scrollTop = messages.scrollHeight;
   } catch(e) {
     document.getElementById('thinking-msg')?.remove();
