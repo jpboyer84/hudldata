@@ -345,6 +345,28 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 #view-import-export .abody { padding: 16px; }
 #view-import-export .sec-label { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
 
+.stats-tab {
+  flex: 1; font-family: var(--font-btn); font-weight: 900; font-size: 11px;
+  letter-spacing: 0.08em; padding: 11px 4px; text-align: center;
+  color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.stats-tab.active { color: var(--text); border-bottom-color: var(--text); }
+.tab-panel { display: flex; flex: 1; overflow: hidden; }
+.tab-panel.abody { overflow-y: auto; flex-direction: column; padding: 16px; gap: 0; }
+.tab-panel.sbody { overflow-y: auto; flex-direction: column; padding: 14px; gap: 14px; }
+
+.sf-btn {
+  font-family: var(--font-btn); font-weight: 900; font-size: 10px;
+  padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--muted); cursor: pointer;
+  white-space: nowrap; letter-spacing: 0.04em; flex-shrink: 0;
+}
+.sf-btn.on { background: #fff; color: #000; border-color: #fff; }
+.sf-row { display: flex; gap: 5px; align-items: center; overflow-x: auto; }
+.sf-label { font-size: 9px; color: var(--muted); letter-spacing: 0.08em;
+  font-family: var(--font-ui); white-space: nowrap; flex-shrink: 0; }
+
 /* SCROLLBAR */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -435,7 +457,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div class="lcard" onclick="openNewGameModal()">
       <div class="lcard-icon">🏈</div>
       <div>
-        <div class="lcard-title">NEW GAME</div>
+        <div class="lcard-title">NEW GAME TRACKER</div>
         <div class="lcard-sub">Start tracking a new game</div>
       </div>
     </div>
@@ -443,7 +465,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div class="lcard" onclick="goArchive()">
       <div class="lcard-icon">📋</div>
       <div>
-        <div class="lcard-title">GAME ARCHIVE</div>
+        <div class="lcard-title">GAME TRACKER ARCHIVE</div>
         <div class="lcard-sub" id="arch-sub">View previous games</div>
       </div>
     </div>
@@ -451,7 +473,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div class="lcard" onclick="goTemplates()">
       <div class="lcard-icon">📐</div>
       <div>
-        <div class="lcard-title">TEMPLATES</div>
+        <div class="lcard-title">GAME TRACKER TEMPLATES</div>
         <div class="lcard-sub" id="tmpl-sub">Create & edit templates</div>
       </div>
     </div>
@@ -849,66 +871,99 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   <div class="hdr">
     <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
     <div class="hdr-title">STATS & ANALYSIS</div>
-    <button class="hdr-btn white" onclick="renderStats()">↺</button>
+    <button class="hdr-btn white" onclick="refreshStats()">↺</button>
   </div>
 
-  <!-- Source toggle -->
-  <div style="display:flex;gap:8px;padding:10px 14px 0;flex-shrink:0">
-    <button class="hdr-btn" id="src-local-btn" onclick="setStatsSource('local')"
-      style="flex:1;padding:9px;font-size:11px;letter-spacing:0.04em">📋 LOCAL GAMES</button>
-    <button class="hdr-btn" id="src-hudl-btn" onclick="setStatsSource('hudl')"
-      style="flex:1;padding:9px;font-size:11px;letter-spacing:0.04em">🎬 HUDL CUTUPS</button>
-  </div>
+  <!-- ── PICKER (always visible) ── -->
+  <div style="flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border)">
 
-  <!-- Local selector -->
-  <div id="stats-local-sel-wrap" style="padding:8px 14px 0;flex-shrink:0">
-    <select class="fi" id="stats-game-sel" onchange="renderStats()" style="width:100%"></select>
-  </div>
-
-  <!-- Hudl selector -->
-  <div id="stats-hudl-sel-wrap" style="padding:8px 14px 0;flex-shrink:0;display:none">
-    <!-- Search + category filters -->
-    <input id="hudl-filter-text" oninput="filterHudlList()" placeholder="Search cutups…"
-      style="width:100%;background:#111;border:1px solid var(--border);border-radius:8px;
-             padding:8px 12px;color:var(--text);font-family:var(--font-ui);font-size:12px;
-             outline:none;margin-bottom:7px" />
-    <div style="display:flex;gap:5px;margin-bottom:7px;flex-wrap:nowrap;overflow-x:auto">
-      <button class="hdr-btn white" id="hudl-cat-all"   onclick="setHudlCat('all')"   style="font-size:10px;padding:5px 10px;flex-shrink:0">ALL</button>
-      <button class="hdr-btn"       id="hudl-cat-game"  onclick="setHudlCat('game')"  style="font-size:10px;padding:5px 10px;flex-shrink:0">GAME</button>
-      <button class="hdr-btn"       id="hudl-cat-scout" onclick="setHudlCat('scout')" style="font-size:10px;padding:5px 10px;flex-shrink:0">SCOUT</button>
-      <button class="hdr-btn"       id="hudl-cat-jv"    onclick="setHudlCat('jv')"    style="font-size:10px;padding:5px 10px;flex-shrink:0">JV</button>
-      <button class="hdr-btn"       id="hudl-cat-other" onclick="setHudlCat('other')" style="font-size:10px;padding:5px 10px;flex-shrink:0">OTHER</button>
+    <!-- Source toggle -->
+    <div style="display:flex;gap:8px;padding:10px 12px 8px">
+      <button class="hdr-btn" id="src-local-btn" onclick="setStatsSource('local')"
+        style="flex:1;padding:8px;font-size:11px">📋 LOCAL</button>
+      <button class="hdr-btn" id="src-hudl-btn" onclick="setStatsSource('hudl')"
+        style="flex:1;padding:8px;font-size:11px">🎬 HUDL</button>
     </div>
-    <!-- Checklist -->
-    <div id="hudl-cutup-list"
-      style="max-height:140px;overflow-y:auto;background:#111;
-             border:1px solid var(--border);border-radius:8px;margin-bottom:7px">
-      <div style="padding:14px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>
+
+    <!-- LOCAL: game dropdown + load -->
+    <div id="stats-local-sel-wrap" style="padding:0 12px 10px">
+      <select class="fi" id="stats-game-sel" style="width:100%;margin-bottom:8px"></select>
+      <button class="btn btn-primary" onclick="loadAndShowStats()"
+        style="width:100%;padding:10px;font-size:12px">LOAD →</button>
     </div>
-    <!-- Status + load -->
-    <div style="display:flex;align-items:center;gap:8px">
-      <div style="font-size:10px;color:var(--muted);flex:1" id="hudl-load-status">Loading cutups…</div>
-      <button class="btn btn-primary" onclick="loadHudlCutup()"
-        style="padding:8px 16px;font-size:11px;white-space:nowrap">LOAD SELECTED →</button>
+
+    <!-- HUDL: smart filters + checklist + load -->
+    <div id="stats-hudl-sel-wrap" style="display:none">
+
+      <!-- Season -->
+      <div class="sf-row" style="padding:0 12px 6px">
+        <span class="sf-label">SEASON</span>
+        <button class="sf-btn" id="sf-s-2024" onclick="toggleSmartFilter('season','2024')">2024</button>
+        <button class="sf-btn" id="sf-s-2025" onclick="toggleSmartFilter('season','2025')">2025</button>
+      </div>
+
+      <!-- Location -->
+      <div class="sf-row" style="padding:0 12px 6px">
+        <span class="sf-label">LOCATION</span>
+        <button class="sf-btn" id="sf-l-home" onclick="toggleSmartFilter('location','home')">HOME</button>
+        <button class="sf-btn" id="sf-l-away" onclick="toggleSmartFilter('location','away')">AWAY</button>
+      </div>
+
+      <!-- Group -->
+      <div class="sf-row" style="padding:0 12px 6px">
+        <span class="sf-label">GROUP</span>
+        <button class="sf-btn" id="sf-g-conference" onclick="toggleSmartFilter('group','conference')">CONFERENCE</button>
+        <button class="sf-btn" id="sf-g-big3" onclick="toggleSmartFilter('group','big3')">BIG 3</button>
+      </div>
+
+      <!-- Type + search -->
+      <div class="sf-row" style="padding:0 12px 6px">
+        <span class="sf-label">TYPE</span>
+        <button class="sf-btn on" id="hudl-cat-all"   onclick="setHudlCat('all')"   >ALL</button>
+        <button class="sf-btn"    id="hudl-cat-game"  onclick="setHudlCat('game')"  >GAME</button>
+        <button class="sf-btn"    id="hudl-cat-scout" onclick="setHudlCat('scout')" >SCOUT</button>
+        <button class="sf-btn"    id="hudl-cat-jv"    onclick="setHudlCat('jv')"    >JV</button>
+        <button class="sf-btn"    id="hudl-cat-other" onclick="setHudlCat('other')" >OTHER</button>
+      </div>
+
+      <div style="padding:0 12px 6px">
+        <input id="hudl-filter-text" oninput="filterHudlList()" placeholder="Search cutups…"
+          style="width:100%;background:#111;border:1px solid var(--border);border-radius:8px;
+                 padding:7px 11px;color:var(--text);font-family:var(--font-ui);font-size:12px;outline:none" />
+      </div>
+
+      <!-- Checklist -->
+      <div id="hudl-cutup-list"
+        style="max-height:120px;overflow-y:auto;background:#111;
+               border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+        <div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>
+      </div>
+
+      <!-- Status + load -->
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px">
+        <div style="font-size:10px;color:var(--muted);flex:1" id="hudl-load-status">Loading cutups…</div>
+        <button class="btn btn-primary" onclick="loadAndShowStats()"
+          style="padding:7px 16px;font-size:11px;white-space:nowrap">LOAD →</button>
+      </div>
     </div>
+
   </div>
 
-  <!-- Scrollable charts area -->
-  <div class="sbody" id="stats-body">
-    <div class="empty-msg">Select a source above to see stats.</div>
+  <!-- Tab bar -->
+  <div style="display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0">
+    <button class="stats-tab active" id="stab-stats" onclick="setStatsTab('stats')">STATS</button>
+    <button class="stats-tab"        id="stab-ai"    onclick="setStatsTab('ai')">ASK AI</button>
   </div>
 
-  <!-- Pinned chat at bottom -->
-  <div id="stats-chat-panel" style="background:var(--surface);border-top:1px solid var(--border);flex-shrink:0">
-    <div style="padding:8px 14px 0;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-family:var(--font-btn);font-weight:900;font-size:10px;
-                  letter-spacing:0.1em;color:var(--muted)">ASK CLAUDE</div>
-      <button onclick="toggleChat()" id="chat-toggle-btn"
-        style="font-size:10px;color:var(--muted);background:none;border:none;
-               cursor:pointer;font-family:var(--font-ui);padding:2px 0">▲ EXPAND</button>
-    </div>
-    <div class="chat-messages" id="chat-messages" style="display:none">
-      <div class="chat-msg assistant">Hi Coach! Select a game or Hudl cutup above and ask me anything — run/pass tendencies, down &amp; distance, formation breakdowns, you name it.</div>
+  <!-- ── TAB: STATS ── -->
+  <div id="stats-tab-stats" class="tab-panel sbody">
+    <div class="empty-msg">Load data above to see stats.</div>
+  </div>
+
+  <!-- ── TAB: ASK AI ── -->
+  <div id="stats-tab-ai" class="tab-panel" style="display:none;flex-direction:column">
+    <div class="chat-messages" id="chat-messages">
+      <div class="chat-msg assistant">Hi Coach! Load a game or Hudl cutup above, then ask me anything — run/pass tendencies, down &amp; distance, formation breakdowns, you name it.</div>
     </div>
     <div class="chat-input-row">
       <input class="chat-input" id="chat-input"
@@ -917,6 +972,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <button class="chat-send" onclick="sendChat()">ASK →</button>
     </div>
   </div>
+
 </div>
 
 <script>
@@ -1362,6 +1418,9 @@ function renderBody() {
 
 function renderCard(col, val) {
   return `<div class="col-card">
+    <div class="col-card-hdr">
+      <div class="col-card-name">${col.name}</div>
+    </div>
     <div class="col-card-body" style="padding:7px">${renderColInner(col, val)}</div>
   </div>`;
 }
@@ -2485,13 +2544,67 @@ function pickerCallback(data) {
 // ════════════════════════════════════════
 const HUDL_API = 'https://hudl-mcp-production.up.railway.app';
 
-let chatExpanded = false;
-function toggleChat() {
-  chatExpanded = !chatExpanded;
-  const msgs = document.getElementById('chat-messages');
-  const btn = document.getElementById('chat-toggle-btn');
-  msgs.style.display = chatExpanded ? 'flex' : 'none';
-  btn.textContent = chatExpanded ? '▼ COLLAPSE' : '▲ EXPAND';
+
+function setStatsTab(tab) {
+  ['stats','ai'].forEach(t => {
+    document.getElementById(`stab-${t}`).classList.toggle('active', t === tab);
+    const panel = document.getElementById(`stats-tab-${t}`);
+    panel.style.display = t === tab ? 'flex' : 'none';
+  });
+}
+
+function refreshStats() {
+  if (statsSource === 'local') {
+    renderStats();
+  } else {
+    hudlLibrary = null;
+    loadHudlLibrary();
+  }
+}
+
+async function loadAndShowStats() {
+  if (statsSource === 'hudl') {
+    await loadHudlCutup();
+  } else {
+    renderStats();
+    setStatsTab('stats');
+  }
+}
+
+// ── SMART FILTERS ──
+const smartFilters = { season: new Set(), location: new Set(), group: new Set() };
+const CONFERENCE_TEAMS = ['lowell','kvhs','munster','hobart','andrean','highland'];
+const BIG3_TEAMS = ['lowell','hobart','andrean'];
+
+function toggleSmartFilter(category, value) {
+  const s = smartFilters[category];
+  if (s.has(value)) s.delete(value); else s.add(value);
+  document.getElementById(`sf-${category[0]}-${value}`)?.classList.toggle('on', s.has(value));
+  filterHudlList();
+}
+
+function matchesSmartFilters(item) {
+  const t = item.title.toLowerCase();
+  const { season, location, group } = smartFilters;
+
+  if (season.size > 0) {
+    const matchSeason = [...season].some(y => t.includes(`'${y.slice(2)}`));
+    if (!matchSeason) return false;
+  }
+  if (location.size > 0) {
+    const isHome = t.includes(' vs ') && !t.includes('@');
+    const isAway = t.includes('@');
+    const matchLoc = (location.has('home') && isHome) || (location.has('away') && isAway);
+    if (!matchLoc) return false;
+  }
+  if (group.size > 0) {
+    const matchGroup = [...group].some(g => {
+      const teams = g === 'big3' ? BIG3_TEAMS : CONFERENCE_TEAMS;
+      return teams.some(team => t.includes(team));
+    });
+    if (!matchGroup) return false;
+  }
+  return true;
 }
 
 function formatChatResponse(text) {
@@ -2503,7 +2616,7 @@ function formatChatResponse(text) {
     .replace(/\n/g, '<br>');
 }
 let statsGameData = null;
-let statsSource = 'local';   // 'local' or 'hudl'
+let statsSource = 'local';
 let statsLabel = '';
 let hudlLibrary = null;
 
@@ -2518,16 +2631,15 @@ function goStats() {
   });
   sel.innerHTML = opts.join('');
   chatHistory = [];
-  chatExpanded = false;
-  const msgs = document.getElementById('chat-messages');
-  if (msgs) msgs.style.display = 'none';
-  const btn = document.getElementById('chat-toggle-btn');
-  if (btn) btn.textContent = '▲ EXPAND';
   document.getElementById('chat-messages').innerHTML =
-    '<div class="chat-msg assistant">Hi Coach! Select a game or Hudl cutup above and ask me anything — run/pass tendencies, down &amp; distance, formation breakdowns, you name it.</div>';
+    '<div class="chat-msg assistant">Hi Coach! Load a game or Hudl cutup above, then ask me anything — run/pass tendencies, down &amp; distance, formation breakdowns, you name it.</div>';
+  // Reset smart filters
+  Object.keys(smartFilters).forEach(k => smartFilters[k].clear());
+  document.querySelectorAll('.sf-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('hudl-cat-all')?.classList.add('on');
   setStatsSource('local');
+  setStatsTab('stats');
   showView('view-stats');
-  renderStats();
 }
 
 function setStatsSource(src) {
@@ -2574,7 +2686,8 @@ function filterHudlList() {
     if (cat === 'practice' || cat === 'untagged') return false;
     const catMatch = hudlCat === 'all' || cat === hudlCat;
     const nameMatch = !keyword || i.title.toLowerCase().includes(keyword);
-    return catMatch && nameMatch;
+    const smartMatch = matchesSmartFilters(i);
+    return catMatch && nameMatch && smartMatch;
   });
   const status = document.getElementById('hudl-load-status');
   status.textContent = filtered.length === 0
@@ -2640,7 +2753,7 @@ async function loadHudlCutup() {
 
   const status = document.getElementById('hudl-load-status');
   status.textContent = `Loading ${checked.length} cutup${checked.length > 1 ? 's' : ''}…`;
-  document.getElementById('stats-body').innerHTML =
+  document.getElementById('stats-tab-stats').innerHTML =
     '<div class="empty-msg">Loading Hudl data…</div>';
 
   // Fetch all selected cutups in parallel
@@ -2689,7 +2802,7 @@ async function loadHudlCutup() {
   status.textContent = `${totalLoaded} total clips loaded`;
   showToast(`Loaded ${totalLoaded} clips`);
 
-  const body = document.getElementById('stats-body');
+  const body = document.getElementById('stats-tab-stats');
   const breakdownHtml = breakdown.length > 1 ? `<div class="stat-card">
     <div class="stat-card-title">Cutup Breakdown</div>
     <div class="stat-big-row" style="flex-wrap:wrap">
@@ -2708,6 +2821,7 @@ async function loadHudlCutup() {
   } else {
     renderStatsFromData(allPlays, statsLabel, false);
   }
+  setStatsTab('stats');
 }
 
 // ── LOCAL GAME DATA ──
@@ -2731,17 +2845,17 @@ function getStatsLabel() {
 
 function renderStats() {
   if (statsSource === 'hudl') {
-    // Hudl data is loaded via loadHudlCutup() — don't auto-render
     if (statsGameData && statsLabel) renderStatsFromData(statsGameData, statsLabel);
     return;
   }
   const plays = getStatsPlays().filter(p => Object.keys(p).length > 0);
   statsGameData = plays;
   renderStatsFromData(plays, getStatsLabel());
+  setStatsTab('stats');
 }
 
 function renderStatsFromData(plays, label, append = false) {
-  const body = document.getElementById('stats-body');
+  const body = document.getElementById('stats-tab-stats');
   if (!plays || plays.length === 0) {
     if (!append) body.innerHTML = '<div class="empty-msg">No play data found.</div>';
     return;
@@ -2899,8 +3013,8 @@ async function sendChat() {
 
   const messages = document.getElementById('chat-messages');
 
-  // Auto-expand chat when user sends a message
-  if (!chatExpanded) toggleChat();
+  // Auto-switch to AI tab
+  setStatsTab('ai');
 
   // Add user message
   chatHistory.push({ role: 'user', content: msg });
