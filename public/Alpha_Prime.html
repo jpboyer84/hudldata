@@ -3035,33 +3035,8 @@ async function loadHudlCutup() {
 }
 
 // ── LOCAL GAME DATA ──
-function getStatsPlays() {
-  const sel = document.getElementById('stats-game-sel').value;
-  const games = getGames();
-  if (sel === 'all') return games.flatMap(g => g.plays || []);
-  const g = games.find(x => x.id === sel);
-  return g ? g.plays || [] : [];
-}
-
 function getStatsLabel() {
-  if (statsSource === 'hudl') return statsLabel;
-  const sel = document.getElementById('stats-game-sel').value;
-  if (sel === 'all') return 'All Games';
-  const g = getGames().find(x => x.id === sel);
-  if (!g) return '';
-  const wk = g.week ? ` · Wk ${g.week}` : '';
-  return `${g.home} vs ${g.away}${wk}`;
-}
-
-function renderStats() {
-  if (statsSource === 'hudl') {
-    if (statsGameData && statsLabel) renderStatsFromData(statsGameData, statsLabel);
-    return;
-  }
-  const plays = getStatsPlays().filter(p => Object.keys(p).length > 0);
-  statsGameData = plays;
-  renderStatsFromData(plays, getStatsLabel());
-  setStatsTab('stats');
+  return statsLabel || '';
 }
 
 function renderStatsFromData(plays, label, append = false) {
