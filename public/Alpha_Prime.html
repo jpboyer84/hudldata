@@ -400,6 +400,22 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   background: var(--surface); border: 1.5px solid var(--col-border);
   border-radius: 12px; padding: 16px;
 }
+.stat-section-toggle {
+  cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;
+}
+.stat-section-toggle .stat-toggle-icon {
+  font-size: 14px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; margin-left: 8px;
+}
+.stat-section-toggle.collapsed .stat-toggle-icon { transform: rotate(-90deg); }
+.stat-section-body { overflow: hidden; transition: max-height 0.3s ease; }
+.stat-section-body.collapsed { display: none; }
+
+/* Defense color accent */
+.stat-card.defense { border-color: rgba(255,120,70,0.4); }
+.stat-card.defense .stat-card-title { color: #ff8855; }
+.stat-card.defense .bar-fill { background: #ff8855; }
+.stat-card.defense .bar-fill span { color: #000; }
+
 .stat-card-title {
   font-family: var(--font-btn); font-weight: 900; font-size: 11px;
   letter-spacing: 0.1em; color: var(--muted); margin-bottom: 12px; text-transform: uppercase;
@@ -447,6 +463,13 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   padding: 10px 16px; cursor: pointer; flex-shrink: 0;
 }
 .chat-send:active { opacity: 0.8; }
+.chat-voice {
+  background: var(--surface2); color: var(--muted); border: 1px solid var(--border); border-radius: 8px;
+  font-size: 18px; padding: 8px 12px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+}
+.chat-voice:active { opacity: 0.7; }
+.chat-voice.recording { background: rgba(255,68,68,0.15); border-color: var(--red); color: var(--red); animation: pulse-rec 1s infinite; }
+@keyframes pulse-rec { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
 
 /* Hudl cutup checklist */
 .cutup-item {
@@ -456,7 +479,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 }
 .cutup-item:last-child { border-bottom: none; }
 .cutup-item:active { background: var(--surface2); }
-.cutup-item input[type=checkbox] { width:16px; height:16px; flex-shrink:0; accent-color:#fff; cursor:pointer; }
+.cutup-item input[type=checkbox] { width:22px; height:22px; flex-shrink:0; accent-color:#fff; cursor:pointer; appearance:auto; -webkit-appearance:checkbox; }
 .cutup-item-label { font-family:var(--font-btn); font-weight:900; font-size:13px; flex:1; }
 .cutup-item-count { font-size:10px; color:var(--muted); flex-shrink:0; }
 </style>
@@ -936,11 +959,10 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <button class="sf-btn" id="sf-g-big3" onclick="toggleSmartFilter('group','big3')">BIG 3</button>
     </div>
 
-    <!-- Type — LOCAL added here -->
+    <!-- Type filter -->
     <div class="sf-row" style="padding:0 12px 5px;flex-wrap:wrap">
       <span class="sf-label">TYPE</span>
       <button class="sf-btn on" id="hudl-cat-all"   onclick="setHudlCat('all')"   >ALL</button>
-      <button class="sf-btn"    id="hudl-cat-local" onclick="setHudlCat('local')" >LOCAL</button>
       <button class="sf-btn"    id="hudl-cat-game"  onclick="setHudlCat('game')"  >GAME</button>
       <button class="sf-btn"    id="hudl-cat-scout" onclick="setHudlCat('scout')" >SCOUT</button>
       <button class="sf-btn"    id="hudl-cat-jv"    onclick="setHudlCat('jv')"    >JV</button>
@@ -997,6 +1019,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <input class="chat-input" id="chat-input"
         placeholder="Ask about your play data…"
         onkeydown="if(event.key==='Enter')sendChat()" />
+      <button class="chat-voice" id="voice-btn" onclick="toggleVoiceInput()" title="Voice input">🎤</button>
       <button class="chat-send" onclick="sendChat()">ASK →</button>
     </div>
   </div>
@@ -2672,7 +2695,7 @@ function goStats() {
   }, 50);
 }
 
-// unified source — 'local' items always included when hudlCat is 'all' or 'local'
+// unified source — tracker items always included when hudlCat is 'all' or 'tracker'
 let hudlCat = 'all';
 
 function getCutupCategory(title) {
@@ -2771,14 +2794,32 @@ async function loadHudlLibrary() {
   }
 }
 
+function parseWeekSort(title) {
+  // Extract week number for sorting: "Wk05" or "'25 Wk 02" etc
+  const m = title.match(/[Ww]k\s*(\d+)/);
+  if (!m) return 999;
+  return parseInt(m[1], 10);
+}
+
+function parseSeason(title) {
+  const m = title.match(/'(\d{2})/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
 function renderUnifiedList(items) {
   const container = document.getElementById('hudl-cutup-list');
   if (items.length === 0) {
     container.innerHTML = '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">No items match</div>';
     return;
   }
-  // Auto-select all filtered items
-  container.innerHTML = items.map(i => `
+  // Sort: most recent season first, then highest week first
+  const sorted = items.slice().sort((a, b) => {
+    const sA = parseSeason(a.title), sB = parseSeason(b.title);
+    if (sA !== sB) return sB - sA; // newer season first
+    const wA = parseWeekSort(a.title), wB = parseWeekSort(b.title);
+    return wB - wA; // higher week first
+  });
+  container.innerHTML = sorted.map(i => `
     <div class="cutup-item" onclick="toggleCutupCheck('${i.internalId}')">
       <input type="checkbox" id="chk-${i.internalId}" value="${i.internalId}"
         data-source="${i.source}" data-gameid="${i.id || ''}"
@@ -2968,6 +3009,7 @@ function renderStats() {
 }
 
 function renderStatsFromData(plays, label, append = false) {
+  statSectionId = 0;
   const body = document.getElementById('stats-tab-stats');
   if (!plays || plays.length === 0) {
     if (!append) body.innerHTML = '<div class="empty-msg">No play data found.</div>';
@@ -3161,7 +3203,7 @@ function renderStatsFromData(plays, label, append = false) {
         ${tfl>0?'<div class="stat-big"><div class="stat-big-val">'+tfl+'</div><div class="stat-big-lbl">TFL</div></div>':''}
         ${ints>0?'<div class="stat-big"><div class="stat-big-val">'+ints+'</div><div class="stat-big-lbl">INT</div></div>':''}
       </div>` : '') +
-      Object.entries(defResults).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([r,c])=>barRow(r,c,def.length)).join(''));
+      Object.entries(defResults).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([r,c])=>barRow(r,c,def.length)).join(''), {defense:true});
   }
 
   // HASH
@@ -3209,10 +3251,24 @@ function renderStatsFromData(plays, label, append = false) {
   if (append) { body.innerHTML += html; } else { body.innerHTML = html; }
 }
 
-function statSection(title, subtitle, content) {
-  return '<div class="stat-card"><div class="stat-card-title">' + title
+let statSectionId = 0;
+function statSection(title, subtitle, content, opts = {}) {
+  const sid = 'ss-' + (statSectionId++);
+  const defClass = opts.defense ? ' defense' : '';
+  return '<div class="stat-card' + defClass + '">'
+    + '<div class="stat-section-toggle" onclick="toggleStatSection(\'' + sid + '\')">'
+    + '<div class="stat-card-title" style="margin-bottom:0">' + title
     + (subtitle ? '<span style="font-weight:400;color:var(--muted);margin-left:6px;font-size:10px">' + subtitle + '</span>' : '')
-    + '</div>' + content + '</div>';
+    + '</div><span class="stat-toggle-icon">▼</span></div>'
+    + '<div class="stat-section-body" id="' + sid + '" style="margin-top:12px">' + content + '</div></div>';
+}
+
+function toggleStatSection(id) {
+  const body = document.getElementById(id);
+  const toggle = body?.previousElementSibling;
+  if (!body) return;
+  body.classList.toggle('collapsed');
+  toggle?.classList.toggle('collapsed');
 }
 
 function barRow(label, count, total) {
@@ -3329,6 +3385,58 @@ ${buildDataSummary()}`;
     messages.scrollTop = messages.scrollHeight;
     chatHistory.pop();
   }
+}
+
+// ════════════════════════════════════════
+// VOICE INPUT
+// ════════════════════════════════════════
+let voiceRecognition = null;
+let isRecording = false;
+
+function toggleVoiceInput() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Voice input not supported in this browser');
+    return;
+  }
+  const btn = document.getElementById('voice-btn');
+  if (isRecording) {
+    voiceRecognition.stop();
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  voiceRecognition = new SpeechRecognition();
+  voiceRecognition.continuous = false;
+  voiceRecognition.interimResults = false;
+  voiceRecognition.lang = 'en-US';
+  voiceRecognition.onstart = () => {
+    isRecording = true;
+    btn.classList.add('recording');
+    btn.textContent = '⏹';
+  };
+  voiceRecognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    document.getElementById('chat-input').value = transcript;
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    // Auto-send after voice input
+    sendChat();
+  };
+  voiceRecognition.onerror = (event) => {
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    if (event.error !== 'aborted') showToast('Voice error: ' + event.error);
+  };
+  voiceRecognition.onend = () => {
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+  };
+  voiceRecognition.start();
 }
 
 // ════════════════════════════════════════
