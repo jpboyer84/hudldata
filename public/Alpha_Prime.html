@@ -3429,7 +3429,7 @@ async function sendChat() {
 
 **Quarter Breakdown:** Plays, yards, and scoring by quarter.
 
-Always show your work — state the count of plays you're analyzing, then give the result. Use exact numbers. If a field is missing from the data, say so clearly.
+Always lead with the direct answer and key numbers first, then supporting detail. Never build up to a conclusion — give the number first.
 
 Current dataset: ${label}
 Game location: ${gameLocation}
@@ -3446,7 +3446,7 @@ ${buildDataSummary()}`;
       signal: controller.signal,
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
+        max_tokens: 4096,
         system: systemPrompt,
         messages: chatHistory
       })
