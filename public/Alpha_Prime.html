@@ -2902,11 +2902,39 @@ async function loadHudlLibrary() {
       localStorage.setItem('hd_library_cache_at', Date.now().toString());
     } catch {}
     filterHudlList();
+    // Background prefetch all cutups into cache
+    prefetchHudlClips();
   } catch(e) {
     status.textContent = `Could not reach Hudl server: ${e.message}`;
     document.getElementById('hudl-cutup-list').innerHTML =
       '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Error loading Hudl cutups</div>';
     filterHudlList();
+  }
+}
+
+async function prefetchHudlClips() {
+  if (!hudlLibrary || hudlLibrary.length === 0) return;
+  const normalize = c => ({
+    odk: c.odk||'', qtr: c.quarter||'', dn: c.down||'', dist: c.distance||'',
+    yardln: c.yard_line||'', hash: c.hash||'', playtype: c.play_type||'',
+    result: c.result||'', gainloss: c.gain_loss||'', offform: c.off_form||'',
+  });
+  // Only prefetch items not already cached, one at a time to avoid hammering the server
+  for (const item of hudlLibrary) {
+    const cat = getCutupCategory(item.title);
+    if (cat === 'practice' || cat === 'untagged') continue;
+    const id = item.internalId || item.id;
+    if (getCachedClips(id)) continue; // already cached
+    try {
+      await new Promise(r => setTimeout(r, 500)); // 500ms delay between fetches
+      const resp = await fetch(\`\${HUDL_API}/api/clips/\${id}?count=1000\`);
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const normalized = data.clips.map(normalize);
+      setCachedClips(id, normalized, item.title);
+    } catch(e) {
+      // Silent fail — prefetch is best-effort
+    }
   }
 }
 
@@ -3319,86 +3347,24 @@ function barRow(label, count, total) {
 function buildDataSummary() {
   const active = (statsGameData || []).filter(p => Object.keys(p).length > 0);
   if (active.length === 0) return 'No play data available.';
-
-  // For small datasets (< 80 plays), send raw play data
-  if (active.length < 300) {
-    return JSON.stringify({
-      label: getStatsLabel(),
-      totalPlays: active.length,
-      plays: active.map(p => {
-        const out = {};
-        if (p.odk) out.odk = p.odk; if (p.qtr) out.qtr = p.qtr;
-        if (p.dn) out.down = p.dn; if (p.dist) out.dist = p.dist;
-        if (p.yardln) out.yardLine = p.yardln; if (p.hash) out.hash = p.hash;
-        if (p.playtype) out.playType = p.playtype; if (p.result) out.result = p.result;
-        if (p.gainloss) out.gainLoss = p.gainloss;
-        if (p.offform) out.formation = p.offform.includes('|') ? p.offform.split('|')[1] : p.offform;
-        return out;
-      })
-    });
-  }
-
-  // For larger datasets, send a pre-computed statistical summary
-  const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
-  const tally = (arr, fn) => { const m = {}; arr.forEach(p => { const v = fn(p); if (v) m[v] = (m[v]||0)+1; }); return m; };
-  const getGL = p => num(p.gainloss);
-  const getForm = p => p.offform ? (p.offform.includes('|') ? p.offform.split('|')[1] : p.offform) : null;
-  const isRun = p => p.playtype && p.playtype.toLowerCase().includes('run');
-  const isPass = p => p.playtype && p.playtype.toLowerCase().includes('pass');
-  const avg = arr => arr.length > 0 ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : 'N/A';
-
-  const off = active.filter(p => p.odk === 'O');
-  const def = active.filter(p => p.odk === 'D');
-  const runs = off.filter(isRun);
-  const passes = off.filter(isPass);
-  const offGL = off.map(getGL).filter(v => v !== null);
-  const runGL = runs.map(getGL).filter(v => v !== null);
-  const passGL = passes.map(getGL).filter(v => v !== null);
-
-  const summary = {
+  return JSON.stringify({
     label: getStatsLabel(),
     totalPlays: active.length,
-    dataMode: 'summary (large dataset — raw plays omitted for speed)',
-    breakdown: { offense: off.length, defense: def.length, specialTeams: active.length - off.length - def.length },
-    offense: {
-      runs: runs.length, passes: passes.length,
-      avgYdsPerPlay: avg(offGL), avgYdsPerRun: avg(runGL), avgYdsPerPass: avg(passGL),
-      plays3plus: offGL.filter(v=>v>=3).length, plays5plus: offGL.filter(v=>v>=5).length,
-      plays10plus: offGL.filter(v=>v>=10).length, negativePlays: offGL.filter(v=>v<0).length
-    },
-    formations: tally(off, getForm),
-    results: tally(active, p => p.result),
-    playTypes: tally(off, p => p.playtype),
-    downDistribution: tally(active, p => p.dn),
-    hashDistribution: tally(active, p => p.hash),
-    quarterDistribution: tally(active, p => p.qtr)
-  };
-
-  // Add per-down breakdown
-  ['1','2','3','4'].forEach(d => {
-    const dnOff = off.filter(p => p.dn === d);
-    if (dnOff.length > 0) {
-      const gl = dnOff.map(getGL).filter(v=>v!==null);
-      summary['down'+d] = {
-        total: dnOff.length,
-        runs: dnOff.filter(isRun).length,
-        passes: dnOff.filter(isPass).length,
-        avgYds: avg(gl)
-      };
-    }
+    plays: active.map(p => {
+      const out = {};
+      if (p.odk)      out.odk       = p.odk;
+      if (p.qtr)      out.qtr       = p.qtr;
+      if (p.dn)       out.down      = p.dn;
+      if (p.dist)     out.dist      = p.dist;
+      if (p.yardln)   out.yardLine  = p.yardln;
+      if (p.hash)     out.hash      = p.hash;
+      if (p.playtype) out.playType  = p.playtype;
+      if (p.result)   out.result    = p.result;
+      if (p.gainloss) out.gainLoss  = p.gainloss;
+      if (p.offform)  out.formation = p.offform.includes('|') ? p.offform.split('|')[1] : p.offform;
+      return out;
+    })
   });
-
-  // Add defense summary
-  if (def.length > 0) {
-    const defGL = def.map(getGL).filter(v=>v!==null);
-    summary.defense = {
-      plays: def.length,
-      avgAllowed: avg(defGL),
-      results: tally(def, p => p.result)
-    };
-  }
-
-  return JSON.stringify(summary);
 }
 
 async function sendChat() {
@@ -3439,7 +3405,7 @@ Data: ${buildDataSummary()}`;
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
         system: systemPrompt,
         messages: recentHistory
