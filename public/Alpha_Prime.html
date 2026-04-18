@@ -3392,9 +3392,25 @@ async function sendChat() {
   const thinkingDiv = appendMsg('assistant thinking', 'Analyzing your data…');
 
   const label = getStatsLabel() || 'No dataset loaded';
-  const systemPrompt = `You are a football analytics assistant. Answer concisely in under 150 words.
+  const systemPrompt = `You are a football analytics assistant for a coaching staff. You have access to complete play-by-play data. Analyze it precisely — do not estimate when you can count directly.
+
+DATA SCHEMA:
+- odk: O=offense, D=defense, K=special teams
+- qtr: quarter (1-4)
+- down: down number (1-4)
+- dist: distance needed (1-3, 4-6, 7-9, 10+, or exact number)
+- yardLine: field position (negative = own side, positive = opponent side)
+- hash: L/M/R
+- playType: Run or Pass (plus special teams types)
+- result: the outcome — "1st DN" means a first down was gained, "Rush TD"/"Complete TD" = touchdown, "Rush"/"Complete"/"Incomplete"/"Sack" etc.
+- gainLoss: exact yards gained or lost (number)
+- formation: offensive formation used
+
+IMPORTANT: First downs are plays where result contains "1st DN" or "TD" (touchdowns also earn first downs). Count these directly — do not estimate. Use gainLoss for yardage calculations. Answer concisely and precisely using actual counts from the data.
+
 Dataset: ${label}
-Data: ${buildDataSummary()}`;
+Plays:
+${buildDataSummary()}`;
 
   const recentHistory = chatHistory.slice(-6);
 
