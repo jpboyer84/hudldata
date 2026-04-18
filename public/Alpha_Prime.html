@@ -2927,7 +2927,7 @@ async function prefetchHudlClips() {
     if (getCachedClips(id)) continue; // already cached
     try {
       await new Promise(r => setTimeout(r, 500)); // 500ms delay between fetches
-      const resp = await fetch(\`\${HUDL_API}/api/clips/\${id}?count=1000\`);
+      const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
       if (!resp.ok) continue;
       const data = await resp.json();
       const normalized = data.clips.map(normalize);
