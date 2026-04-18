@@ -2681,6 +2681,8 @@ let statsGameData = null;
 let statsSource = 'local';
 let statsLabel = '';
 let hudlLibrary = null;
+let hudlCat = 'all';
+let chatHistory = [];
 
 function goStats() {
   statsReturnView = 'view-landing';
@@ -2702,7 +2704,6 @@ function goStats() {
 }
 
 // unified source — tracker items always included when hudlCat is 'all' or 'tracker'
-let hudlCat = 'all';
 
 function getCutupCategory(title) {
   const t = title.trim().toLowerCase();
@@ -3431,28 +3432,34 @@ async function sendChat() {
   if (!msg) return;
   input.value = '';
 
-  const messages = document.getElementById('chat-messages');
+  const messagesEl = document.getElementById('chat-messages');
 
   // Auto-switch to AI tab
   setStatsTab('ai');
 
-  // Add user message
+  // Helper: append a message div
+  function appendMsg(cls, html) {
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + cls;
+    div.innerHTML = html;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
   chatHistory.push({ role: 'user', content: msg });
-  messages.innerHTML += `<div class="chat-msg user">${msg}</div>`;
-  messages.innerHTML += `<div class="chat-msg assistant thinking" id="thinking-msg">Analyzing your data…</div>`;
-  messages.scrollTop = messages.scrollHeight;
+  appendMsg('user', msg);
+  const thinkingDiv = appendMsg('assistant thinking', 'Analyzing your data…');
 
   const label = getStatsLabel();
   const gameLocation = (() => {
     const l = label.toLowerCase();
-    if (l.includes('@')) return 'AWAY game (title contains @)';
-    if (l.includes(' vs ')) return 'HOME game (title contains vs)';
+    if (l.includes('@')) return 'AWAY game';
+    if (l.includes(' vs ')) return 'HOME game';
     return 'unknown location';
   })();
   const seasonMatch = label.match(/'(\d{2})/);
   const season = seasonMatch ? `20${seasonMatch[1]}` : 'unknown';
-
-  const dataSummary = buildDataSummary();
 
   const systemPrompt = `You are a football analytics assistant for a coaching staff. You have access to play-by-play data from their games. Analyze the data and answer coaching questions concisely and directly. Use football terminology. When referencing numbers, be specific. Keep answers under 200 words unless a detailed breakdown is requested.
 
@@ -3460,14 +3467,14 @@ Current game/dataset: ${label}
 Game location: ${gameLocation}
 Season: ${season}
 Play data:
-${dataSummary}`;
+${buildDataSummary()}`;
 
   // Only send last 6 messages of history to prevent ballooning
   const recentHistory = chatHistory.slice(-6);
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000); // 2 min
+    const timeout = setTimeout(() => controller.abort(), 120000);
     const resp = await fetch(`${HUDL_API}/api/claude`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3483,27 +3490,28 @@ ${dataSummary}`;
 
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-    const reply = data.content?.[0]?.text || 'Sorry, I couldn\'t get a response.';
+    const reply = data.content?.[0]?.text || "Sorry, I couldn't get a response.";
     chatHistory.push({ role: 'assistant', content: reply });
 
-    document.getElementById('thinking-msg')?.remove();
-    const savedMsg = msg; // capture for closure
-    messages.innerHTML += `<div class="chat-msg assistant">
-      ${formatChatResponse(reply)}
-      <div style="margin-top:8px;text-align:right">
-        <button onclick="saveInsight(${JSON.stringify(savedMsg)}, ${JSON.stringify(reply)})"
-          style="font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);
-                 border-radius:4px;padding:3px 8px;cursor:pointer;font-family:var(--font-ui)">📌 SAVE</button>
-      </div>
-    </div>`;
-    messages.scrollTop = messages.scrollHeight;
+    thinkingDiv.remove();
+
+    const replyDiv = document.createElement('div');
+    replyDiv.className = 'chat-msg assistant';
+    replyDiv.innerHTML = formatChatResponse(reply)
+      + `<div style="margin-top:8px;text-align:right">
+          <button onclick="saveInsight(${JSON.stringify(msg)}, ${JSON.stringify(reply)})"
+            style="font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);
+                   border-radius:4px;padding:3px 8px;cursor:pointer;font-family:var(--font-ui)">📌 SAVE</button>
+         </div>`;
+    messagesEl.appendChild(replyDiv);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
   } catch(e) {
-    document.getElementById('thinking-msg')?.remove();
+    thinkingDiv.remove();
     const errMsg = e.name === 'AbortError'
-      ? 'Request timed out — dataset may be too large. Try loading fewer cutups.'
+      ? 'Request timed out — try loading fewer cutups.'
       : `Error: ${e.message}`;
-    messages.innerHTML += `<div class="chat-msg assistant">${errMsg}</div>`;
-    messages.scrollTop = messages.scrollHeight;
+    appendMsg('assistant', errMsg);
     chatHistory.pop();
   }
 }
@@ -3648,6 +3656,9 @@ function goStatsFromTracker() {
   const weekStr = game.week ? ' · Wk ' + game.week : '';
   statsLabel = game.home + ' vs ' + game.away + weekStr;
   statsSource = 'local';
+  chatHistory = [];
+  document.getElementById('chat-messages').innerHTML =
+    '<div class="chat-msg assistant">Hi Coach! Data loaded — ask me anything about this game.</div>';
   showView('view-stats');
   renderStatsFromData(plays, statsLabel, false);
   updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
@@ -3664,6 +3675,9 @@ function goStatsFromArchive(gameId) {
   const weekStr = g.week ? ' · Wk ' + g.week : '';
   statsLabel = g.home + ' vs ' + g.away + weekStr;
   statsSource = 'local';
+  chatHistory = [];
+  document.getElementById('chat-messages').innerHTML =
+    '<div class="chat-msg assistant">Hi Coach! Data loaded — ask me anything about this game.</div>';
   showView('view-stats');
   renderStatsFromData(plays, statsLabel, false);
   updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
