@@ -675,6 +675,14 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <button class="btn btn-secondary" onclick="closeModal('m-new-game')">Cancel</button>
       <button class="btn btn-primary" onclick="startGame()">START GAME</button>
     </div>
+    <div class="settings-group">
+      <div class="settings-group-title">🗑️ Hudl Data Cache</div>
+      <div class="settings-group-sub" id="cache-stats-info">Cached Hudl data speeds up loading. Data auto-expires after 24 hours.</div>
+      <div class="settings-row">
+        <div class="settings-btn" onclick="clearHudlCache();updateCacheStats()"><span class="settings-btn-icon">🗑️</span>CLEAR CACHE<span class="settings-btn-label">Remove all cached data</span></div>
+        <div class="settings-btn" onclick="updateCacheStats()"><span class="settings-btn-icon">📊</span>CHECK SIZE<span class="settings-btn-label">See cache usage</span></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2614,12 +2622,10 @@ function updateActiveLabel(text) {
 }
 
 function refreshStats() {
-  if (statsSource === 'local') {
-    renderStats();
-  } else {
-    hudlLibrary = null;
-    loadHudlLibrary();
-  }
+  hudlLibrary = null;
+  localStorage.removeItem('hd_library_cache');
+  localStorage.removeItem('hd_library_cache_at');
+  loadHudlLibrary();
 }
 
 async function loadAndShowStats() {
@@ -2773,9 +2779,115 @@ function matchesSmartFiltersLocal(item) {
   return true;
 }
 
+// ════════════════════════════════════════
+// HUDL DATA CACHE
+// ════════════════════════════════════════
+const CACHE_KEY_PREFIX = 'hd_cache_';
+const CACHE_META_KEY = 'hd_cache_meta';
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+function getCacheMeta() {
+  try { return JSON.parse(localStorage.getItem(CACHE_META_KEY) || '{}'); } catch { return {}; }
+}
+
+function setCacheMeta(meta) {
+  localStorage.setItem(CACHE_META_KEY, JSON.stringify(meta));
+}
+
+function getCachedClips(cutupId) {
+  const meta = getCacheMeta();
+  const entry = meta[cutupId];
+  if (!entry) return null;
+  // Check TTL
+  if (Date.now() - entry.cachedAt > CACHE_TTL) {
+    // Expired — clean up
+    localStorage.removeItem(CACHE_KEY_PREFIX + cutupId);
+    delete meta[cutupId];
+    setCacheMeta(meta);
+    return null;
+  }
+  try {
+    const data = localStorage.getItem(CACHE_KEY_PREFIX + cutupId);
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedClips(cutupId, clips, label) {
+  const meta = getCacheMeta();
+  try {
+    localStorage.setItem(CACHE_KEY_PREFIX + cutupId, JSON.stringify(clips));
+    meta[cutupId] = { cachedAt: Date.now(), label: label, count: clips.length };
+    setCacheMeta(meta);
+  } catch(e) {
+    // localStorage full — evict oldest entries and retry
+    console.warn('Cache storage full, evicting old entries');
+    evictOldestCache(3);
+    try {
+      localStorage.setItem(CACHE_KEY_PREFIX + cutupId, JSON.stringify(clips));
+      meta[cutupId] = { cachedAt: Date.now(), label: label, count: clips.length };
+      setCacheMeta(meta);
+    } catch { /* give up silently */ }
+  }
+}
+
+function evictOldestCache(count) {
+  const meta = getCacheMeta();
+  const sorted = Object.entries(meta).sort((a, b) => a[1].cachedAt - b[1].cachedAt);
+  for (let i = 0; i < Math.min(count, sorted.length); i++) {
+    localStorage.removeItem(CACHE_KEY_PREFIX + sorted[i][0]);
+    delete meta[sorted[i][0]];
+  }
+  setCacheMeta(meta);
+}
+
+function updateCacheStats() {
+  const stats = getCacheStats();
+  const el = document.getElementById('cache-stats-info');
+  if (el) el.textContent = stats.entries > 0
+    ? `${stats.entries} cutup${stats.entries!==1?'s':''} cached (${stats.sizeKB} KB). Auto-expires after 24 hours.`
+    : 'No cached data. Data auto-expires after 24 hours.';
+}
+
+function clearHudlCache() {
+  const meta = getCacheMeta();
+  Object.keys(meta).forEach(id => localStorage.removeItem(CACHE_KEY_PREFIX + id));
+  localStorage.removeItem(CACHE_META_KEY);
+  localStorage.removeItem('hd_library_cache');
+  localStorage.removeItem('hd_library_cache_at');
+  showToast('Hudl cache cleared');
+}
+
+function getCacheStats() {
+  const meta = getCacheMeta();
+  const entries = Object.keys(meta).length;
+  let totalSize = 0;
+  Object.keys(meta).forEach(id => {
+    const item = localStorage.getItem(CACHE_KEY_PREFIX + id);
+    if (item) totalSize += item.length;
+  });
+  return { entries, sizeKB: Math.round(totalSize / 1024) };
+}
+
 async function loadHudlLibrary() {
   const status = document.getElementById('hudl-load-status');
   if (hudlLibrary) { filterHudlList(); return; }
+
+  // Try library cache first (1 hour TTL)
+  const libCacheAge = Date.now() - parseInt(localStorage.getItem('hd_library_cache_at') || '0');
+  if (libCacheAge < 3600000) {
+    try {
+      const cached = JSON.parse(localStorage.getItem('hd_library_cache'));
+      if (cached && cached.length > 0) {
+        hudlLibrary = cached;
+        status.textContent = 'Loaded from cache';
+        filterHudlList();
+        return;
+      }
+    } catch {}
+  }
+
   status.textContent = 'Loading cutups from Hudl…';
   document.getElementById('hudl-cutup-list').innerHTML =
     '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>';
@@ -2784,12 +2896,15 @@ async function loadHudlLibrary() {
     if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
     const data = await resp.json();
     hudlLibrary = data.items;
+    try {
+      localStorage.setItem('hd_library_cache', JSON.stringify(data.items));
+      localStorage.setItem('hd_library_cache_at', Date.now().toString());
+    } catch {}
     filterHudlList();
   } catch(e) {
     status.textContent = `Could not reach Hudl server: ${e.message}`;
     document.getElementById('hudl-cutup-list').innerHTML =
       '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Error loading Hudl cutups</div>';
-    // Still show local games
     filterHudlList();
   }
 }
@@ -2868,14 +2983,26 @@ async function loadHudlCutup() {
     result: c.result||'', gainloss: c.gain_loss||'', offform: c.off_form||'',
   });
 
+  let cacheHits = 0, cacheMisses = 0;
+
   const hudlResults = await Promise.all(hudlChecked.map(async chk => {
     const id = chk.value.replace('local_', '');
     const label = chk.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || id;
+    // Check cache first
+    const cached = getCachedClips(id);
+    if (cached) {
+      cacheHits++;
+      return { label, clips: cached, error: null };
+    }
+    // Cache miss — fetch from Hudl
+    cacheMisses++;
     try {
       const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
       if (!resp.ok) throw new Error(resp.status);
       const data = await resp.json();
-      return { label, clips: data.clips.map(normalize), error: null };
+      const normalized = data.clips.map(normalize);
+      setCachedClips(id, normalized, label);
+      return { label, clips: normalized, error: null };
     } catch(e) {
       return { label, clips: [], error: e.message };
     }
@@ -2890,92 +3017,15 @@ async function loadHudlCutup() {
   const allLabels   = [...localLabels, ...hudlLabels];
   statsLabel = allLabels.length === 1 ? allLabels[0] : `${allLabels.length} sources combined`;
 
-  status.textContent = `${allPlays.length} total plays loaded`;
-  showToast(`Loaded ${allPlays.length} plays`);
+  const cacheInfo = cacheHits > 0 ? ` (${cacheHits} cached)` : '';
+  status.textContent = `${allPlays.length} total plays loaded${cacheInfo}`;
+  showToast(`Loaded ${allPlays.length} plays${cacheInfo}`);
 
   const body = document.getElementById('stats-tab-stats');
   const breakdown = [...localChecked.map(c=>({ label: c.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent, count: localPlays.length })), ...hudlResults];
   renderStatsFromData(allPlays, statsLabel, false);
   setStatsTab('stats');
   updateActiveLabel(`${statsLabel} · ${allPlays.length} plays`);
-}
-
-async function loadHudlCutup() {
-  const checked = [...document.querySelectorAll('#hudl-cutup-list input[type=checkbox]:checked')];
-  if (checked.length === 0) { showToast('Check at least one cutup'); return; }
-
-  const status = document.getElementById('hudl-load-status');
-  status.textContent = `Loading ${checked.length} cutup${checked.length > 1 ? 's' : ''}…`;
-  document.getElementById('stats-tab-stats').innerHTML =
-    '<div class="empty-msg">Loading Hudl data…</div>';
-
-  // Fetch all selected cutups in parallel
-  const results = await Promise.all(checked.map(async chk => {
-    const id = chk.value;
-    const label = chk.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || id;
-    try {
-      const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
-      if (!resp.ok) throw new Error(`${resp.status}`);
-      const data = await resp.json();
-      return { id, label, clips: data.clips, error: null };
-    } catch(e) {
-      return { id, label, clips: [], error: e.message };
-    }
-  }));
-
-  // Normalize Hudl clip format to Alpha Prime play format
-  const normalize = c => ({
-    odk:      c.odk       || '',
-    qtr:      c.quarter   || '',
-    dn:       c.down      || '',
-    dist:     c.distance  || '',
-    yardln:   c.yard_line || '',
-    hash:     c.hash      || '',
-    playtype: c.play_type || '',
-    result:   c.result    || '',
-    gainloss: c.gain_loss || '',
-    offform:  c.off_form  || '',
-  });
-
-  // Build combined dataset + per-cutup breakdown
-  const allPlays = [];
-  const breakdown = [];
-  results.forEach(r => {
-    const plays = r.clips.map(normalize);
-    allPlays.push(...plays);
-    breakdown.push({ label: r.label, count: plays.length, error: r.error });
-  });
-
-  statsGameData = allPlays;
-  statsLabel = checked.length === 1
-    ? results[0].label
-    : `${checked.length} cutups combined`;
-
-  const totalLoaded = allPlays.length;
-  status.textContent = `${totalLoaded} total clips loaded`;
-  showToast(`Loaded ${totalLoaded} clips`);
-
-  const body = document.getElementById('stats-tab-stats');
-  const breakdownHtml = breakdown.length > 1 ? `<div class="stat-card">
-    <div class="stat-card-title">Cutup Breakdown</div>
-    <div class="stat-big-row" style="flex-wrap:wrap">
-      ${breakdown.map(b => `
-        <div class="stat-big" style="min-width:100px">
-          <div class="stat-big-val">${b.error ? '!' : b.count}</div>
-          <div class="stat-big-lbl" style="font-size:9px;word-break:break-word">${b.label}</div>
-        </div>`).join('')}
-    </div>
-  </div>` : '';
-
-  // Render breakdown card first, then append stat charts
-  if (breakdownHtml) {
-    body.innerHTML = breakdownHtml;
-    renderStatsFromData(allPlays, statsLabel, true);
-  } else {
-    renderStatsFromData(allPlays, statsLabel, false);
-  }
-  setStatsTab('stats');
-  updateActiveLabel(`${statsLabel} · ${totalLoaded} plays`);
 }
 
 // ── LOCAL GAME DATA ──
