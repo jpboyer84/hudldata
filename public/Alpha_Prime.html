@@ -2902,39 +2902,11 @@ async function loadHudlLibrary() {
       localStorage.setItem('hd_library_cache_at', Date.now().toString());
     } catch {}
     filterHudlList();
-    // Background prefetch all cutups into cache
-    prefetchHudlClips();
   } catch(e) {
     status.textContent = `Could not reach Hudl server: ${e.message}`;
     document.getElementById('hudl-cutup-list').innerHTML =
       '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Error loading Hudl cutups</div>';
     filterHudlList();
-  }
-}
-
-async function prefetchHudlClips() {
-  if (!hudlLibrary || hudlLibrary.length === 0) return;
-  const normalize = c => ({
-    odk: c.odk||'', qtr: c.quarter||'', dn: c.down||'', dist: c.distance||'',
-    yardln: c.yard_line||'', hash: c.hash||'', playtype: c.play_type||'',
-    result: c.result||'', gainloss: c.gain_loss||'', offform: c.off_form||'',
-  });
-  // Only prefetch items not already cached, one at a time to avoid hammering the server
-  for (const item of hudlLibrary) {
-    const cat = getCutupCategory(item.title);
-    if (cat === 'practice' || cat === 'untagged') continue;
-    const id = item.internalId || item.id;
-    if (getCachedClips(id)) continue; // already cached
-    try {
-      await new Promise(r => setTimeout(r, 500)); // 500ms delay between fetches
-      const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
-      if (!resp.ok) continue;
-      const data = await resp.json();
-      const normalized = data.clips.map(normalize);
-      setCachedClips(id, normalized, item.title);
-    } catch(e) {
-      // Silent fail — prefetch is best-effort
-    }
   }
 }
 
@@ -3347,7 +3319,7 @@ function barRow(label, count, total) {
 function buildDataSummary() {
   const active = (statsGameData || []).filter(p => Object.keys(p).length > 0);
   if (active.length === 0) return 'No play data available.';
-  return JSON.stringify({
+  const summary = {
     label: getStatsLabel(),
     totalPlays: active.length,
     plays: active.map(p => {
@@ -3364,7 +3336,8 @@ function buildDataSummary() {
       if (p.offform)  out.formation = p.offform.includes('|') ? p.offform.split('|')[1] : p.offform;
       return out;
     })
-  });
+  };
+  return JSON.stringify(summary);
 }
 
 async function sendChat() {
@@ -3374,7 +3347,6 @@ async function sendChat() {
   input.value = '';
 
   const messagesEl = document.getElementById('chat-messages');
-
   setStatsTab('ai');
 
   function appendMsg(cls, html) {
@@ -3391,66 +3363,45 @@ async function sendChat() {
   appendMsg('user', msg);
   const thinkingDiv = appendMsg('assistant thinking', 'Analyzing your data…');
 
-  const label = getStatsLabel() || 'No dataset loaded';
-  const systemPrompt = `You are a football analytics assistant for a coaching staff. You have access to complete play-by-play data. Analyze it precisely — do not estimate when you can count directly.
+  const label = getStatsLabel();
+  const gameLocation = (() => {
+    const l = label.toLowerCase();
+    if (l.includes('@')) return 'AWAY game (title contains @)';
+    if (l.includes(' vs ')) return 'HOME game (title contains vs)';
+    return 'unknown location';
+  })();
+  const seasonMatch = label.match(/'(\d{2})/);
+  const season = seasonMatch ? `20${seasonMatch[1]}` : 'unknown';
 
-DATA SCHEMA:
-- odk: O=offense, D=defense, K=special teams
-- qtr: quarter (1-4)
-- down: down number (1-4)
-- dist: distance needed (1-3, 4-6, 7-9, 10+, or exact number)
-- yardLine: field position (negative = own side, positive = opponent side)
-- hash: L/M/R
-- playType: Run or Pass (plus special teams types)
-- result: the outcome — "1st DN" means a first down was gained, "Rush TD"/"Complete TD" = touchdown, "Rush"/"Complete"/"Incomplete"/"Sack" etc.
-- gainLoss: exact yards gained or lost (number)
-- formation: offensive formation used
+  const systemPrompt = `You are a football analytics assistant for a coaching staff. You have access to play-by-play data from their games. Analyze the data and answer coaching questions concisely and directly. Use football terminology. When referencing numbers, be specific. Keep answers under 200 words unless a detailed breakdown is requested.
 
-IMPORTANT: First downs are plays where result contains "1st DN" or "TD" (touchdowns also earn first downs). Count these directly — do not estimate. Use gainLoss for yardage calculations. Answer concisely and precisely using actual counts from the data.
-
-Dataset: ${label}
-Plays:
+Current game/dataset: ${label}
+Game location: ${gameLocation}
+Season: ${season}
+Play data:
 ${buildDataSummary()}`;
 
-  const recentHistory = chatHistory.slice(-6);
-
   try {
-    thinkingDiv.innerHTML = 'Sending request…';
-
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000);
     const resp = await fetch(`${HUDL_API}/api/claude`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
+        max_tokens: 2048,
         system: systemPrompt,
-        messages: recentHistory
+        messages: chatHistory
       })
     });
+    clearTimeout(timeout);
 
-    thinkingDiv.innerHTML = `Got response (${resp.status})…`;
-
-    const text = await resp.text();
-
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch(parseErr) {
-      thinkingDiv.remove();
-      appendMsg('assistant', `Parse error: ${text.slice(0, 200)}`);
-      chatHistory.pop();
-      return;
-    }
-
-    if (data.error) {
-      thinkingDiv.remove();
-      appendMsg('assistant', `API error: ${data.error.message || JSON.stringify(data.error)}`);
-      chatHistory.pop();
-      return;
-    }
-
-    const reply = data.content?.[0]?.text || 'No response text received.';
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    const reply = data.content?.[0]?.text || "Sorry, I couldn't get a response.";
     chatHistory.push({ role: 'assistant', content: reply });
+
     thinkingDiv.remove();
 
     const savedMsg = msg;
@@ -3471,7 +3422,10 @@ ${buildDataSummary()}`;
 
   } catch(e) {
     thinkingDiv.remove();
-    appendMsg('assistant', `Fetch error: ${e.name} — ${e.message}`);
+    const errMsg = e.name === 'AbortError'
+      ? 'Request timed out — dataset may be too large. Try loading a single game cutup instead.'
+      : `Error: ${e.message}`;
+    appendMsg('assistant', errMsg);
     chatHistory.pop();
   }
 }
