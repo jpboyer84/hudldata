@@ -3321,7 +3321,7 @@ function buildDataSummary() {
   if (active.length === 0) return 'No play data available.';
 
   // For small datasets (< 80 plays), send raw play data
-  if (active.length < 80) {
+  if (active.length < 300) {
     return JSON.stringify({
       label: getStatsLabel(),
       totalPlays: active.length,
@@ -3471,11 +3471,16 @@ Data: ${buildDataSummary()}`;
     chatHistory.push({ role: 'assistant', content: reply });
     thinkingDiv.remove();
 
+    const savedMsg = msg;
+    const savedReply = reply;
+    const saveId = 'save_' + Date.now();
+    window[saveId] = () => saveInsight(savedMsg, savedReply);
+
     const replyDiv = document.createElement('div');
     replyDiv.className = 'chat-msg assistant';
     replyDiv.innerHTML = formatChatResponse(reply)
       + `<div style="margin-top:8px;text-align:right">
-          <button onclick="saveInsight(${JSON.stringify(msg)}, ${JSON.stringify(reply)})"
+          <button onclick="window['${saveId}']()"
             style="font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);
                    border-radius:4px;padding:3px 8px;cursor:pointer;font-family:var(--font-ui)">📌 SAVE</button>
          </div>`;
