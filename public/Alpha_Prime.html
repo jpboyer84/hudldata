@@ -3484,6 +3484,27 @@ async function runSpotlightAnalysis(plays) {
   const third = off.filter(p=>p.dn==='3');
   const thirdConv = third.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('first')||r.includes('td'); });
 
+  // Defense stats
+  const defGL = def.map(getGL).filter(v=>v!==null);
+  const defRuns = def.filter(isRun);
+  const defPasses = def.filter(isPass);
+  const defResults = {};
+  def.forEach(p => { const r = (p.result||'').toLowerCase(); if(r) defResults[r] = (defResults[r]||0) + 1; });
+  const sacks = def.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('sack'); }).length;
+  const tfl = def.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('tfl')||r.includes('for loss'); }).length;
+  const ints = def.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('int')||r.includes('interception'); }).length;
+  const defThird = def.filter(p=>p.dn==='3');
+  const defThirdStop = defThird.filter(p=>{ const r=(p.result||'').toLowerCase(); return !r.includes('first')&&!r.includes('td')&&!r.includes('conv'); });
+  const defNegPlays = defGL.filter(v=>v<0).length;
+
+  // Defense down tendencies
+  const defDnStats = ['1','2','3','4'].map(d => {
+    const dnDef = def.filter(p=>p.dn===d);
+    if (!dnDef.length) return null;
+    const gl = dnDef.map(getGL).filter(v=>v!==null);
+    return { down: d, plays: dnDef.length, runPct: Math.round(dnDef.filter(isRun).length/dnDef.length*100), passPct: Math.round(dnDef.filter(isPass).length/dnDef.length*100), avgAllowed: avg(gl) };
+  }).filter(Boolean);
+
   const summaryObj = {
     totalPlays: active.length,
     offense: { plays: off.length, playsWithYardage: offGL.length, missingYardage: off.length - offGL.length,
@@ -3497,7 +3518,17 @@ async function runSpotlightAnalysis(plays) {
       thirdDowns: third.length, thirdConversions: thirdConv.length,
       thirdConvPct: third.length ? Math.round(thirdConv.length/third.length*100) : 0
     },
-    defense: { plays: def.length },
+    defense: { plays: def.length, playsWithYardage: defGL.length, missingYardage: def.length - defGL.length,
+      avgYdsAllowed: avg(defGL), oppRunPlays: defRuns.length, oppPassPlays: defPasses.length,
+      oppRunPct: def.length ? Math.round(defRuns.length/def.length*100) : 0,
+      oppPassPct: def.length ? Math.round(defPasses.length/def.length*100) : 0,
+      sacks, tfl, interceptions: ints,
+      negativePlaysPct: defGL.length ? Math.round(defNegPlays/defGL.length*100) : 0,
+      thirdDownFaced: defThird.length, thirdDownStops: defThirdStop.length,
+      thirdDownStopPct: defThird.length ? Math.round(defThirdStop.length/defThird.length*100) : 0,
+      topResults: Object.entries(defResults).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([r,c])=>({result:r,count:c}))
+    },
+    defenseDownTendencies: defDnStats,
     downTendencies: dnStats,
     formations: formStats,
     hashTendencies: Object.entries(hashMap).map(([h,d])=>({hash:h, plays:d.plays, playsWithYardage:d.gl.length, missingYardage:d.plays-d.gl.length, runPct:Math.round(d.runs/d.plays*100), avg:avg(d.gl)})),
@@ -3505,19 +3536,20 @@ async function runSpotlightAnalysis(plays) {
     dataLabel: statsLabel
   };
 
-  const systemPrompt = `You are an elite football analytics assistant for a high school coach. Analyze play data and surface the most important, actionable findings.
+  const systemPrompt = `You are an elite football analytics assistant for a high school coach. Analyze play data and surface the most important, actionable findings for BOTH offense and defense.
 
-Return ONLY a valid JSON array (no markdown, no preamble) of 4-5 insight objects. Each object must have:
-- "stat": Supporting data point (e.g. "71% run rate on 3rd & long", "Only 8% of plays"). Keep under 10 words. This is small context text.
-- "headline": The actionable takeaway or recommendation (e.g. "Mix in more passes on 3rd & long", "Use Trips Right more — it's your best formation"). This is the BIG text the coach reads first. Max 12 words.
+Return ONLY a valid JSON array (no markdown, no preamble) of 5-6 insight objects. You MUST include at least 2 offensive insights (tag "O") and at least 2 defensive insights (tag "D"). Each object must have:
+- "stat": Supporting data point (e.g. "71% run rate on 3rd & long", "Opponents convert 80% of 3rd downs"). Keep under 10 words. This is small context text.
+- "headline": The actionable takeaway or recommendation (e.g. "Mix in more passes on 3rd & long", "Get off the field on 3rd down"). This is the BIG text the coach reads first. Max 12 words.
 - "why": Brief context on why (max 12 words)
 - "tag": one of "O", "D", "K", "G" (G = general)
 - "priority": "high" if exploitable/alarming, "medium" if notable, "low" if interesting
 
 CRITICAL RULES:
+- You MUST analyze both the "offense" and "defense" sections of the data. Do not skip defense.
+- For defense: look at yards allowed, opponent run/pass tendencies, 3rd down stop rate, sacks, TFLs, interceptions, and down-by-down breakdowns.
 - Check "playsWithYardage" and "missingYardage" fields. If a category has fewer than 10 plays with yardage data, do NOT make YPP/average claims about it — the sample is too small.
 - Never compare averages between groups where one has significant missing data.
-- Focus on patterns with solid sample sizes: run/pass tendencies, down-and-distance predictability, formation usage rates, overall efficiency.
 - Be specific with numbers but honest about limitations.`;
 
   try {
@@ -3528,7 +3560,7 @@ CRITICAL RULES:
         model: 'claude-sonnet-4-6',
         system: systemPrompt,
         messages: [{ role: 'user', content: `Analyze this football play data and return insights as JSON:\n${JSON.stringify(summaryObj, null, 2)}` }],
-        max_tokens: 1200
+        max_tokens: 1600
       })
     });
 
