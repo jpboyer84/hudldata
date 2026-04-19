@@ -2686,7 +2686,12 @@ function refreshStats() {
 }
 
 async function loadAndShowStats() {
-  await loadHudlCutup();
+  try {
+    await loadHudlCutup();
+  } catch(e) {
+    showToast('Load error: ' + e.message);
+    console.error('loadHudlCutup error:', e);
+  }
   closeFilterDrawer();
 }
 
@@ -3086,7 +3091,7 @@ async function loadHudlCutup() {
   status.textContent = `${allPlays.length} total plays loaded${cacheInfo}`;
   showToast(`Loaded ${allPlays.length} plays${cacheInfo}`);
 
-  renderStatsFromData(allPlays, statsLabel, false);
+  try { renderStatsFromData(allPlays, statsLabel, false); } catch(e) { console.error('Stats render error:', e); }
   setStatsTab('spotlight');
   setStatsSubTab('overview');
   updateActiveLabel(`${statsLabel} · ${allPlays.length} plays`);
