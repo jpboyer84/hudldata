@@ -2751,6 +2751,7 @@ function formatChatResponse(text) {
 let statsGameData = null;
 let statsReturnView = 'view-landing';
 let statSectionId = 0;
+let spotlightInsights = [];
 let statsSource = 'local';
 let statsLabel = '';
 let hudlLibrary = null;
@@ -3418,17 +3419,28 @@ function barRow(label, count, total) {
 }
 
 // ── SPOTLIGHT: AUTO AI ANALYSIS ──
-async function runSpotlightAnalysis(plays) {
+async function runSpotlightAnalysis(plays, append = false) {
   const panel = document.getElementById('stats-tab-spotlight');
   const empty = document.getElementById('spotlight-empty');
   if (empty) empty.style.display = 'none';
 
+  if (!append) spotlightInsights = [];
+
   // Show loading state
-  panel.innerHTML = `
-    <div class="spotlight-loading">
+  if (append) {
+    // Remove the generate more button and add loading indicator at bottom
+    const moreBtn = document.getElementById('spotlight-more-btn');
+    if (moreBtn) moreBtn.outerHTML = `<div class="spotlight-loading" id="spotlight-loading-more">
       <div class="spotlight-dot"></div>
-      <div>AI is analyzing your play data…</div>
+      <div>Finding more insights…</div>
     </div>`;
+  } else {
+    panel.innerHTML = `
+      <div class="spotlight-loading">
+        <div class="spotlight-dot"></div>
+        <div>AI is analyzing your play data…</div>
+      </div>`;
+  }
 
   const active = (plays || []).filter(p => Object.keys(p).length > 0);
   if (active.length === 0) {
@@ -3538,9 +3550,9 @@ async function runSpotlightAnalysis(plays) {
 
   const systemPrompt = `You are an elite football analytics assistant for a high school coach. Analyze play data and surface the most important, actionable findings for BOTH offense and defense.
 
-Return ONLY a valid JSON array (no markdown, no preamble) of 5-6 insight objects. You MUST include at least 2 offensive insights (tag "O") and at least 2 defensive insights (tag "D"). Each object must have:
-- "stat": Supporting data point (e.g. "71% run rate on 3rd & long", "Opponents convert 80% of 3rd downs"). Keep under 10 words. This is small context text.
-- "headline": The actionable takeaway or recommendation (e.g. "Mix in more passes on 3rd & long", "Get off the field on 3rd down"). This is the BIG text the coach reads first. Max 12 words.
+Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 offensive insights (tag "O") and 2-5 defensive insights (tag "D"). Only include an insight if it's genuinely useful — do NOT pad with filler. If there are only 2 real findings on one side, return 2. Quality over quantity. Each object must have:
+- "stat": Supporting data point (e.g. "71% run rate on 3rd & long", "Opponents convert 80% of 3rd downs"). Keep under 10 words.
+- "headline": The actionable takeaway or recommendation. This is the BIG text the coach reads first. Max 12 words.
 - "why": Brief context on why (max 12 words)
 - "tag": one of "O", "D", "K", "G" (G = general)
 - "priority": "high" if exploitable/alarming, "medium" if notable, "low" if interesting
@@ -3550,7 +3562,8 @@ CRITICAL RULES:
 - For defense: look at yards allowed, opponent run/pass tendencies, 3rd down stop rate, sacks, TFLs, interceptions, and down-by-down breakdowns.
 - Check "playsWithYardage" and "missingYardage" fields. If a category has fewer than 10 plays with yardage data, do NOT make YPP/average claims about it — the sample is too small.
 - Never compare averages between groups where one has significant missing data.
-- Be specific with numbers but honest about limitations.`;
+- Be specific with numbers but honest about limitations.
+- Do NOT repeat insights you have already provided (prior insights will be listed if this is a follow-up request).`;
 
   try {
     const resp = await fetch(`${HUDL_API}/api/claude`, {
@@ -3559,7 +3572,7 @@ CRITICAL RULES:
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         system: systemPrompt,
-        messages: [{ role: 'user', content: `Analyze this football play data and return insights as JSON:\n${JSON.stringify(summaryObj, null, 2)}` }],
+        messages: [{ role: 'user', content: `Analyze this football play data and return insights as JSON:\n${JSON.stringify(summaryObj, null, 2)}${append && spotlightInsights.length > 0 ? '\n\nYou have ALREADY provided these insights — do NOT repeat them, find NEW patterns:\n' + spotlightInsights.map(i => `- ${i.headline} (${i.stat})`).join('\n') : ''}` }],
         max_tokens: 1600
       })
     });
@@ -3574,11 +3587,26 @@ CRITICAL RULES:
 
     if (!Array.isArray(insights) || insights.length === 0) throw new Error('No insights returned');
 
-    // Render the cards
-    const priorityOrder = { high: 0, medium: 1, low: 2 };
-    const sorted = [...insights].sort((a,b) => (priorityOrder[a.priority]||1) - (priorityOrder[b.priority]||1));
+    // Store insights
+    spotlightInsights.push(...insights);
 
+    // Render all cards (full rebuild)
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
     const tagLabel = { O: 'OFFENSE', D: 'DEFENSE', K: 'SPECIAL TEAMS', G: 'GAME' };
+
+    // Group by O/D/other
+    const offInsights = spotlightInsights.filter(i => i.tag === 'O');
+    const defInsights = spotlightInsights.filter(i => i.tag === 'D');
+    const otherInsights = spotlightInsights.filter(i => i.tag !== 'O' && i.tag !== 'D');
+
+    const renderCards = (list) => list
+      .sort((a,b) => (priorityOrder[a.priority]||1) - (priorityOrder[b.priority]||1))
+      .map(ins => `<div class="spotlight-card ${ins.priority || 'medium'}">
+        <span class="spotlight-tag">${(tagLabel[ins.tag] || 'GENERAL')}</span>
+        <div class="spotlight-stat">${ins.stat}</div>
+        <div class="spotlight-headline">${ins.headline}</div>
+        <div class="spotlight-why">${ins.why}</div>
+      </div>`).join('');
 
     let html = `<div style="padding:4px 0">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -3586,26 +3614,41 @@ CRITICAL RULES:
         <button class="hdr-btn" onclick="runSpotlightAnalysis(statsGameData)" style="font-size:10px;padding:4px 10px">↺ REFRESH</button>
       </div>`;
 
-    sorted.forEach(ins => {
-      html += `<div class="spotlight-card ${ins.priority || 'medium'}">
-        <span class="spotlight-tag">${(tagLabel[ins.tag] || 'GENERAL')}</span>
-        <div class="spotlight-stat">${ins.stat}</div>
-        <div class="spotlight-headline">${ins.headline}</div>
-        <div class="spotlight-why">${ins.why}</div>
-      </div>`;
-    });
+    if (offInsights.length > 0) {
+      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:900;color:var(--green);margin-bottom:6px;margin-top:4px">OFFENSE</div>`;
+      html += renderCards(offInsights);
+    }
+    if (defInsights.length > 0) {
+      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:900;color:var(--red);margin-bottom:6px;margin-top:14px">DEFENSE</div>`;
+      html += renderCards(defInsights);
+    }
+    if (otherInsights.length > 0) {
+      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:900;color:var(--yellow);margin-bottom:6px;margin-top:14px">GENERAL</div>`;
+      html += renderCards(otherInsights);
+    }
 
-    html += `<div style="margin-top:12px">
-      <button class="btn btn-primary" onclick="setStatsTab('ai')" style="width:100%;padding:12px;font-size:12px">ASK AI A QUESTION →</button>
+    html += `<div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-secondary" id="spotlight-more-btn" onclick="runSpotlightAnalysis(statsGameData, true)" style="flex:1;padding:12px;font-size:12px">GENERATE MORE</button>
+      <button class="btn btn-primary" onclick="setStatsTab('ai')" style="flex:1;padding:12px;font-size:12px">ASK AI →</button>
     </div></div>`;
 
     panel.innerHTML = html;
 
   } catch(e) {
-    panel.innerHTML = `<div style="padding:16px">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Could not generate AI insights: ${e.message}</div>
-      <button class="btn btn-secondary" onclick="runSpotlightAnalysis(statsGameData)" style="font-size:11px">↺ TRY AGAIN</button>
-    </div>`;
+    if (append) {
+      // Remove loading indicator, re-add the button
+      const loader = document.getElementById('spotlight-loading-more');
+      if (loader) loader.outerHTML = `<div style="padding:10px;font-size:11px;color:var(--muted)">No additional insights found.</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-secondary" id="spotlight-more-btn" onclick="runSpotlightAnalysis(statsGameData, true)" style="flex:1;padding:12px;font-size:12px">TRY AGAIN</button>
+          <button class="btn btn-primary" onclick="setStatsTab('ai')" style="flex:1;padding:12px;font-size:12px">ASK AI →</button>
+        </div>`;
+    } else {
+      panel.innerHTML = `<div style="padding:16px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Could not generate AI insights: ${e.message}</div>
+        <button class="btn btn-secondary" onclick="runSpotlightAnalysis(statsGameData)" style="font-size:11px">↺ TRY AGAIN</button>
+      </div>`;
+    }
   }
 }
 
