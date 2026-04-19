@@ -3465,7 +3465,7 @@ ${buildDataSummary()}`;
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         system: systemPrompt,
-        messages: chatHistory
+        messages: chatHistory.slice(-6)
       })
     });
     clearTimeout(timeout);
@@ -3814,3 +3814,4 @@ setTimeout(tryInitGoogle, 500);
 </script>
 </body>
 </html>
+
