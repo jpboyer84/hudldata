@@ -3407,12 +3407,9 @@ Always answer with the number first, then brief context. Use a short table or bu
 
   // On the FIRST question: embed the full dataset in the user message so it only travels once.
   // On follow-ups: just send the question — data is already in the conversation history.
-  const isFirstMessage = chatHistory.length === 0;
   const userContent = isFirstMessage
     ? `Dataset: ${label} | Location: ${gameLocation} | Season: ${season}\n\nPlay data:\n${buildDataSummary()}\n\n---\n\nFirst question: ${msg}`
     : msg;
-
-  chatHistory.push({ role: 'user', content: userContent });
 
   chatHistory.push({ role: 'user', content: userContent });
 
