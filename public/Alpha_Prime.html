@@ -1190,6 +1190,20 @@ function getTmpls() { return JSON.parse(localStorage.getItem('hd_tmpls') || 'nul
 function saveTmpls(d){ localStorage.setItem('hd_tmpls', JSON.stringify(d)); }
 function getGames() { return JSON.parse(localStorage.getItem('hd_games') || '[]'); }
 function saveGames(d){ localStorage.setItem('hd_games', JSON.stringify(d)); }
+function getSpotlightFeedback() { return JSON.parse(localStorage.getItem('hd_spotlight_feedback') || '{"liked":[],"disliked":[]}'); }
+function saveSpotlightFeedback(d) { localStorage.setItem('hd_spotlight_feedback', JSON.stringify(d)); }
+function addSpotlightFeedback(insight, liked) {
+  const fb = getSpotlightFeedback();
+  const entry = { headline: insight.headline, stat: insight.stat, tag: insight.tag, ts: Date.now() };
+  // Remove if already exists in either list
+  fb.liked = fb.liked.filter(x => x.headline !== entry.headline);
+  fb.disliked = fb.disliked.filter(x => x.headline !== entry.headline);
+  if (liked) { fb.liked.push(entry); } else { fb.disliked.push(entry); }
+  // Keep last 20 of each
+  if (fb.liked.length > 20) fb.liked = fb.liked.slice(-20);
+  if (fb.disliked.length > 20) fb.disliked = fb.disliked.slice(-20);
+  saveSpotlightFeedback(fb);
+}
 
 // ════════════════════════════════════════
 // STATE
@@ -2154,7 +2168,8 @@ function exportBackupAll() {
     exportedAt: new Date().toISOString(),
     games: getGames(),
     columns: getCols(),
-    templates: getTmpls()
+    templates: getTmpls(),
+    spotlightFeedback: getSpotlightFeedback()
   };
   downloadJson(data, `hudldata_backup_${datestamp()}.json`);
   showToast('Backup exported!');
@@ -2350,12 +2365,13 @@ function handleJsonImport(input) {
       const gCount = data.games?.length ?? 0;
       const cCount = data.columns?.length ?? 0;
       const tCount = data.templates?.length ?? 0;
+      const hasFb = !!(data.spotlightFeedback && (data.spotlightFeedback.liked?.length || data.spotlightFeedback.disliked?.length));
       const info = document.getElementById('json-import-info');
       const parts = [];
       if (gCount > 0) parts.push(`${gCount} game${gCount!==1?'s':''}`);
       if (cCount > 0) parts.push(`${cCount} column${cCount!==1?'s':''}`);
       if (tCount > 0) parts.push(`${tCount} template${tCount!==1?'s':''}`);
-      info.textContent = `File contains: ${parts.join(', ') || 'nothing recognizable'}.`;
+      if (hasFb) parts.push('AI preferences');      info.textContent = `File contains: ${parts.join(', ') || 'nothing recognizable'}.`;
 
       // Toggle checkboxes based on what's available
       document.getElementById('ji-games').disabled = gCount === 0;
@@ -2411,6 +2427,21 @@ function confirmJsonImport() {
       const existingIds = new Set(existing.map(t => t.id));
       const newTmpls = jsonImportData.templates.filter(t => !existingIds.has(t.id));
       saveTmpls([...existing, ...newTmpls]);
+    }
+  }
+
+  // Import spotlight AI preferences if present
+  if (jsonImportData.spotlightFeedback) {
+    if (mode === 'overwrite') {
+      saveSpotlightFeedback(jsonImportData.spotlightFeedback);
+    } else {
+      const existing = getSpotlightFeedback();
+      const incoming = jsonImportData.spotlightFeedback;
+      const mergedLiked = [...existing.liked];
+      (incoming.liked || []).forEach(x => { if (!mergedLiked.some(e => e.headline === x.headline)) mergedLiked.push(x); });
+      const mergedDisliked = [...existing.disliked];
+      (incoming.disliked || []).forEach(x => { if (!mergedDisliked.some(e => e.headline === x.headline)) mergedDisliked.push(x); });
+      saveSpotlightFeedback({ liked: mergedLiked.slice(-20), disliked: mergedDisliked.slice(-20) });
     }
   }
 
@@ -2482,7 +2513,8 @@ function driveSaveBackup() {
       exportedAt: new Date().toISOString(),
       games: getGames(),
       columns: getCols(),
-      templates: getTmpls()
+      templates: getTmpls(),
+      spotlightFeedback: getSpotlightFeedback()
     };
     const filename = `hudldata_backup_${datestamp()}.json`;
     const content = JSON.stringify(data, null, 2);
@@ -3565,13 +3597,26 @@ CRITICAL RULES:
 - Be specific with numbers but honest about limitations.
 - Do NOT repeat insights you have already provided (prior insights will be listed if this is a follow-up request).`;
 
+  // Inject coach feedback into prompt if available
+  const fb = getSpotlightFeedback();
+  let feedbackContext = '';
+  if (fb.liked.length > 0) {
+    feedbackContext += '\n\nThe coach has rated these types of insights as USEFUL (generate more like these):\n' +
+      fb.liked.slice(-10).map(x => `- [${x.tag}] "${x.headline}" (${x.stat})`).join('\n');
+  }
+  if (fb.disliked.length > 0) {
+    feedbackContext += '\n\nThe coach has rated these types of insights as NOT USEFUL (avoid similar ones):\n' +
+      fb.disliked.slice(-10).map(x => `- [${x.tag}] "${x.headline}" (${x.stat})`).join('\n');
+  }
+  const finalSystemPrompt = systemPrompt + feedbackContext;
+
   try {
     const resp = await fetch(`${HUDL_API}/api/claude`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        system: systemPrompt,
+        system: finalSystemPrompt,
         messages: [{ role: 'user', content: `Analyze this football play data and return insights as JSON:\n${JSON.stringify(summaryObj, null, 2)}${append && spotlightInsights.length > 0 ? '\n\nYou have ALREADY provided these insights — do NOT repeat them, find NEW patterns:\n' + spotlightInsights.map(i => `- ${i.headline} (${i.stat})`).join('\n') : ''}` }],
         max_tokens: 1600
       })
@@ -3599,14 +3644,24 @@ CRITICAL RULES:
     const defInsights = spotlightInsights.filter(i => i.tag === 'D');
     const otherInsights = spotlightInsights.filter(i => i.tag !== 'O' && i.tag !== 'D');
 
+    const escHtml = s => s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
     const renderCards = (list) => list
       .sort((a,b) => (priorityOrder[a.priority]||1) - (priorityOrder[b.priority]||1))
-      .map(ins => `<div class="spotlight-card ${ins.priority || 'medium'}">
-        <span class="spotlight-tag">${(tagLabel[ins.tag] || 'GENERAL')}</span>
+      .map((ins, i) => {
+        const insJson = escHtml(JSON.stringify({headline:ins.headline,stat:ins.stat,tag:ins.tag}));
+        return `<div class="spotlight-card ${ins.priority || 'medium'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <span class="spotlight-tag">${(tagLabel[ins.tag] || 'GENERAL')}</span>
+          <div style="display:flex;gap:2px;flex-shrink:0">
+            <button onclick="rateSpotlight(this, '${insJson}', true)" style="background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px;opacity:0.4" title="Useful">👍</button>
+            <button onclick="rateSpotlight(this, '${insJson}', false)" style="background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px;opacity:0.4" title="Not useful">👎</button>
+          </div>
+        </div>
         <div class="spotlight-stat">${ins.stat}</div>
         <div class="spotlight-headline">${ins.headline}</div>
         <div class="spotlight-why">${ins.why}</div>
-      </div>`).join('');
+      </div>`;
+      }).join('');
 
     let html = `<div style="padding:4px 0">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -3650,6 +3705,17 @@ CRITICAL RULES:
       </div>`;
     }
   }
+}
+
+function rateSpotlight(btn, insightJson, liked) {
+  const insight = JSON.parse(insightJson);
+  addSpotlightFeedback(insight, liked);
+  // Visual feedback — highlight the tapped button, dim the other
+  const container = btn.parentElement;
+  const buttons = container.querySelectorAll('button');
+  buttons.forEach(b => b.style.opacity = '0.2');
+  btn.style.opacity = '1';
+  showToast(liked ? '👍 Noted — will prioritize similar insights' : '👎 Noted — will deprioritize similar insights');
 }
 
 // ── CLAUDE CHAT ──
