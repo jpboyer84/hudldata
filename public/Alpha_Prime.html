@@ -3373,7 +3373,11 @@ async function sendChat() {
   const seasonMatch = label.match(/'(\d{2})/);
   const season = seasonMatch ? `20${seasonMatch[1]}` : 'unknown';
 
-  const systemPrompt = `You are a football analytics assistant for a coaching staff. You have complete play-by-play data. Always calculate stats directly from the data — never estimate or approximate when an exact count is possible.
+  const systemPrompt = `You are a football analytics assistant for the Lowell Pioneers coaching staff. You have complete play-by-play data. Always calculate stats directly from the data — never estimate or approximate when an exact count is possible.
+
+## TEAM CONTEXT
+- Team: Lowell Pioneers (Highland Christian HS)
+- "The Big 3" (also "Big3", "Big Three") = rivalry games against Hobart, Andrean, and Lowell. When the coach references the Big 3, filter or focus on games against these opponents.
 
 ## DATA SCHEMA
 - odk: "O"=offense, "D"=defense, "K"=kickoff/special teams, "S"=special teams
