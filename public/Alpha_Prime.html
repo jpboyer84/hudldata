@@ -3058,7 +3058,7 @@ async function loadHudlCutup() {
 
   // Fetch Hudl cutups in parallel
   const normalize = c => ({
-    odk: c.odk||'', qtr: c.quarter||'', dn: c.down||'', dist: c.distance||'',
+    odk: c.odk||'', qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
     yardln: c.yard_line||'', hash: c.hash||'', playtype: c.play_type||'',
     result: c.result||'', gainloss: c.gain_loss||'', offform: c.off_form||'',
   });
