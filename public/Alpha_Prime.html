@@ -3359,7 +3359,7 @@ async function sendChat() {
   }
 
   if (!Array.isArray(chatHistory)) chatHistory = [];
-  chatHistory.push({ role: 'user', content: msg });
+  const isFirstMessage = chatHistory.length === 0;
   appendMsg('user', msg);  // Always show just the question, not the data payload
   const thinkingDiv = appendMsg('assistant thinking', 'Analyzing your data…');
 
@@ -3411,6 +3411,8 @@ Always answer with the number first, then brief context. Use a short table or bu
   const userContent = isFirstMessage
     ? `Dataset: ${label} | Location: ${gameLocation} | Season: ${season}\n\nPlay data:\n${buildDataSummary()}\n\n---\n\nFirst question: ${msg}`
     : msg;
+
+  chatHistory.push({ role: 'user', content: userContent });
 
   chatHistory.push({ role: 'user', content: userContent });
 
