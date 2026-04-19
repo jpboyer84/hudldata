@@ -3407,9 +3407,13 @@ async function sendChat() {
 
 **Completion Rate:** Count plays where result contains "Complete" divided by total pass attempts (playType="Pass").
 
-**Red Zone:** Plays where yardLine >= 1 AND yardLine <= 20 (inside opponent's 20).
+**Red Zone:** Plays where yardLine >= 1 AND yardLine <= 20 (opponent's 20 to goal line).
 
-**Red Zone Efficiency:** Of red zone offensive plays, what percentage resulted in a TD (result contains "TD").
+**Score Zone:** Plays where yardLine >= 1 AND yardLine <= 10 (opponent's 10 to goal line).
+
+**Goal Line:** Plays where yardLine >= 1 AND yardLine <= 5 (opponent's 5 to goal line).
+
+**Red Zone Efficiency:** Of red zone offensive plays, what percentage resulted in a TD (result contains "TD"). Apply the same efficiency calc for Score Zone and Goal Line when asked.
 
 **Sack Rate:** Count plays where result contains "Sack" divided by total pass attempts.
 
