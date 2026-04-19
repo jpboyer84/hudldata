@@ -2683,6 +2683,7 @@ let statsLabel = '';
 let hudlLibrary = null;
 let hudlCat = 'all';
 let chatHistory = [];
+let chatLastSent = 0; // timestamp of last API call for rate limiting
 
 function goStats() {
   statsReturnView = 'view-landing';
@@ -3320,20 +3321,31 @@ function barRow(label, count, total) {
 function buildDataSummary() {
   const active = (statsGameData || []).filter(p => Object.keys(p).length > 0);
   if (active.length === 0) return 'No play data available.';
-  // Compact CSV-style format to minimize tokens
-  const header = 'game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
+  // Build a game index to shorten the CSV (G0, G1, etc. instead of full titles)
+  const gameTitles = [...new Set(active.map(p => p._gameTitle || ''))];
+  const gameIndex = Object.fromEntries(gameTitles.map((t, i) => [t, 'G' + i]));
+  const legend = gameTitles.map((t, i) => `G${i}=${t}`).join(', ');
+  const header = 'g,odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
   const rows = active.map(p => {
     const form = p.offform ? (p.offform.includes('|') ? p.offform.split('|')[1] : p.offform) : '';
-    const game = (p._gameTitle || '').replace(/,/g, ' ');
-    return [game,p.odk||'',p.qtr||'',p.dn||'',p.dist||'',p.yardln||'',p.hash||'',p.playtype||'',p.result||'',p.gainloss||'',form].join(',');
+    const g = gameIndex[p._gameTitle || ''] || 'G?';
+    return [g,p.odk||'',p.qtr||'',p.dn||'',p.dist||'',p.yardln||'',p.hash||'',p.playtype||'',p.result||'',p.gainloss||'',form].join(',');
   });
-  return `${getStatsLabel()} | ${active.length} plays\n${header}\n${rows.join('\n')}`;
+  return `${getStatsLabel()} | ${active.length} plays\nGame legend: ${legend}\n${header}\n${rows.join('\n')}`;
 }
 
 async function sendChat() {
   const input = document.getElementById('chat-input');
   const msg = input.value.trim();
   if (!msg) return;
+  // Rate limit guard: enforce 5s between requests to avoid API rate limit errors
+  const now = Date.now();
+  if (now - chatLastSent < 5000) {
+    const wait = Math.ceil((5000 - (now - chatLastSent)) / 1000);
+    appendMsg('assistant', `⏳ Please wait ${wait}s before sending another question.`);
+    input.value = msg; // put message back
+    return;
+  }
   input.value = '';
 
   const messagesEl = document.getElementById('chat-messages');
@@ -3482,6 +3494,7 @@ Season: ${season}`;
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
     const reply = data.content?.[0]?.text || "Sorry, I couldn't get a response.";
+    chatLastSent = Date.now();
     chatHistory.push({ role: 'assistant', content: reply });
 
     thinkingDiv.remove();
