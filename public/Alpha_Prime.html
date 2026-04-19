@@ -3411,6 +3411,24 @@ Always answer with the number first, then brief context. Use a short table or bu
     ? `Dataset: ${label} | Location: ${gameLocation} | Season: ${season}\n\nPlay data:\n${buildDataSummary()}\n\n---\n\nFirst question: ${msg}`
     : msg;
 
+  // Build messages to send:
+  // - First message: full data payload + question (already in chatHistory[0])
+  // - Follow-ups: send a compact version of history — strip the data blob from message[0]
+  //   so we don't resend 15k tokens of play data on every follow-up
+  let messagesToSend;
+  if (isFirstMessage) {
+    messagesToSend = chatHistory;
+  } else {
+    // Replace the data-heavy first message with a lightweight placeholder
+    const compactHistory = chatHistory.map((m, i) => {
+      if (i === 0 && m.role === 'user' && m.content.includes('Play data:')) {
+        return { role: 'user', content: '(Play data provided at start of conversation — refer to it for all calculations.)' };
+      }
+      return m;
+    });
+    messagesToSend = compactHistory;
+  }
+
   chatHistory.push({ role: 'user', content: userContent });
 
   try {
@@ -3424,7 +3442,7 @@ Always answer with the number first, then brief context. Use a short table or bu
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
         system: systemPrompt,
-        messages: chatHistory
+        messages: messagesToSend
       })
     });
     clearTimeout(timeout);
