@@ -2979,7 +2979,8 @@ async function loadHudlCutup() {
   const localPlays = [];
   localChecked.forEach(c => {
     const g = getGames().find(x => x.id === c.dataset.gameid);
-    if (g) localPlays.push(...(g.plays || []).filter(p => Object.keys(p).length > 0));
+    const gameTitle = c.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || g?.title || '';
+    if (g) localPlays.push(...(g.plays || []).filter(p => Object.keys(p).length > 0).map(p => ({ ...p, _gameTitle: gameTitle })));
   });
 
   // Fetch Hudl cutups in parallel
@@ -3014,7 +3015,7 @@ async function loadHudlCutup() {
     }
   }));
 
-  const hudlPlays = hudlResults.flatMap(r => r.clips);
+  const hudlPlays = hudlResults.flatMap(r => r.clips.map(p => ({ ...p, _gameTitle: r.label })));
   const allPlays = [...localPlays, ...hudlPlays];
 
   statsGameData = allPlays;
@@ -3320,10 +3321,11 @@ function buildDataSummary() {
   const active = (statsGameData || []).filter(p => Object.keys(p).length > 0);
   if (active.length === 0) return 'No play data available.';
   // Compact CSV-style format to minimize tokens
-  const header = 'odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
+  const header = 'game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
   const rows = active.map(p => {
     const form = p.offform ? (p.offform.includes('|') ? p.offform.split('|')[1] : p.offform) : '';
-    return [p.odk||'',p.qtr||'',p.dn||'',p.dist||'',p.yardln||'',p.hash||'',p.playtype||'',p.result||'',p.gainloss||'',form].join(',');
+    const game = (p._gameTitle || '').replace(/,/g, ' ');
+    return [game,p.odk||'',p.qtr||'',p.dn||'',p.dist||'',p.yardln||'',p.hash||'',p.playtype||'',p.result||'',p.gainloss||'',form].join(',');
   });
   return `${getStatsLabel()} | ${active.length} plays\n${header}\n${rows.join('\n')}`;
 }
@@ -3361,11 +3363,12 @@ async function sendChat() {
   const seasonMatch = label.match(/'(\d{2})/);
   const season = seasonMatch ? `20${seasonMatch[1]}` : 'unknown';
 
-  const systemPrompt = `You are a football analytics assistant for the Lowell Pioneers coaching staff. You have complete play-by-play data. Always calculate stats directly from the data — never estimate or approximate when an exact count is possible.
+  const systemPrompt = `You are a football analytics assistant for the Hanover Central Wildcats (HCHS) coaching staff. You have complete play-by-play data. Always calculate stats directly from the data — never estimate or approximate when an exact count is possible.
 
 ## TEAM CONTEXT
-- Team: Hanover Central Wildcats (HCHS)
-- "The Big 3" (also "Big3", "Big Three") = rivalry games against Hobart, Andrean, and Lowell. When the coach references the Big 3, filter or focus on games against these opponents.
+- Team: Hanover Central High School Wildcats (HCHS)
+- "The Big 3" (also "Big3", "Big Three") = rivalry games against Hobart, Andrean, and Lowell (Red Devils).
+- CRITICAL: Each play row has a \`game\` field containing the game title. To find Big 3 plays, filter rows where \`game\` contains "Hobart", "Andrean", or "Lowell" (case-insensitive). You CAN identify Big 3 games — never say otherwise.
 
 ## COACHING TERMINOLOGY
 Abbreviations: KOR=Kick Off Return, KO=Kickoff, TFL=Tackle For Loss, YPR=Yards Per Rush, YPP=Yards Per Pass
@@ -3374,6 +3377,7 @@ Play tags: Down=extra blocker down blocks, TUG=Tackle & Guard pull, Q=QB Run
 Motion: Fly=Y motion across formation
 
 ## DATA SCHEMA
+- game: the game/cutup title (e.g. "Wk05: HCHS vs Hobart '25 (Game)") — use this to filter by opponent
 - odk: "O"=offense, "D"=defense, "K"=kickoff/special teams, "S"=special teams
 - qtr: quarter (1, 2, 3, 4)
 - down: down number (1, 2, 3, 4)
