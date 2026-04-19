@@ -3319,25 +3319,13 @@ function barRow(label, count, total) {
 function buildDataSummary() {
   const active = (statsGameData || []).filter(p => Object.keys(p).length > 0);
   if (active.length === 0) return 'No play data available.';
-  const summary = {
-    label: getStatsLabel(),
-    totalPlays: active.length,
-    plays: active.map(p => {
-      const out = {};
-      if (p.odk)      out.odk       = p.odk;
-      if (p.qtr)      out.qtr       = p.qtr;
-      if (p.dn)       out.down      = p.dn;
-      if (p.dist)     out.dist      = p.dist;
-      if (p.yardln)   out.yardLine  = p.yardln;
-      if (p.hash)     out.hash      = p.hash;
-      if (p.playtype) out.playType  = p.playtype;
-      if (p.result)   out.result    = p.result;
-      if (p.gainloss) out.gainLoss  = p.gainloss;
-      if (p.offform)  out.formation = p.offform.includes('|') ? p.offform.split('|')[1] : p.offform;
-      return out;
-    })
-  };
-  return JSON.stringify(summary);
+  // Compact CSV-style format to minimize tokens
+  const header = 'odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
+  const rows = active.map(p => {
+    const form = p.offform ? (p.offform.includes('|') ? p.offform.split('|')[1] : p.offform) : '';
+    return [p.odk||'',p.qtr||'',p.dn||'',p.dist||'',p.yardln||'',p.hash||'',p.playtype||'',p.result||'',p.gainloss||'',form].join(',');
+  });
+  return `${getStatsLabel()} | ${active.length} plays\n${header}\n${rows.join('\n')}`;
 }
 
 async function sendChat() {
@@ -3454,7 +3442,7 @@ Motion: Fly=Y motion across formation
 Current dataset: ${label}
 Game location: ${gameLocation}
 Season: ${season}
-Play data:
+Play data (CSV format — columns: odk,qtr,dn,dist,ydln,hash,type,result,gl,form):
 ${buildDataSummary()}`;
 
   // Safety guard: ensure history ends with a user message
