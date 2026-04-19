@@ -362,6 +362,36 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .export-choice-btn:active { opacity: 0.8; }
 .export-choice-icon { font-size: 24px; display: block; margin-bottom: 6px; }
 
+.stats-subtab {
+  flex: 1; min-width: 70px; padding: 8px 6px; font-size: 10px;
+  font-family: var(--font-btn); font-weight: 900; letter-spacing: 0.03em;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); cursor: pointer; white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.stats-subtab.active { color: var(--text); border-bottom-color: var(--yellow); }
+
+/* Spotlight cards */
+.spotlight-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px; margin-bottom: 10px;
+}
+.spotlight-card.high { border-left: 3px solid var(--red); }
+.spotlight-card.medium { border-left: 3px solid var(--yellow); }
+.spotlight-card.low { border-left: 3px solid var(--blue); }
+.spotlight-headline { font-family: var(--font-btn); font-weight: 900; font-size: 13px; line-height: 1.3; margin-bottom: 6px; }
+.spotlight-stat { font-size: 11px; color: var(--yellow); font-weight: 600; margin-bottom: 6px; }
+.spotlight-why { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.spotlight-tag { display: inline-block; font-size: 9px; font-family: var(--font-btn); font-weight: 900;
+  padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; letter-spacing: 0.05em; }
+.spotlight-tag.O { background: #1a3a1a; color: var(--green); }
+.spotlight-tag.D { background: #3a1a1a; color: var(--red); }
+.spotlight-tag.K { background: #1a2a3a; color: var(--blue); }
+.spotlight-tag.G { background: #2a2a1a; color: var(--yellow); }
+.spotlight-loading { display: flex; align-items: center; gap: 10px; padding: 16px; color: var(--muted); font-size: 12px; }
+.spotlight-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
 .stats-tab {
   flex: 1; font-family: var(--font-btn); font-weight: 900; font-size: 11px;
   letter-spacing: 0.08em; padding: 11px 4px; text-align: center;
@@ -1006,16 +1036,35 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div style="font-size:10px;color:var(--muted)" id="stats-active-text"></div>
   </div>
 
-  <!-- Tab bar -->
-  <div style="display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0">
-    <button class="stats-tab active" id="stab-stats"    onclick="setStatsTab('stats')">STATS</button>
-    <button class="stats-tab"        id="stab-ai"       onclick="setStatsTab('ai')">ASK AI</button>
-    <button class="stats-tab"        id="stab-insights" onclick="setStatsTab('insights')">📌 SAVED</button>
+  <!-- Top tab bar -->
+  <div style="display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <button class="stats-tab active" id="stab-spotlight" onclick="setStatsTab('spotlight')">⚡ SPOTLIGHT</button>
+    <button class="stats-tab"        id="stab-stats"     onclick="setStatsTab('stats')">STATS</button>
+    <button class="stats-tab"        id="stab-ai"        onclick="setStatsTab('ai')">ASK AI</button>
+    <button class="stats-tab"        id="stab-insights"  onclick="setStatsTab('insights')">📌 SAVED</button>
   </div>
 
-  <!-- ── TAB: STATS ── -->
-  <div id="stats-tab-stats" class="tab-panel sbody">
-    <div class="empty-msg">Tap FILTER to load data.</div>
+  <!-- ── TAB: SPOTLIGHT (AI auto-analysis) ── -->
+  <div id="stats-tab-spotlight" class="tab-panel sbody">
+    <div class="empty-msg" id="spotlight-empty">Load data to get AI-powered insights.</div>
+  </div>
+
+  <!-- ── TAB: STATS (sub-tabbed) ── -->
+  <div id="stats-tab-stats" class="tab-panel" style="display:none;flex-direction:column;overflow:hidden">
+    <!-- Stats sub-tab bar -->
+    <div style="display:flex;background:var(--surface2);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <button class="stats-subtab active" id="sstab-overview"  onclick="setStatsSubTab('overview')">OVERVIEW</button>
+      <button class="stats-subtab"        id="sstab-offense"   onclick="setStatsSubTab('offense')">OFFENSE</button>
+      <button class="stats-subtab"        id="sstab-defense"   onclick="setStatsSubTab('defense')">DEFENSE</button>
+      <button class="stats-subtab"        id="sstab-field"     onclick="setStatsSubTab('field')">FIELD</button>
+      <button class="stats-subtab"        id="sstab-quarter"   onclick="setStatsSubTab('quarter')">BY QTR</button>
+    </div>
+    <!-- Stats sub-tab panels -->
+    <div id="stats-sub-overview"  class="tab-panel sbody"><div class="empty-msg">Tap FILTER to load data.</div></div>
+    <div id="stats-sub-offense"   class="tab-panel sbody" style="display:none"></div>
+    <div id="stats-sub-defense"   class="tab-panel sbody" style="display:none"></div>
+    <div id="stats-sub-field"     class="tab-panel sbody" style="display:none"></div>
+    <div id="stats-sub-quarter"   class="tab-panel sbody" style="display:none"></div>
   </div>
 
   <!-- ── TAB: ASK AI ── -->
@@ -2588,12 +2637,20 @@ const HUDL_API = 'https://hudl-mcp-production.up.railway.app';
 
 
 function setStatsTab(tab) {
-  ['stats','ai','insights'].forEach(t => {
+  ['spotlight','stats','ai','insights'].forEach(t => {
     document.getElementById(`stab-${t}`)?.classList.toggle('active', t === tab);
     const panel = document.getElementById(`stats-tab-${t}`);
     if (panel) panel.style.display = t === tab ? 'flex' : 'none';
   });
   if (tab === 'insights') renderInsights();
+}
+
+function setStatsSubTab(sub) {
+  ['overview','offense','defense','field','quarter'].forEach(s => {
+    document.getElementById(`sstab-${s}`)?.classList.toggle('active', s === sub);
+    const panel = document.getElementById(`stats-sub-${s}`);
+    if (panel) panel.style.display = s === sub ? 'flex' : 'none';
+  });
 }
 
 function toggleFilterDrawer() {
@@ -2683,7 +2740,6 @@ let statsLabel = '';
 let hudlLibrary = null;
 let hudlCat = 'all';
 let chatHistory = [];
-let chatLastSent = 0; // timestamp of last API call for rate limiting
 
 function goStats() {
   statsReturnView = 'view-landing';
@@ -2694,7 +2750,7 @@ function goStats() {
   document.querySelectorAll('.sf-btn').forEach(b => b.classList.remove('on'));
   document.getElementById('hudl-cat-all')?.classList.add('on');
   hudlCat = 'all';
-  setStatsTab('stats');
+  setStatsTab('spotlight');
   showView('view-stats');
   setTimeout(() => {
     const drawer = document.getElementById('stats-filter-drawer');
@@ -3029,11 +3085,11 @@ async function loadHudlCutup() {
   status.textContent = `${allPlays.length} total plays loaded${cacheInfo}`;
   showToast(`Loaded ${allPlays.length} plays${cacheInfo}`);
 
-  const body = document.getElementById('stats-tab-stats');
-  const breakdown = [...localChecked.map(c=>({ label: c.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent, count: localPlays.length })), ...hudlResults];
   renderStatsFromData(allPlays, statsLabel, false);
-  setStatsTab('stats');
+  setStatsTab('spotlight');
+  setStatsSubTab('overview');
   updateActiveLabel(`${statsLabel} · ${allPlays.length} plays`);
+  runSpotlightAnalysis(allPlays);
 }
 
 // ── LOCAL GAME DATA ──
@@ -3043,11 +3099,6 @@ function getStatsLabel() {
 
 function renderStatsFromData(plays, label, append = false) {
   statSectionId = 0;
-  const body = document.getElementById('stats-tab-stats');
-  if (!plays || plays.length === 0) {
-    if (!append) body.innerHTML = '<div class="empty-msg">No play data found.</div>';
-    return;
-  }
 
   const pct = (n, total) => total > 0 ? Math.round((n/total)*100) : 0;
   const avg = arr => arr.length > 0 ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : '—';
@@ -3067,23 +3118,21 @@ function renderStatsFromData(plays, label, append = false) {
   const runGL = runs.map(getGL).filter(v=>v!==null);
   const passGL = passes.map(getGL).filter(v=>v!==null);
 
-  let html = '';
-
-  // OVERVIEW
-  html += statSection('OVERVIEW', plays.length + ' total plays' + (label ? ' \u00b7 ' + label : ''), `
+  // ── OVERVIEW sub-panel ──
+  let ovHtml = '';
+  ovHtml += statSection('OVERVIEW', plays.length + ' total plays' + (label ? ' · ' + label : ''), `
     <div class="stat-big-row">
       <div class="stat-big"><div class="stat-big-val">${off.length}</div><div class="stat-big-lbl">OFFENSE</div></div>
       <div class="stat-big"><div class="stat-big-val">${def.length}</div><div class="stat-big-lbl">DEFENSE</div></div>
       <div class="stat-big"><div class="stat-big-val">${st.length}</div><div class="stat-big-lbl">SPECIAL</div></div>
     </div>`);
 
-  // OFFENSIVE EFFICIENCY
   if (off.length > 0) {
     const gain3  = offGL.filter(v=>v>=3).length;
     const gain5  = offGL.filter(v=>v>=5).length;
     const gain10 = offGL.filter(v=>v>=10).length;
     const negPlay = offGL.filter(v=>v<0).length;
-    html += statSection('OFFENSIVE EFFICIENCY', off.length + ' offense plays', `
+    ovHtml += statSection('OFFENSIVE EFFICIENCY', off.length + ' offense plays', `
       <div class="stat-big-row" style="margin-bottom:10px">
         <div class="stat-big"><div class="stat-big-val">${avg(offGL)}</div><div class="stat-big-lbl">AVG YDS/PLAY</div></div>
         <div class="stat-big"><div class="stat-big-val">${avg(runGL)}</div><div class="stat-big-lbl">AVG YDS/RUN</div></div>
@@ -3095,10 +3144,9 @@ function renderStatsFromData(plays, label, append = false) {
       ${barRow('NEGATIVE', negPlay, offGL.length)}` : '<div style="font-size:11px;color:var(--muted)">Add GAIN/LOSS column to tracker for this data</div>'));
   }
 
-  // RUN / PASS
   if (off.length > 0) {
     const other = off.length - runs.length - passes.length;
-    html += statSection('RUN / PASS SPLIT', off.length + ' offense plays', `
+    ovHtml += statSection('RUN / PASS SPLIT', off.length + ' offense plays', `
       ${barRow('RUN', runs.length, off.length)}
       ${barRow('PASS', passes.length, off.length)}
       ${other > 0 ? barRow('OTHER', other, off.length) : ''}` + (runGL.length > 0 || passGL.length > 0 ? `
@@ -3107,8 +3155,12 @@ function renderStatsFromData(plays, label, append = false) {
         <div class="stat-big" style="flex:1"><div class="stat-big-val">${avg(passGL)}</div><div class="stat-big-lbl">PASS AVG YDS</div></div>
       </div>` : ''));
   }
+  document.getElementById('stats-sub-overview').innerHTML = ovHtml || '<div class="empty-msg">No data.</div>';
 
-  // DOWN & DISTANCE
+  // ── OFFENSE sub-panel ──
+  let offHtml = '';
+
+  // Down & Distance
   if (plays.some(p=>p.dn)) {
     const dnLabels = {'1':'1ST DOWN','2':'2ND DOWN','3':'3RD DOWN','4':'4TH DOWN'};
     const dnCounts = tally(plays, p=>p.dn);
@@ -3124,7 +3176,7 @@ function renderStatsFromData(plays, label, append = false) {
         + '<td style="padding:5px 8px;font-size:11px">' + pct(dPasses,dnOff.length) + '% PASS</td>'
         + '<td style="padding:5px 8px;font-size:11px;color:var(--muted)">' + avg(dGL) + ' avg</td></tr>';
     }).join('');
-    html += statSection('DOWN & DISTANCE', '', `
+    offHtml += statSection('DOWN & DISTANCE', '', `
       ${['1','2','3','4'].filter(d=>dnCounts[d]).map(d=>barRow(dnLabels[d]||d, dnCounts[d], plays.length)).join('')}` +
       (third.length > 0 ? `
       <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
@@ -3140,10 +3192,10 @@ function renderStatsFromData(plays, label, append = false) {
         <table style="width:100%;border-collapse:collapse">${dnTable}</table></div>` : ''));
   }
 
-  // FIRST DOWNS
+  // First Downs
   const fdPlays = off.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('first')||r.includes('1st'); });
   if (fdPlays.length > 0) {
-    html += statSection('FIRST DOWNS', fdPlays.length + ' first downs earned', `
+    offHtml += statSection('FIRST DOWNS', fdPlays.length + ' first downs earned', `
       <div class="stat-big-row" style="margin-bottom:10px">
         <div class="stat-big"><div class="stat-big-val">${fdPlays.length}</div><div class="stat-big-lbl">TOTAL</div></div>
         <div class="stat-big"><div class="stat-big-val">${fdPlays.filter(isRun).length}</div><div class="stat-big-lbl">BY RUN</div></div>
@@ -3153,7 +3205,7 @@ function renderStatsFromData(plays, label, append = false) {
       ${barRow('BY PASS', fdPlays.filter(isPass).length, fdPlays.length)}`);
   }
 
-  // FORMATIONS
+  // Formations
   const formCounts = tally(off, getForm);
   const formTotal = off.filter(p=>getForm(p)).length;
   if (formTotal > 0) {
@@ -3166,38 +3218,29 @@ function renderStatsFromData(plays, label, append = false) {
         + '<td style="padding:5px 8px;font-size:11px">' + pct(fPlays.filter(isRun).length,fPlays.length) + '% R / ' + pct(fPlays.filter(isPass).length,fPlays.length) + '% P</td>'
         + '<td style="padding:5px 8px;font-size:11px;color:var(--muted)">' + avg(fGL) + ' avg</td></tr>';
     }).join('');
-    html += statSection('OFFENSIVE FORMATIONS', Object.keys(formCounts).length + ' formations', `
+    offHtml += statSection('OFFENSIVE FORMATIONS', Object.keys(formCounts).length + ' formations', `
       ${sortedForms.slice(0,8).map(([f,c])=>barRow(f,c,formTotal)).join('')}` +
       (formTable ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
         <table style="width:100%;border-collapse:collapse">${formTable}</table></div>` : ''));
   }
 
-  // RESULTS
-  const resultCounts = tally(plays, p=>p.result);
-  const resultTotal = plays.filter(p=>p.result).length;
-  if (resultTotal > 0) {
-    html += statSection('RESULTS', resultTotal + ' plays with result data',
-      Object.entries(resultCounts).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([r,c])=>barRow(r,c,resultTotal)).join(''));
+  // Play Types
+  const ptCounts = tally(off, p=>p.playtype);
+  if (off.some(p=>p.playtype)) {
+    const ptTotal = off.filter(p=>p.playtype).length;
+    offHtml += statSection('PLAY TYPES', Object.keys(ptCounts).length + ' types',
+      Object.entries(ptCounts).sort((a,b)=>b[1]-a[1]).map(([t,c])=>barRow(t,c,ptTotal)).join(''));
   }
 
-  // FIELD POSITION
-  if (plays.some(p=>p.yardln)) {
-    const parseYL = v => { if(!v) return null; const n=parseFloat(v); return isNaN(n)?null:n; };
-    const offYL = off.filter(p=>parseYL(p.yardln)!==null);
-    if (offYL.length > 0) {
-      const ownTerr  = offYL.filter(p=>{ const y=parseYL(p.yardln); return y!==null&&y<=0; }).length;
-      const oppTerr  = offYL.filter(p=>{ const y=parseYL(p.yardln); return y!==null&&y>0&&y<=49; }).length;
-      const redZone  = offYL.filter(p=>{ const y=parseYL(p.yardln); return y!==null&&y>=1&&y<=20; }).length;
-      const backedUp = offYL.filter(p=>{ const y=parseYL(p.yardln); return y!==null&&y<=-1&&y>=-20; }).length;
-      html += statSection('FIELD POSITION', offYL.length + ' plays with yard line data', `
-        ${barRow('OWN TERRITORY', ownTerr, offYL.length)}
-        ${barRow('OPP TERRITORY', oppTerr, offYL.length)}
-        ${barRow('RED ZONE (opp 20)', redZone, offYL.length)}
-        ${barRow('BACKED UP (own 20)', backedUp, offYL.length)}`);
-    }
+  // Results (offense)
+  const offResultCounts = tally(off, p=>p.result);
+  const offResultTotal = off.filter(p=>p.result).length;
+  if (offResultTotal > 0) {
+    offHtml += statSection('RESULTS', offResultTotal + ' plays with result data',
+      Object.entries(offResultCounts).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([r,c])=>barRow(r,c,offResultTotal)).join(''));
   }
 
-  // DRIVES (series)
+  // Drives
   if (plays.some(p=>p.series)) {
     const drives = {};
     plays.forEach(p=>{ if(p.series){ if(!drives[p.series]) drives[p.series]=[]; drives[p.series].push(p); } });
@@ -3206,7 +3249,7 @@ function renderStatsFromData(plays, label, append = false) {
     const driveGains = driveList.map(d=>d.map(getGL).filter(v=>v!==null).reduce((a,b)=>a+b,0));
     const scoring = driveList.filter(d=>d.some(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('td')||r.includes('fg')||r.includes('score'); }));
     const turnovers = driveList.filter(d=>d.some(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('int')||r.includes('fumble'); }));
-    html += statSection('DRIVES', driveList.length + ' drives', `
+    offHtml += statSection('DRIVES', driveList.length + ' drives', `
       <div class="stat-big-row" style="margin-bottom:8px">
         <div class="stat-big"><div class="stat-big-val">${driveList.length}</div><div class="stat-big-lbl">DRIVES</div></div>
         <div class="stat-big"><div class="stat-big-val">${avg(driveLens)}</div><div class="stat-big-lbl">AVG PLAYS</div></div>
@@ -3219,14 +3262,17 @@ function renderStatsFromData(plays, label, append = false) {
       </div>` : ''));
   }
 
-  // DEFENSE
+  document.getElementById('stats-sub-offense').innerHTML = offHtml || '<div class="empty-msg">No offensive data.</div>';
+
+  // ── DEFENSE sub-panel ──
+  let defHtml = '';
   if (def.length > 0) {
     const defGL = def.map(getGL).filter(v=>v!==null);
     const sacks = def.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('sack'); }).length;
     const tfl   = def.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('tfl')||r.includes('for loss'); }).length;
     const ints  = def.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('int')||r.includes('interception'); }).length;
     const defResults = tally(def, p=>p.result);
-    html += statSection('DEFENSE', def.length + ' defensive plays', `
+    defHtml += statSection('DEFENSE', def.length + ' defensive plays', `
       <div class="stat-big-row" style="margin-bottom:8px">
         <div class="stat-big"><div class="stat-big-val">${def.length}</div><div class="stat-big-lbl">PLAYS</div></div>
         <div class="stat-big"><div class="stat-big-val">${avg(defGL)}</div><div class="stat-big-lbl">AVG ALLOWED</div></div>
@@ -3236,53 +3282,91 @@ function renderStatsFromData(plays, label, append = false) {
         ${tfl>0?'<div class="stat-big"><div class="stat-big-val">'+tfl+'</div><div class="stat-big-lbl">TFL</div></div>':''}
         ${ints>0?'<div class="stat-big"><div class="stat-big-val">'+ints+'</div><div class="stat-big-lbl">INT</div></div>':''}
       </div>` : '') +
-      Object.entries(defResults).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([r,c])=>barRow(r,c,def.length)).join(''), {defense:true});
+      Object.entries(defResults).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([r,c])=>barRow(r,c,def.length)).join(''), {defense:true});
   }
+  document.getElementById('stats-sub-defense').innerHTML = defHtml || '<div class="empty-msg">No defensive data. Tag plays with ODK = D to see defense stats.</div>';
 
-  // HASH
+  // ── FIELD sub-panel ──
+  let fieldHtml = '';
+
+  // Hash
   const hashCounts = tally(plays, p=>p.hash);
   if (plays.some(p=>p.hash)) {
     const hashLabels = {L:'LEFT HASH',M:'MIDDLE',R:'RIGHT HASH'};
     const hashTotal = plays.filter(p=>p.hash).length;
-    html += statSection('HASH DISTRIBUTION', '', Object.entries(hashCounts).map(([h,c])=>barRow(hashLabels[h]||h,c,hashTotal)).join(''));
+    fieldHtml += statSection('HASH DISTRIBUTION', '', Object.entries(hashCounts).map(([h,c])=>barRow(hashLabels[h]||h,c,hashTotal)).join(''));
   }
 
-  // PLAY TYPES
-  const ptCounts = tally(off, p=>p.playtype);
-  if (off.some(p=>p.playtype)) {
-    const ptTotal = off.filter(p=>p.playtype).length;
-    html += statSection('PLAY TYPES', Object.keys(ptCounts).length + ' types',
-      Object.entries(ptCounts).sort((a,b)=>b[1]-a[1]).map(([t,c])=>barRow(t,c,ptTotal)).join(''));
+  // Field Position
+  if (plays.some(p=>p.yardln)) {
+    const parseYL = v => { if(!v) return null; const n=parseFloat(v); return isNaN(n)?null:n; };
+    const offYL = off.filter(p=>parseYL(p.yardln)!==null);
+    if (offYL.length > 0) {
+      const ownTerr  = offYL.filter(p=>{ const y=parseYL(p.yardln); return y!==null&&y<=0; }).length;
+      const oppTerr  = offYL.filter(p=>{ const y=parseYL(p.yardln); return y!==null&&y>0&&y<=49; }).length;
+      const redZone  = offYL.filter(p=>{ const y=parseYL(p.yardln); return y!==null&&y>=1&&y<=20; }).length;
+      const backedUp = offYL.filter(p=>{ const y=parseYL(p.yardln); return y!==null&&y<=-1&&y>=-20; }).length;
+      fieldHtml += statSection('FIELD POSITION', offYL.length + ' plays with yard line data', `
+        ${barRow('OWN TERRITORY', ownTerr, offYL.length)}
+        ${barRow('OPP TERRITORY', oppTerr, offYL.length)}
+        ${barRow('RED ZONE (opp 20)', redZone, offYL.length)}
+        ${barRow('BACKED UP (own 20)', backedUp, offYL.length)}`);
+    }
   }
 
-  // PLAYS BY QUARTER
+  // Hash breakdown by run/pass
+  if (off.some(p=>p.hash) && off.length > 0) {
+    const hashOff = tally(off, p=>p.hash);
+    const hashLabels = {L:'LEFT HASH',M:'MIDDLE',R:'RIGHT HASH'};
+    const hashOffTotal = off.filter(p=>p.hash).length;
+    const hashTable = Object.entries(hashOff).map(([h,c]) => {
+      const hPlays = off.filter(p=>p.hash===h);
+      const hGL = hPlays.map(getGL).filter(v=>v!==null);
+      return '<tr><td style="padding:5px 8px;font-size:11px;color:var(--muted)">' + (hashLabels[h]||h) + '</td>'
+        + '<td style="padding:5px 8px;font-size:11px">' + pct(hPlays.filter(isRun).length,hPlays.length) + '% R / ' + pct(hPlays.filter(isPass).length,hPlays.length) + '% P</td>'
+        + '<td style="padding:5px 8px;font-size:11px;color:var(--muted)">' + avg(hGL) + ' avg</td></tr>';
+    }).join('');
+    if (hashTable) {
+      fieldHtml += statSection('HASH: RUN/PASS TENDENCY', '', `<table style="width:100%;border-collapse:collapse">${hashTable}</table>`);
+    }
+  }
+
+  document.getElementById('stats-sub-field').innerHTML = fieldHtml || '<div class="empty-msg">No field position or hash data.</div>';
+
+  // ── QUARTER sub-panel ──
+  let qtrHtml = '';
   const qtrCounts = tally(plays, p=>p.qtr);
   if (plays.some(p=>p.qtr)) {
     const qtrTotal = plays.filter(p=>p.qtr).length;
     const order = ['1','2','3','4'];
     const sortedQ = [...order.filter(k=>qtrCounts[k]),...Object.keys(qtrCounts).filter(k=>!order.includes(k))];
-    const qtrTable = sortedQ.map(q=>{
+    sortedQ.forEach(q => {
       const qOff = off.filter(p=>p.qtr===q);
-      const qGL = qOff.map(getGL).filter(v=>v!==null);
-      return '<tr><td style="padding:5px 8px;font-size:11px;color:var(--muted)">Q' + q + '</td>'
-        + '<td style="padding:5px 8px;font-size:11px">' + qtrCounts[q] + ' plays</td>'
-        + (qOff.length>0 ? '<td style="padding:5px 8px;font-size:11px">' + pct(qOff.filter(isRun).length,qOff.length) + 'R / ' + pct(qOff.filter(isPass).length,qOff.length) + 'P</td>'
-          + '<td style="padding:5px 8px;font-size:11px;color:var(--muted)">' + avg(qGL) + ' avg</td>' : '<td></td><td></td>') + '</tr>';
-    }).join('');
-    html += statSection('PLAYS BY QUARTER', '', `
-      ${sortedQ.map(q=>barRow('Q'+q, qtrCounts[q], qtrTotal)).join('')}` +
-      (qtrTable ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <table style="width:100%;border-collapse:collapse">${qtrTable}</table></div>` : ''));
+      const qDef = def.filter(p=>p.qtr===q);
+      const qGL  = qOff.map(getGL).filter(v=>v!==null);
+      const qDefGL = qDef.map(getGL).filter(v=>v!==null);
+      const qRuns = qOff.filter(isRun).length;
+      const qPasses = qOff.filter(isPass).length;
+      qtrHtml += statSection(`Q${q}`, qtrCounts[q] + ' total plays', `
+        <div class="stat-big-row" style="margin-bottom:8px">
+          <div class="stat-big"><div class="stat-big-val">${qOff.length}</div><div class="stat-big-lbl">OFF</div></div>
+          <div class="stat-big"><div class="stat-big-val">${qDef.length}</div><div class="stat-big-lbl">DEF</div></div>
+          <div class="stat-big"><div class="stat-big-val">${avg(qGL)}</div><div class="stat-big-lbl">AVG YDS</div></div>
+        </div>` +
+        (qOff.length > 0 ? `${barRow('RUN', qRuns, qOff.length)}${barRow('PASS', qPasses, qOff.length)}` : ''));
+    });
   }
-
-  // SAVED INSIGHTS BUTTON
-  html += `<div style="margin-top:6px">
-    <button class="btn btn-secondary" onclick="setStatsTab('insights')"
-      style="width:100%;padding:10px;font-size:11px">📌 VIEW SAVED INSIGHTS</button>
-  </div>`;
-
-  if (append) { body.innerHTML += html; } else { body.innerHTML = html; }
+  document.getElementById('stats-sub-quarter').innerHTML = qtrHtml || '<div class="empty-msg">No quarter data.</div>';
 }
+
+  const off = plays.filter(p => p.odk === 'O');
+  const def = plays.filter(p => p.odk === 'D');
+  const st  = plays.filter(p => p.odk === 'K' || p.odk === 'S');
+  const runs = off.filter(isRun);
+  const passes = off.filter(isPass);
+  const offGL = off.map(getGL).filter(v=>v!==null);
+  const runGL = runs.map(getGL).filter(v=>v!==null);
+  const passGL = passes.map(getGL).filter(v=>v!==null);
 
 let statSectionId = 0;
 function statSection(title, subtitle, content, opts = {}) {
@@ -3317,35 +3401,178 @@ function barRow(label, count, total) {
   </div>`;
 }
 
+// ── SPOTLIGHT: AUTO AI ANALYSIS ──
+async function runSpotlightAnalysis(plays) {
+  const panel = document.getElementById('stats-tab-spotlight');
+  const empty = document.getElementById('spotlight-empty');
+  if (empty) empty.style.display = 'none';
+
+  // Show loading state
+  panel.innerHTML = `
+    <div class="spotlight-loading">
+      <div class="spotlight-dot"></div>
+      <div>AI is analyzing your play data…</div>
+    </div>`;
+
+  const active = (plays || []).filter(p => Object.keys(p).length > 0);
+  if (active.length === 0) {
+    panel.innerHTML = '<div class="empty-msg">No play data to analyze.</div>';
+    return;
+  }
+
+  // Build compact data summary for the prompt
+  const off = active.filter(p => p.odk === 'O');
+  const def = active.filter(p => p.odk === 'D');
+  const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+  const getGL = p => num(p.gainloss);
+  const getForm = p => p.offform ? (p.offform.includes('|') ? p.offform.split('|')[1] : p.offform) : null;
+  const isRun = p => !!(p.playtype?.toLowerCase().includes('run'));
+  const isPass = p => !!(p.playtype?.toLowerCase().includes('pass'));
+  const avg = arr => arr.length > 0 ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : null;
+
+  // Summarize key stats to send to Claude (token-efficient)
+  const offGL = off.map(getGL).filter(v=>v!==null);
+  const runs = off.filter(isRun);
+  const passes = off.filter(isPass);
+
+  // Down tendencies
+  const dnStats = ['1','2','3','4'].map(d => {
+    const dnOff = off.filter(p=>p.dn===d);
+    if (!dnOff.length) return null;
+    const gl = dnOff.map(getGL).filter(v=>v!==null);
+    return { down: d, plays: dnOff.length, runPct: Math.round(dnOff.filter(isRun).length/dnOff.length*100), passPct: Math.round(dnOff.filter(isPass).length/dnOff.length*100), avg: avg(gl) };
+  }).filter(Boolean);
+
+  // Formation stats
+  const formMap = {};
+  off.forEach(p => { const f = getForm(p); if(f) { if(!formMap[f]) formMap[f]={plays:0,gl:[],runs:0,passes:0}; formMap[f].plays++; const g=getGL(p); if(g!==null)formMap[f].gl.push(g); if(isRun(p))formMap[f].runs++; if(isPass(p))formMap[f].passes++; } });
+  const formStats = Object.entries(formMap).sort((a,b)=>b[1].plays-a[1].plays).slice(0,8).map(([f,d])=>({
+    formation: f, plays: d.plays, pct: Math.round(d.plays/off.length*100),
+    runPct: Math.round(d.runs/d.plays*100), passPct: Math.round(d.passes/d.plays*100),
+    avg: avg(d.gl)
+  }));
+
+  // Hash tendencies
+  const hashMap = {};
+  off.forEach(p => { if(p.hash){ if(!hashMap[p.hash])hashMap[p.hash]={plays:0,runs:0,passes:0,gl:[]}; hashMap[p.hash].plays++; const g=getGL(p); if(g!==null)hashMap[p.hash].gl.push(g); if(isRun(p))hashMap[p.hash].runs++; if(isPass(p))hashMap[p.hash].passes++; } });
+
+  // Quarter tendencies
+  const qtrMap = {};
+  active.forEach(p => { if(p.qtr){ if(!qtrMap[p.qtr])qtrMap[p.qtr]={off:0,def:0,gl:[]}; if(p.odk==='O'){qtrMap[p.qtr].off++; const g=getGL(p); if(g!==null)qtrMap[p.qtr].gl.push(g);} if(p.odk==='D')qtrMap[p.qtr].def++; } });
+
+  // Negative plays
+  const negPlays = offGL.filter(v=>v<0).length;
+  const bigPlays = offGL.filter(v=>v>=10).length;
+
+  // 3rd down
+  const third = off.filter(p=>p.dn==='3');
+  const thirdConv = third.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('first')||r.includes('td'); });
+
+  const summaryObj = {
+    totalPlays: active.length,
+    offense: { plays: off.length, avgYPP: avg(offGL), runPlays: runs.length, passPlays: passes.length,
+      runPct: off.length ? Math.round(runs.length/off.length*100) : 0,
+      passPct: off.length ? Math.round(passes.length/off.length*100) : 0,
+      negPlayPct: offGL.length ? Math.round(negPlays/offGL.length*100) : 0,
+      bigPlayPct: offGL.length ? Math.round(bigPlays/offGL.length*100) : 0,
+      avgRunYds: avg(runs.map(getGL).filter(v=>v!==null)),
+      avgPassYds: avg(passes.map(getGL).filter(v=>v!==null)),
+      thirdDowns: third.length, thirdConversions: thirdConv.length,
+      thirdConvPct: third.length ? Math.round(thirdConv.length/third.length*100) : 0
+    },
+    defense: { plays: def.length },
+    downTendencies: dnStats,
+    formations: formStats,
+    hashTendencies: Object.entries(hashMap).map(([h,d])=>({hash:h, plays:d.plays, runPct:Math.round(d.runs/d.plays*100), avg:avg(d.gl)})),
+    quarterTrends: Object.entries(qtrMap).sort((a,b)=>a[0]-b[0]).map(([q,d])=>({qtr:q, offPlays:d.off, defPlays:d.def, avgYds:avg(d.gl)})),
+    dataLabel: statsLabel
+  };
+
+  const systemPrompt = `You are an elite football analytics assistant for Coach Jim at Hanover Central High School (HCHS Wildcats). Your job is to analyze play-by-play data and surface the most important, actionable insights a coach would want to know.
+
+Return ONLY a valid JSON array (no markdown, no preamble) of 4-6 insight objects. Each object must have:
+- "headline": short punchy finding (max 12 words)
+- "stat": the key number or comparison supporting it (max 15 words)
+- "why": one sentence on why this matters to a coach (max 20 words)
+- "tag": one of "O", "D", "K", "G" (G = general/game)
+- "priority": "high", "medium", or "low"
+
+Focus on: unusual tendencies, exploitable patterns, efficiency gaps, down-and-distance anomalies, formation predictability, red zone issues, or concerning trends. Be specific with numbers. Prioritize findings that a coach might actually miss by eyeballing stats.`;
+
+  try {
+    const resp = await fetch(`${HUDL_API}/api/claude`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: systemPrompt,
+        messages: [{ role: 'user', content: `Analyze this football play data and return insights as JSON:\n${JSON.stringify(summaryObj, null, 2)}` }],
+        max_tokens: 1200
+      })
+    });
+
+    if (!resp.ok) throw new Error(`API ${resp.status}`);
+    const data = await resp.json();
+    const raw = data.content?.[0]?.text || '';
+
+    // Parse JSON — strip any accidental markdown fences
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const insights = JSON.parse(clean);
+
+    if (!Array.isArray(insights) || insights.length === 0) throw new Error('No insights returned');
+
+    // Render the cards
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    const sorted = [...insights].sort((a,b) => (priorityOrder[a.priority]||1) - (priorityOrder[b.priority]||1));
+
+    const tagLabel = { O: 'OFFENSE', D: 'DEFENSE', K: 'SPECIAL TEAMS', G: 'GAME' };
+
+    let html = `<div style="padding:12px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+        <span>⚡ AI SPOTLIGHT · ${statsLabel}</span>
+        <button style="font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-family:var(--font-ui)" onclick="runSpotlightAnalysis(statsGameData)">↺ REFRESH</button>
+      </div>`;
+
+    sorted.forEach(ins => {
+      html += `<div class="spotlight-card ${ins.priority || 'medium'}">
+        <span class="spotlight-tag ${ins.tag || 'G'}">${tagLabel[ins.tag] || 'GENERAL'}</span>
+        <div class="spotlight-headline">${ins.headline}</div>
+        <div class="spotlight-stat">📊 ${ins.stat}</div>
+        <div class="spotlight-why">💡 ${ins.why}</div>
+      </div>`;
+    });
+
+    html += `<div style="margin-top:6px">
+      <button class="btn btn-secondary" onclick="setStatsTab('ai')" style="width:100%;padding:10px;font-size:11px">💬 DIG DEEPER WITH ASK AI →</button>
+    </div></div>`;
+
+    panel.innerHTML = html;
+
+  } catch(e) {
+    panel.innerHTML = `<div style="padding:16px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Could not generate AI insights: ${e.message}</div>
+      <button class="btn btn-secondary" onclick="runSpotlightAnalysis(statsGameData)" style="font-size:11px">↺ TRY AGAIN</button>
+    </div>`;
+  }
+}
+
 // ── CLAUDE CHAT ──
 function buildDataSummary() {
   const active = (statsGameData || []).filter(p => Object.keys(p).length > 0);
   if (active.length === 0) return 'No play data available.';
-  // Build a game index to shorten the CSV (G0, G1, etc. instead of full titles)
-  const gameTitles = [...new Set(active.map(p => p._gameTitle || ''))];
-  const gameIndex = Object.fromEntries(gameTitles.map((t, i) => [t, 'G' + i]));
-  const legend = gameTitles.map((t, i) => `G${i}=${t}`).join(', ');
-  const header = 'g,odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
+  // Compact CSV-style format to minimize tokens
+  const header = 'game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
   const rows = active.map(p => {
     const form = p.offform ? (p.offform.includes('|') ? p.offform.split('|')[1] : p.offform) : '';
-    const g = gameIndex[p._gameTitle || ''] || 'G?';
-    return [g,p.odk||'',p.qtr||'',p.dn||'',p.dist||'',p.yardln||'',p.hash||'',p.playtype||'',p.result||'',p.gainloss||'',form].join(',');
+    const game = (p._gameTitle || '').replace(/,/g, ' ');
+    return [game,p.odk||'',p.qtr||'',p.dn||'',p.dist||'',p.yardln||'',p.hash||'',p.playtype||'',p.result||'',p.gainloss||'',form].join(',');
   });
-  return `${getStatsLabel()} | ${active.length} plays\nGame legend: ${legend}\n${header}\n${rows.join('\n')}`;
+  return `${getStatsLabel()} | ${active.length} plays\n${header}\n${rows.join('\n')}`;
 }
 
 async function sendChat() {
   const input = document.getElementById('chat-input');
   const msg = input.value.trim();
   if (!msg) return;
-  // Rate limit guard: enforce 5s between requests to avoid API rate limit errors
-  const now = Date.now();
-  if (now - chatLastSent < 5000) {
-    const wait = Math.ceil((5000 - (now - chatLastSent)) / 1000);
-    appendMsg('assistant', `⏳ Please wait ${wait}s before sending another question.`);
-    input.value = msg; // put message back
-    return;
-  }
   input.value = '';
 
   const messagesEl = document.getElementById('chat-messages');
@@ -3457,23 +3684,14 @@ Motion: Fly=Y motion across formation
 
 Current dataset: ${label}
 Game location: ${gameLocation}
-Season: ${season}`;
-
-  // Build data context — sent once as first message, not re-embedded every call
-  const dataContextMsg = 'Here is the complete play-by-play dataset for this session. Use it to answer all questions accurately.\n\nPlay data (CSV — columns: game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form):\n' + buildDataSummary();
+Season: ${season}
+Play data (CSV format — columns: odk,qtr,dn,dist,ydln,hash,type,result,gl,form):
+${buildDataSummary()}`;
 
   // Safety guard: ensure history ends with a user message
   while (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role !== 'user') {
     chatHistory.pop();
   }
-
-  // Keep only last 4 conversation turns, always prepend data context
-  const recentHistory = chatHistory.slice(-4);
-  const messagesPayload = [
-    { role: 'user', content: dataContextMsg },
-    { role: 'assistant', content: 'Got it. Full play-by-play data loaded. What would you like to know?' },
-    ...recentHistory
-  ];
 
   try {
     const controller = new AbortController();
@@ -3484,9 +3702,9 @@ Season: ${season}`;
       signal: controller.signal,
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
+        max_tokens: 4096,
         system: systemPrompt,
-        messages: messagesPayload
+        messages: chatHistory
       })
     });
     clearTimeout(timeout);
@@ -3494,7 +3712,6 @@ Season: ${season}`;
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
     const reply = data.content?.[0]?.text || "Sorry, I couldn't get a response.";
-    chatLastSent = Date.now();
     chatHistory.push({ role: 'assistant', content: reply });
 
     thinkingDiv.remove();
@@ -3671,8 +3888,10 @@ function goStatsFromTracker() {
   showView('view-stats');
   renderStatsFromData(plays, statsLabel, false);
   updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
-  setStatsTab('stats');
+  setStatsTab('spotlight');
+  setStatsSubTab('overview');
   closeFilterDrawer();
+  runSpotlightAnalysis(plays);
 }
 
 function goStatsFromArchive(gameId) {
@@ -3690,8 +3909,10 @@ function goStatsFromArchive(gameId) {
   showView('view-stats');
   renderStatsFromData(plays, statsLabel, false);
   updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
-  setStatsTab('stats');
+  setStatsTab('spotlight');
+  setStatsSubTab('overview');
   closeFilterDrawer();
+  runSpotlightAnalysis(plays);
 }
 
 function openEditGameModal() {
@@ -3836,4 +4057,3 @@ setTimeout(tryInitGoogle, 500);
 </script>
 </body>
 </html>
-
