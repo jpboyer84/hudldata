@@ -379,11 +379,11 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .spotlight-card.high { border-color: var(--red); }
 .spotlight-card.medium { border-color: var(--yellow); }
 .spotlight-card.low { border-color: var(--border); }
-.spotlight-stat { font-family: var(--font-btn); font-weight: 900; font-size: 22px; line-height: 1.1; margin-bottom: 4px; color: var(--text); }
-.spotlight-card.high .spotlight-stat { color: var(--red); }
-.spotlight-card.medium .spotlight-stat { color: var(--yellow); }
-.spotlight-card.low .spotlight-stat { color: var(--blue); }
-.spotlight-headline { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; margin-bottom: 6px; }
+.spotlight-stat { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.spotlight-headline { font-family: var(--font-btn); font-weight: 900; font-size: 18px; line-height: 1.3; margin-bottom: 8px; }
+.spotlight-card.high .spotlight-headline { color: var(--red); }
+.spotlight-card.medium .spotlight-headline { color: var(--yellow); }
+.spotlight-card.low .spotlight-headline { color: var(--blue); }
 .spotlight-why { font-size: 11px; color: var(--muted); line-height: 1.4; }
 .spotlight-tag { display: inline-block; font-size: 9px; font-family: var(--font-btn); font-weight: 900;
   padding: 2px 6px; border-radius: 4px; margin-bottom: 10px; letter-spacing: 0.05em; color: var(--muted); background: var(--surface2); }
@@ -3507,9 +3507,9 @@ async function runSpotlightAnalysis(plays) {
   const systemPrompt = `You are an elite football analytics assistant for a high school coach. Analyze play data and surface the most important, actionable findings.
 
 Return ONLY a valid JSON array (no markdown, no preamble) of 4-5 insight objects. Each object must have:
-- "stat": A bold key number (e.g. "71% Run on 3rd & Long", "6.2 YPP from Trips Right", "34% Negative Play Rate on 1st Down"). Keep under 8 words. This is the hero — make it punch.
-- "headline": One sentence explaining the finding (max 15 words)
-- "why": One sentence on what to do about it or why it matters (max 15 words)
+- "stat": Supporting data point (e.g. "71% run rate on 3rd & long", "Only 8% of plays"). Keep under 10 words. This is small context text.
+- "headline": The actionable takeaway or recommendation (e.g. "Mix in more passes on 3rd & long", "Use Trips Right more — it's your best formation"). This is the BIG text the coach reads first. Max 12 words.
+- "why": Brief context on why (max 12 words)
 - "tag": one of "O", "D", "K", "G" (G = general)
 - "priority": "high" if exploitable/alarming, "medium" if notable, "low" if interesting
 
