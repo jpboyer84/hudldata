@@ -3445,14 +3445,23 @@ Motion: Fly=Y motion across formation
 
 Current dataset: ${label}
 Game location: ${gameLocation}
-Season: ${season}
-Play data (CSV format — columns: odk,qtr,dn,dist,ydln,hash,type,result,gl,form):
-${buildDataSummary()}`;
+Season: ${season}`;
+
+  // Build data context — sent once as first message, not re-embedded every call
+  const dataContextMsg = 'Here is the complete play-by-play dataset for this session. Use it to answer all questions accurately.\n\nPlay data (CSV — columns: game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form):\n' + buildDataSummary();
 
   // Safety guard: ensure history ends with a user message
   while (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role !== 'user') {
     chatHistory.pop();
   }
+
+  // Keep only last 4 conversation turns, always prepend data context
+  const recentHistory = chatHistory.slice(-4);
+  const messagesPayload = [
+    { role: 'user', content: dataContextMsg },
+    { role: 'assistant', content: 'Got it. Full play-by-play data loaded. What would you like to know?' },
+    ...recentHistory
+  ];
 
   try {
     const controller = new AbortController();
@@ -3463,9 +3472,9 @@ ${buildDataSummary()}`;
       signal: controller.signal,
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        max_tokens: 1024,
         system: systemPrompt,
-        messages: chatHistory.slice(-6)
+        messages: messagesPayload
       })
     });
     clearTimeout(timeout);
