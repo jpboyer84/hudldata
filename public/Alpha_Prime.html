@@ -3517,6 +3517,7 @@ Focus on: unusual tendencies, exploitable patterns, efficiency gaps, down-and-di
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
         system: systemPrompt,
         messages: [{ role: 'user', content: `Analyze this football play data and return insights as JSON:\n${JSON.stringify(summaryObj, null, 2)}` }],
         max_tokens: 1200
