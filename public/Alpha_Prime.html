@@ -21,8 +21,6 @@
   --sel-text: #000000;
   --red: #ff4444;
   --yellow: #ffb400;
-  --blue: #4a9eff;
-  --green: #44cc66;
   --radius: 8px;
   --font-ui: 'IBM Plex Mono', monospace;
   --font-btn: 'Nunito', sans-serif;
@@ -64,7 +62,6 @@ body {
 .hdr-btn.red { color: var(--red); border-color: rgba(255,68,68,0.4); background: rgba(255,68,68,0.08); }
 .hdr-btn.yellow { color: var(--yellow); border-color: rgba(255,180,0,0.4); background: rgba(255,180,0,0.08); }
 .hdr-btn.white { background: #fff; color: #000; border-color: #fff; }
-.hdr-btn.blue { color: var(--blue); border-color: rgba(74,158,255,0.4); background: rgba(74,158,255,0.08); }
 
 /* ════════════════════════════════════════
    LANDING PAGE
@@ -261,7 +258,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .arch-title { font-family: var(--font-btn); font-weight: 900; font-size: 16px; margin-bottom: 3px; }
 .arch-meta { font-size: 11px; color: var(--muted); }
 .arch-arrow { font-size: 20px; color: var(--muted); }
-.arch-tmpl { font-size: 10px; color: var(--blue); letter-spacing: 0.04em; margin-top: 2px; }
 
 .empty-msg { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 12px; line-height: 2.2; }
 
@@ -346,21 +342,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* SETTINGS */
-.settings-body { flex: 1; overflow-y: auto; padding: 16px; -webkit-overflow-scrolling: touch; }
-.settings-group { background: var(--surface); border: 1.5px solid var(--col-border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
-.settings-group-title { font-family: var(--font-btn); font-weight: 900; font-size: 15px; letter-spacing: 0.06em; margin-bottom: 4px; }
-.settings-group-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
-.settings-row { display: flex; gap: 10px; margin-bottom: 10px; }
-.settings-row:last-child { margin-bottom: 0; }
-.settings-btn { flex: 1; padding: 14px 10px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface2); cursor: pointer; text-align: center; font-family: var(--font-btn); font-weight: 900; font-size: 13px; color: var(--text); letter-spacing: 0.04em; }
-.settings-btn:active { opacity: 0.8; }
-.settings-btn-icon { font-size: 20px; display: block; margin-bottom: 4px; }
-.settings-btn-label { font-size: 11px; color: var(--muted); display: block; margin-top: 2px; }
-.export-choice { display: flex; gap: 10px; margin-top: 10px; }
-.export-choice-btn { flex: 1; padding: 16px 10px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface2); cursor: pointer; text-align: center; font-family: var(--font-btn); font-weight: 900; font-size: 14px; color: var(--text); }
-.export-choice-btn:active { opacity: 0.8; }
-.export-choice-icon { font-size: 24px; display: block; margin-bottom: 6px; }
+#view-import-export .abody { padding: 16px; }
+#view-import-export .sec-label { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
 
 .stats-tab {
   flex: 1; font-family: var(--font-btn); font-weight: 900; font-size: 11px;
@@ -400,22 +383,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   background: var(--surface); border: 1.5px solid var(--col-border);
   border-radius: 12px; padding: 16px;
 }
-.stat-section-toggle {
-  cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;
-}
-.stat-section-toggle .stat-toggle-icon {
-  font-size: 14px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; margin-left: 8px;
-}
-.stat-section-toggle.collapsed .stat-toggle-icon { transform: rotate(-90deg); }
-.stat-section-body { overflow: hidden; transition: max-height 0.3s ease; }
-.stat-section-body.collapsed { display: none; }
-
-/* Defense color accent */
-.stat-card.defense { border-color: rgba(255,120,70,0.4); }
-.stat-card.defense .stat-card-title { color: #ff8855; }
-.stat-card.defense .bar-fill { background: #ff8855; }
-.stat-card.defense .bar-fill span { color: #000; }
-
 .stat-card-title {
   font-family: var(--font-btn); font-weight: 900; font-size: 11px;
   letter-spacing: 0.1em; color: var(--muted); margin-bottom: 12px; text-transform: uppercase;
@@ -463,13 +430,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   padding: 10px 16px; cursor: pointer; flex-shrink: 0;
 }
 .chat-send:active { opacity: 0.8; }
-.chat-voice {
-  background: var(--surface2); color: var(--muted); border: 1px solid var(--border); border-radius: 8px;
-  font-size: 18px; padding: 8px 12px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-}
-.chat-voice:active { opacity: 0.7; }
-.chat-voice.recording { background: rgba(255,68,68,0.15); border-color: var(--red); color: var(--red); animation: pulse-rec 1s infinite; }
-@keyframes pulse-rec { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
 
 /* Hudl cutup checklist */
 .cutup-item {
@@ -479,7 +439,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 }
 .cutup-item:last-child { border-bottom: none; }
 .cutup-item:active { background: var(--surface2); }
-.cutup-item input[type=checkbox] { width:22px; height:22px; flex-shrink:0; accent-color:#fff; cursor:pointer; appearance:auto; -webkit-appearance:checkbox; }
+.cutup-item input[type=checkbox] { width:16px; height:16px; flex-shrink:0; accent-color:#fff; cursor:pointer; }
 .cutup-item-label { font-family:var(--font-btn); font-weight:900; font-size:13px; flex:1; }
 .cutup-item-count { font-size:10px; color:var(--muted); flex-shrink:0; }
 </style>
@@ -492,53 +452,53 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 <div class="view active" id="view-landing">
   <div class="lbody">
     <div class="landing-logo">HUDL DATA</div>
-    <div class="lcard" onclick="goTrackersHub()">
+
+    <div class="lcard" onclick="openNewGameModal()">
       <div class="lcard-icon">🏈</div>
       <div>
-        <div class="lcard-title">GAME TRACKERS</div>
-        <div class="lcard-sub" id="trackers-sub">Track, archive & manage games</div>
+        <div class="lcard-title">NEW GAME TRACKER</div>
+        <div class="lcard-sub">Start tracking a new game</div>
       </div>
     </div>
+
+    <div class="lcard" onclick="goArchive()">
+      <div class="lcard-icon">📋</div>
+      <div>
+        <div class="lcard-title">GAME TRACKER ARCHIVE</div>
+        <div class="lcard-sub" id="arch-sub">View previous games</div>
+      </div>
+    </div>
+
+    <div class="lcard" onclick="goTemplates()">
+      <div class="lcard-icon">📐</div>
+      <div>
+        <div class="lcard-title">GAME TRACKER TEMPLATES</div>
+        <div class="lcard-sub" id="tmpl-sub">Create & edit templates</div>
+      </div>
+    </div>
+
+    <div class="lcard" onclick="goColumns()">
+      <div class="lcard-icon">＋</div>
+      <div>
+        <div class="lcard-title">COLUMNS</div>
+        <div class="lcard-sub" id="col-sub">Create & edit columns</div>
+      </div>
+    </div>
+
+    <div class="lcard" onclick="goImportExport()">
+      <div class="lcard-icon">⇅</div>
+      <div>
+        <div class="lcard-title">IMPORT / EXPORT</div>
+        <div class="lcard-sub">Backup, restore & transfer data</div>
+      </div>
+    </div>
+
     <div class="lcard" onclick="goStats()">
       <div class="lcard-icon">📊</div>
       <div>
         <div class="lcard-title">STATS & ANALYSIS</div>
         <div class="lcard-sub" id="stats-sub">Analyze play data with AI</div>
       </div>
-    </div>
-    <div class="lcard" onclick="goSettings()">
-      <div class="lcard-icon">⚙️</div>
-      <div>
-        <div class="lcard-title">SETTINGS</div>
-        <div class="lcard-sub">Backup & restore your data</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- GAME TRACKERS HUB -->
-<div class="view" id="view-trackers-hub">
-  <div class="hdr">
-    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
-    <div class="hdr-title">GAME TRACKERS</div>
-    <div style="width:60px"></div>
-  </div>
-  <div class="lbody">
-    <div class="lcard" onclick="openNewGameModal()">
-      <div class="lcard-icon">➕</div>
-      <div><div class="lcard-title">NEW GAME TRACKER</div><div class="lcard-sub">Start tracking a new game</div></div>
-    </div>
-    <div class="lcard" onclick="goArchive()">
-      <div class="lcard-icon">📋</div>
-      <div><div class="lcard-title">ARCHIVE</div><div class="lcard-sub" id="arch-sub">View previous games</div></div>
-    </div>
-    <div class="lcard" onclick="goTemplates()">
-      <div class="lcard-icon">📐</div>
-      <div><div class="lcard-title">TEMPLATES</div><div class="lcard-sub" id="tmpl-sub">Create & edit templates</div></div>
-    </div>
-    <div class="lcard" onclick="goImportGameData()">
-      <div class="lcard-icon">📥</div>
-      <div><div class="lcard-title">IMPORT GAME DATA</div><div class="lcard-sub">Upload from file or Google Drive</div></div>
     </div>
   </div>
 </div>
@@ -549,12 +509,11 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 <div class="view" id="view-tracker">
   <div class="hdr">
     <button class="hdr-btn" onclick="leaveTracker()">← BACK</button>
-    <div class="hdr-title" id="tracker-title" onclick="openEditGameModal()" style="cursor:pointer">GAME</div>
+    <div class="hdr-title" id="tracker-title">GAME</div>
     <div style="display:flex;gap:5px">
       <button class="hdr-btn" id="layout-btn" onclick="toggleLayout()">▤ 1COL</button>
-      <button class="hdr-btn blue" onclick="goStatsFromTracker()">📊</button>
       <button class="hdr-btn white" onclick="saveAsTemplate()">+ TMPL</button>
-      <button class="hdr-btn" onclick="openExportXlsxModal()">⬇ XLSX</button>
+      <button class="hdr-btn" onclick="exportGame()">⬇ XLSX</button>
       <button class="hdr-btn yellow" onclick="clearRow()">✕ ROW</button>
       <button class="hdr-btn red" onclick="clearAll()">✕ ALL</button>
     </div>
@@ -573,12 +532,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 ══════════════════════════════════════ -->
 <div class="view" id="view-archive">
   <div class="hdr">
-    <button class="hdr-btn" onclick="goTrackersHub()">← BACK</button>
-    <div class="hdr-title">ARCHIVE</div>
-    <div style="display:flex;gap:5px">
-      <button class="hdr-btn" id="arch-select-btn" onclick="toggleArchiveSelect()">SELECT</button>
-      <button class="hdr-btn white" id="arch-export-btn" style="display:none" onclick="exportSelectedGamesXlsx()">⬇ EXPORT</button>
-    </div>
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
+    <div class="hdr-title">GAME ARCHIVE</div>
+    <div style="width:60px"></div>
   </div>
   <div class="abody" id="arch-body"></div>
 </div>
@@ -588,12 +544,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 ══════════════════════════════════════ -->
 <div class="view" id="view-templates">
   <div class="hdr">
-    <button class="hdr-btn" onclick="goTrackersHub()">← BACK</button>
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
     <div class="hdr-title">TEMPLATES</div>
-    <div style="display:flex;gap:5px">
-      <button class="hdr-btn" onclick="goColumns()">COLUMNS</button>
-      <button class="hdr-btn white" onclick="goTemplateBuilder()">+ NEW</button>
-    </div>
+    <button class="hdr-btn white" onclick="goTemplateBuilder()">+ NEW</button>
   </div>
   <div class="abody" id="tmpl-list-body"></div>
 </div>
@@ -625,7 +578,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 ══════════════════════════════════════ -->
 <div class="view" id="view-columns">
   <div class="hdr">
-    <button class="hdr-btn" onclick="showView('view-templates')">← BACK</button>
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
     <div class="hdr-title">COLUMNS</div>
     <button class="hdr-btn white" onclick="goColumnBuilder()">+ NEW</button>
   </div>
@@ -663,55 +616,17 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <div class="modal-x" onclick="closeModal('m-new-game')">✕</div>
     </div>
     <div class="modal-body">
-      <div class="fg"><label class="fl">Template</label><select class="fi" id="ng-tmpl"></select></div>
-      <div class="fg"><label class="fl">Home Team <span style="color:var(--muted);font-size:9px">(optional — edit anytime)</span></label><input class="fi" id="ng-home" placeholder="Home team" /></div>
-      <div class="fg"><label class="fl">Away Team <span style="color:var(--muted);font-size:9px">(optional — edit anytime)</span></label><input class="fi" id="ng-away" placeholder="Away team" /></div>
+      <div class="fg"><label class="fl">Home Team</label><input class="fi" id="ng-home" placeholder="Home team" /></div>
+      <div class="fg"><label class="fl">Away Team</label><input class="fi" id="ng-away" placeholder="Away team" /></div>
       <div style="display:flex;gap:10px">
         <div class="fg" style="flex:0 0 110px"><label class="fl">Week <span style="color:var(--muted);font-size:9px">(optional)</span></label><input class="fi" id="ng-week" placeholder="e.g. 5" type="number" min="1" max="20" /></div>
         <div class="fg" style="flex:1"><label class="fl">Date <span style="color:var(--muted);font-size:9px">(optional)</span></label><input class="fi" id="ng-date" placeholder="e.g. 10/4/2025" /></div>
       </div>
+      <div class="fg"><label class="fl">Template</label><select class="fi" id="ng-tmpl"></select></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('m-new-game')">Cancel</button>
       <button class="btn btn-primary" onclick="startGame()">START GAME</button>
-    </div>
-    <div class="settings-group">
-      <div class="settings-group-title">🗑️ Hudl Data Cache</div>
-      <div class="settings-group-sub" id="cache-stats-info">Cached Hudl data speeds up loading. Data auto-expires after 24 hours.</div>
-      <div class="settings-row">
-        <div class="settings-btn" onclick="clearHudlCache();updateCacheStats()"><span class="settings-btn-icon">🗑️</span>CLEAR CACHE<span class="settings-btn-label">Remove all cached data</span></div>
-        <div class="settings-btn" onclick="updateCacheStats()"><span class="settings-btn-icon">📊</span>CHECK SIZE<span class="settings-btn-label">See cache usage</span></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: EDIT GAME INFO -->
-<div class="overlay" id="m-edit-game">
-  <div class="modal">
-    <div class="modal-hdr"><div class="modal-title">EDIT GAME INFO</div><div class="modal-x" onclick="closeModal('m-edit-game')">✕</div></div>
-    <div class="modal-body">
-      <div class="fg"><label class="fl">Home Team</label><input class="fi" id="eg-home" placeholder="Home team" /></div>
-      <div class="fg"><label class="fl">Away Team</label><input class="fi" id="eg-away" placeholder="Away team" /></div>
-      <div style="display:flex;gap:10px">
-        <div class="fg" style="flex:0 0 110px"><label class="fl">Week</label><input class="fi" id="eg-week" placeholder="e.g. 5" type="number" min="1" max="20" /></div>
-        <div class="fg" style="flex:1"><label class="fl">Date</label><input class="fi" id="eg-date" placeholder="e.g. 10/4/2025" /></div>
-      </div>
-    </div>
-    <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('m-edit-game')">Cancel</button><button class="btn btn-primary" onclick="saveEditedGameInfo()">SAVE</button></div>
-  </div>
-</div>
-
-<!-- MODAL: EXPORT XLSX CHOICE -->
-<div class="overlay" id="m-export-xlsx">
-  <div class="modal" style="max-width:340px">
-    <div class="modal-hdr"><div class="modal-title">EXPORT XLSX</div><div class="modal-x" onclick="closeModal('m-export-xlsx')">✕</div></div>
-    <div class="modal-body" style="padding:16px 18px">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:14px" id="export-xlsx-info">Where do you want to save this spreadsheet?</div>
-      <div class="export-choice">
-        <div class="export-choice-btn" onclick="exportXlsxLocal()"><span class="export-choice-icon">💾</span>DEVICE</div>
-        <div class="export-choice-btn" onclick="exportXlsxDrive()"><span class="export-choice-icon">☁️</span>GOOGLE DRIVE</div>
-      </div>
     </div>
   </div>
 </div>
@@ -800,51 +715,69 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   </div>
 </div>
 
-<!-- IMPORT GAME DATA -->
-<div class="view" id="view-import-game">
+<!-- ══════════════════════════════════════
+     IMPORT / EXPORT
+══════════════════════════════════════ -->
+<div class="view" id="view-import-export">
   <div class="hdr">
-    <button class="hdr-btn" onclick="goTrackersHub()">← BACK</button>
-    <div class="hdr-title">IMPORT GAME DATA</div>
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
+    <div class="hdr-title">IMPORT / EXPORT</div>
     <div style="width:60px"></div>
   </div>
   <div class="abody" style="gap:16px">
-    <div class="settings-group">
-      <div class="settings-group-title">📥 Import Game from Spreadsheet</div>
-      <div class="settings-group-sub">Load a spreadsheet (.xlsx) back into the tracker.</div>
-      <div class="settings-row">
-        <div class="settings-btn" onclick="triggerXlsxImport()"><span class="settings-btn-icon">💾</span>FROM DEVICE<span class="settings-btn-label">Choose file</span></div>
-        <div class="settings-btn" onclick="showToast('Drive XLSX import coming soon')"><span class="settings-btn-icon">☁️</span>FROM DRIVE<span class="settings-btn-label">Google Drive</span></div>
-      </div>
+
+    <div class="sec-label" style="padding:0 2px 4px">EXPORT</div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">📊 Export Game as XLSX</div>
+      <div class="arch-meta">Export any saved game's plays to a spreadsheet. Edit on your computer, then import back.</div>
+      <select class="fi" id="ie-game-sel" style="width:100%;margin-top:2px"></select>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="exportSelectedGameXlsx()">EXPORT GAME →</button>
+    </div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">📦 Export Backup (JSON)</div>
+      <div class="arch-meta">Save all your data to a single file for safekeeping or moving to another device.</div>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="exportBackupAll()">EXPORT ALL DATA →</button>
+    </div>
+
+    <div class="sec-label" style="padding:4px 2px 4px">IMPORT</div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">📥 Import Game from XLSX</div>
+      <div class="arch-meta">Load a spreadsheet back into the tracker. You'll be asked how to handle unrecognized columns.</div>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="triggerXlsxImport()">CHOOSE XLSX FILE →</button>
       <input type="file" id="ie-xlsx-input" accept=".xlsx,.xls" style="display:none" />
     </div>
-  </div>
-</div>
 
-<!-- SETTINGS -->
-<div class="view" id="view-settings">
-  <div class="hdr">
-    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
-    <div class="hdr-title">SETTINGS</div>
-    <div style="width:60px"></div>
-  </div>
-  <div class="settings-body">
-    <div class="settings-group">
-      <div class="settings-group-title">💾 Save Full Backup</div>
-      <div class="settings-group-sub">Save all your games, templates, and columns to a safe location. Useful for backing up or moving to another device.</div>
-      <div class="settings-row">
-        <div class="settings-btn" onclick="exportBackupAll()"><span class="settings-btn-icon">📁</span>SAVE TO DEVICE<span class="settings-btn-label">Download JSON file</span></div>
-        <div class="settings-btn" onclick="driveSaveBackup()"><span class="settings-btn-icon">☁️</span>SAVE TO DRIVE<span class="settings-btn-label">Google Drive</span></div>
-      </div>
-    </div>
-    <div class="settings-group">
-      <div class="settings-group-title">📥 Restore Full Backup</div>
-      <div class="settings-group-sub">Load a previously saved backup to restore all your data (games, templates, columns).</div>
-      <div class="settings-row">
-        <div class="settings-btn" onclick="triggerJsonImport()"><span class="settings-btn-icon">📁</span>FROM DEVICE<span class="settings-btn-label">Choose JSON file</span></div>
-        <div class="settings-btn" onclick="driveLoadBackup()"><span class="settings-btn-icon">☁️</span>FROM DRIVE<span class="settings-btn-label">Google Drive</span></div>
-      </div>
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">📦 Import Backup (JSON)</div>
+      <div class="arch-meta">Restore from a backup file. You'll choose what to import and whether to merge or overwrite.</div>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="triggerJsonImport()">CHOOSE JSON FILE →</button>
       <input type="file" id="ie-json-input" accept=".json" style="display:none" />
     </div>
+
+    <div class="sec-label" style="padding:4px 2px 4px">GOOGLE DRIVE</div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">☁️ Save Backup to Drive</div>
+      <div class="arch-meta">Export all data and save directly to your Google Drive as a JSON backup file.</div>
+      <button class="btn btn-primary" style="width:100%;padding:12px" id="drive-save-btn" onclick="driveSaveBackup()">SAVE TO GOOGLE DRIVE →</button>
+    </div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">☁️ Load Backup from Drive</div>
+      <div class="arch-meta">Pick a Hudl Data backup file from your Google Drive to restore from.</div>
+      <button class="btn btn-primary" style="width:100%;padding:12px" id="drive-load-btn" onclick="driveLoadBackup()">LOAD FROM GOOGLE DRIVE →</button>
+    </div>
+
+    <div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+      <div class="arch-title" style="font-size:14px">☁️ Save Game XLSX to Drive</div>
+      <div class="arch-meta">Export the selected game as a spreadsheet and save directly to Google Drive.</div>
+      <select class="fi" id="ie-drive-game-sel" style="width:100%;margin-top:2px"></select>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="driveSaveGameXlsx()">SAVE XLSX TO DRIVE →</button>
+    </div>
+
   </div>
 </div>
 
@@ -935,7 +868,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
   <!-- Header -->
   <div class="hdr">
-    <button class="hdr-btn" onclick="leaveStats()">← BACK</button>
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
     <div class="hdr-title">STATS & ANALYSIS</div>
     <div style="display:flex;gap:5px">
       <button class="hdr-btn white" id="stats-filter-btn" onclick="toggleFilterDrawer()">FILTER ▼</button>
@@ -967,15 +900,15 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <button class="sf-btn" id="sf-g-big3" onclick="toggleSmartFilter('group','big3')">BIG 3</button>
     </div>
 
-    <!-- Type filter -->
+    <!-- Type — LOCAL added here -->
     <div class="sf-row" style="padding:0 12px 5px;flex-wrap:wrap">
       <span class="sf-label">TYPE</span>
       <button class="sf-btn on" id="hudl-cat-all"   onclick="setHudlCat('all')"   >ALL</button>
+      <button class="sf-btn"    id="hudl-cat-local" onclick="setHudlCat('local')" >LOCAL</button>
       <button class="sf-btn"    id="hudl-cat-game"  onclick="setHudlCat('game')"  >GAME</button>
       <button class="sf-btn"    id="hudl-cat-scout" onclick="setHudlCat('scout')" >SCOUT</button>
       <button class="sf-btn"    id="hudl-cat-jv"    onclick="setHudlCat('jv')"    >JV</button>
       <button class="sf-btn"    id="hudl-cat-other" onclick="setHudlCat('other')" >OTHER</button>
-      <button class="sf-btn"    id="hudl-cat-tracker" onclick="setHudlCat('tracker')">TRACKER</button>
     </div>
 
     <!-- Search -->
@@ -1027,7 +960,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <input class="chat-input" id="chat-input"
         placeholder="Ask about your play data…"
         onkeydown="if(event.key==='Enter')sendChat()" />
-      <button class="chat-voice" id="voice-btn" onclick="toggleVoiceInput()" title="Voice input">🎤</button>
       <button class="chat-send" onclick="sendChat()">ASK →</button>
     </div>
   </div>
@@ -1371,8 +1303,14 @@ function goColumnBuilder() {
 
 function updateLanding() {
   const games = getGames();
-  document.getElementById('trackers-sub').textContent =
-    games.length > 0 ? `${games.length} game${games.length!==1?'s':''} · track, archive & manage` : 'Track, archive & manage games';
+  const tmpls = getTmpls();
+  const cols = getCols();
+  document.getElementById('arch-sub').textContent =
+    games.length > 0 ? `${games.length} game${games.length!==1?'s':''} saved` : 'View previous games';
+  document.getElementById('tmpl-sub').textContent =
+    `${tmpls.length} template${tmpls.length!==1?'s':''} · tap to edit`;
+  document.getElementById('col-sub').textContent =
+    `${cols.length} column${cols.length!==1?'s':''} · tap to edit`;
 }
 
 // ════════════════════════════════════════
@@ -1382,11 +1320,13 @@ function openNewGameModal() {
   const tmpls = getTmpls();
   const sel = document.getElementById('ng-tmpl');
   sel.innerHTML = tmpls.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-  document.getElementById('ng-date').value = '';
+  const today = new Date();
+  document.getElementById('ng-date').value = `${today.getMonth()+1}/${today.getDate()}/${today.getFullYear()}`;
   document.getElementById('ng-home').value = '';
   document.getElementById('ng-away').value = '';
   document.getElementById('ng-week').value = '';
   openModal('m-new-game');
+  setTimeout(() => document.getElementById('ng-home').focus(), 100);
 }
 
 function startGame() {
@@ -1635,7 +1575,7 @@ function clearAll() {
 }
 
 function leaveTracker() {
-  goTrackersHub();
+  showView('view-landing');
   updateLanding();
 }
 
@@ -1777,14 +1717,16 @@ function confirmSaveAsTemplate() {
   showToast(`"${name}" saved as template!`);
 }
 
-
+function exportGame() {
+  if (!game) return;
+  exportGameToXlsx(game);
+}
 
 // ════════════════════════════════════════
 // GAME ARCHIVE
 // ════════════════════════════════════════
 function renderArchive() {
   const games = getGames();
-  const tmpls = getTmpls();
   const body = document.getElementById('arch-body');
   if (games.length === 0) {
     body.innerHTML = '<div class="empty-msg">No games yet.<br>Start a NEW GAME to see it here.</div>';
@@ -1795,30 +1737,13 @@ function renderArchive() {
     const plays = g.plays ? g.plays.filter(p => Object.keys(p).length > 0).length : 0;
     const weekStr = g.week ? `Wk ${g.week} · ` : '';
     const dateStr = g.date ? `${g.date} · ` : '';
-    const tmpl = tmpls.find(t => t.id === g.tmplId);
-    const tmplName = tmpl ? tmpl.name : '';
-    if (archiveSelectMode) {
-      h += `<div class="arch-card" onclick="toggleArchiveCheck('${g.id}')" style="gap:12px">
-        <div class="arch-check" id="archck-${g.id}"></div>
-        <div style="flex:1">
-          <div class="arch-title">${g.home} vs ${g.away}</div>
-          <div class="arch-meta">${weekStr}${dateStr}${plays} play${plays!==1?'s':''}</div>
-          ${tmplName ? `<div class="arch-tmpl">Template: ${tmplName}</div>` : ''}
-        </div>
-      </div>`;
-    } else {
-      h += `<div class="arch-card" onclick="loadTracker('${g.id}')">
-        <div style="flex:1">
-          <div class="arch-title">${g.home} vs ${g.away}</div>
-          <div class="arch-meta">${weekStr}${dateStr}${plays} play${plays!==1?'s':''}</div>
-          ${tmplName ? `<div class="arch-tmpl">Template: ${tmplName}</div>` : ''}
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <button class="hdr-btn blue" onclick="event.stopPropagation();goStatsFromArchive('${g.id}')" title="Stats">📊</button>
-          <div class="arch-arrow">›</div>
-        </div>
-      </div>`;
-    }
+    h += `<div class="arch-card" onclick="loadTracker('${g.id}')">
+      <div>
+        <div class="arch-title">${g.home} vs ${g.away}</div>
+        <div class="arch-meta">${weekStr}${dateStr}${plays} play${plays!==1?'s':''}</div>
+      </div>
+      <div class="arch-arrow">›</div>
+    </div>`;
   });
   body.innerHTML = h;
 }
@@ -2061,7 +1986,29 @@ function saveColumn() {
 // ════════════════════════════════════════
 // IMPORT / EXPORT VIEW
 // ════════════════════════════════════════
+function goImportExport() {
+  const games = getGames();
+  const gameOptions = games.length === 0
+    ? '<option value="">No saved games</option>'
+    : games.map(g => {
+        const wk = g.week ? `Wk ${g.week} · ` : '';
+        const dt = g.date ? `${g.date} · ` : '';
+        return `<option value="${g.id}">${g.home} vs ${g.away} (${wk}${dt})</option>`;
+      }).join('');
+  document.getElementById('ie-game-sel').innerHTML = gameOptions;
+  document.getElementById('ie-drive-game-sel').innerHTML = gameOptions;
+  showView('view-import-export');
+}
 
+// ── XLSX EXPORT (from import/export page) ──
+function exportSelectedGameXlsx() {
+  const gameId = document.getElementById('ie-game-sel').value;
+  if (!gameId) { showToast('No game selected'); return; }
+  const games = getGames();
+  const g = games.find(x => x.id === gameId);
+  if (!g) return;
+  exportGameToXlsx(g);
+}
 
 function exportGameToXlsx(g) {
   const tmpls = getTmpls();
@@ -2112,7 +2059,15 @@ function exportBackupAll() {
   showToast('Backup exported!');
 }
 
-
+function exportBackupSeparate() {
+  const files = [
+    { data: { version:1, exportedAt: new Date().toISOString(), games: getGames() },     name: `hudldata_games_${datestamp()}.json` },
+    { data: { version:1, exportedAt: new Date().toISOString(), columns: getCols() },    name: `hudldata_columns_${datestamp()}.json` },
+    { data: { version:1, exportedAt: new Date().toISOString(), templates: getTmpls() }, name: `hudldata_templates_${datestamp()}.json` }
+  ];
+  files.forEach((f, i) => setTimeout(() => downloadJson(f.data, f.name), i * 400));
+  showToast('3 files exported!');
+}
 
 function downloadJson(data, filename) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -2622,10 +2577,12 @@ function updateActiveLabel(text) {
 }
 
 function refreshStats() {
-  hudlLibrary = null;
-  localStorage.removeItem('hd_library_cache');
-  localStorage.removeItem('hd_library_cache_at');
-  loadHudlLibrary();
+  if (statsSource === 'local') {
+    renderStats();
+  } else {
+    hudlLibrary = null;
+    loadHudlLibrary();
+  }
 }
 
 async function loadAndShowStats() {
@@ -2681,11 +2638,8 @@ let statsGameData = null;
 let statsSource = 'local';
 let statsLabel = '';
 let hudlLibrary = null;
-let hudlCat = 'all';
-let chatHistory = [];
 
 function goStats() {
-  statsReturnView = 'view-landing';
   chatHistory = [];
   document.getElementById('chat-messages').innerHTML =
     '<div class="chat-msg assistant">Hi Coach! Load data using the FILTER button, then ask me anything about your plays.</div>';
@@ -2703,7 +2657,8 @@ function goStats() {
   }, 50);
 }
 
-// unified source — tracker items always included when hudlCat is 'all' or 'tracker'
+// unified source — 'local' items always included when hudlCat is 'all' or 'local'
+let hudlCat = 'all';
 
 function getCutupCategory(title) {
   const t = title.trim().toLowerCase();
@@ -2717,7 +2672,7 @@ function getCutupCategory(title) {
 
 function setHudlCat(cat) {
   hudlCat = cat;
-  ['all','game','scout','jv','other','tracker'].forEach(c => {
+  ['all','local','game','scout','jv','other'].forEach(c => {
     const btn = document.getElementById(`hudl-cat-${c}`);
     if (btn) btn.classList.toggle('on', c === cat);
   });
@@ -2738,7 +2693,7 @@ function getUnifiedItems() {
       internalId: 'local_' + g.id,
       title: `${g.home} vs ${g.away} (${wk}${dt})`,
       clip_count: g.plays ? g.plays.filter(p=>Object.keys(p).length>0).length : 0,
-      category: 'tracker'
+      category: 'local'
     });
   });
   // Hudl items
@@ -2780,115 +2735,9 @@ function matchesSmartFiltersLocal(item) {
   return true;
 }
 
-// ════════════════════════════════════════
-// HUDL DATA CACHE
-// ════════════════════════════════════════
-const CACHE_KEY_PREFIX = 'hd_cache_';
-const CACHE_META_KEY = 'hd_cache_meta';
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-
-function getCacheMeta() {
-  try { return JSON.parse(localStorage.getItem(CACHE_META_KEY) || '{}'); } catch { return {}; }
-}
-
-function setCacheMeta(meta) {
-  localStorage.setItem(CACHE_META_KEY, JSON.stringify(meta));
-}
-
-function getCachedClips(cutupId) {
-  const meta = getCacheMeta();
-  const entry = meta[cutupId];
-  if (!entry) return null;
-  // Check TTL
-  if (Date.now() - entry.cachedAt > CACHE_TTL) {
-    // Expired — clean up
-    localStorage.removeItem(CACHE_KEY_PREFIX + cutupId);
-    delete meta[cutupId];
-    setCacheMeta(meta);
-    return null;
-  }
-  try {
-    const data = localStorage.getItem(CACHE_KEY_PREFIX + cutupId);
-    return data ? JSON.parse(data) : null;
-  } catch {
-    return null;
-  }
-}
-
-function setCachedClips(cutupId, clips, label) {
-  const meta = getCacheMeta();
-  try {
-    localStorage.setItem(CACHE_KEY_PREFIX + cutupId, JSON.stringify(clips));
-    meta[cutupId] = { cachedAt: Date.now(), label: label, count: clips.length };
-    setCacheMeta(meta);
-  } catch(e) {
-    // localStorage full — evict oldest entries and retry
-    console.warn('Cache storage full, evicting old entries');
-    evictOldestCache(3);
-    try {
-      localStorage.setItem(CACHE_KEY_PREFIX + cutupId, JSON.stringify(clips));
-      meta[cutupId] = { cachedAt: Date.now(), label: label, count: clips.length };
-      setCacheMeta(meta);
-    } catch { /* give up silently */ }
-  }
-}
-
-function evictOldestCache(count) {
-  const meta = getCacheMeta();
-  const sorted = Object.entries(meta).sort((a, b) => a[1].cachedAt - b[1].cachedAt);
-  for (let i = 0; i < Math.min(count, sorted.length); i++) {
-    localStorage.removeItem(CACHE_KEY_PREFIX + sorted[i][0]);
-    delete meta[sorted[i][0]];
-  }
-  setCacheMeta(meta);
-}
-
-function updateCacheStats() {
-  const stats = getCacheStats();
-  const el = document.getElementById('cache-stats-info');
-  if (el) el.textContent = stats.entries > 0
-    ? `${stats.entries} cutup${stats.entries!==1?'s':''} cached (${stats.sizeKB} KB). Auto-expires after 24 hours.`
-    : 'No cached data. Data auto-expires after 24 hours.';
-}
-
-function clearHudlCache() {
-  const meta = getCacheMeta();
-  Object.keys(meta).forEach(id => localStorage.removeItem(CACHE_KEY_PREFIX + id));
-  localStorage.removeItem(CACHE_META_KEY);
-  localStorage.removeItem('hd_library_cache');
-  localStorage.removeItem('hd_library_cache_at');
-  showToast('Hudl cache cleared');
-}
-
-function getCacheStats() {
-  const meta = getCacheMeta();
-  const entries = Object.keys(meta).length;
-  let totalSize = 0;
-  Object.keys(meta).forEach(id => {
-    const item = localStorage.getItem(CACHE_KEY_PREFIX + id);
-    if (item) totalSize += item.length;
-  });
-  return { entries, sizeKB: Math.round(totalSize / 1024) };
-}
-
 async function loadHudlLibrary() {
   const status = document.getElementById('hudl-load-status');
   if (hudlLibrary) { filterHudlList(); return; }
-
-  // Try library cache first (1 hour TTL)
-  const libCacheAge = Date.now() - parseInt(localStorage.getItem('hd_library_cache_at') || '0');
-  if (libCacheAge < 3600000) {
-    try {
-      const cached = JSON.parse(localStorage.getItem('hd_library_cache'));
-      if (cached && cached.length > 0) {
-        hudlLibrary = cached;
-        status.textContent = 'Loaded from cache';
-        filterHudlList();
-        return;
-      }
-    } catch {}
-  }
-
   status.textContent = 'Loading cutups from Hudl…';
   document.getElementById('hudl-cutup-list').innerHTML =
     '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>';
@@ -2897,29 +2746,14 @@ async function loadHudlLibrary() {
     if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
     const data = await resp.json();
     hudlLibrary = data.items;
-    try {
-      localStorage.setItem('hd_library_cache', JSON.stringify(data.items));
-      localStorage.setItem('hd_library_cache_at', Date.now().toString());
-    } catch {}
     filterHudlList();
   } catch(e) {
     status.textContent = `Could not reach Hudl server: ${e.message}`;
     document.getElementById('hudl-cutup-list').innerHTML =
       '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Error loading Hudl cutups</div>';
+    // Still show local games
     filterHudlList();
   }
-}
-
-function parseWeekSort(title) {
-  // Extract week number for sorting: "Wk05" or "Wk 02" or "Wk10"
-  const m = title.match(/[Ww]k\s*0*(\d+)/);
-  if (!m) return -1; // no week = sort last
-  return parseInt(m[1], 10);
-}
-
-function parseSeason(title) {
-  const m = title.match(/'(\d{2})/);
-  return m ? parseInt(m[1], 10) : 0;
 }
 
 function renderUnifiedList(items) {
@@ -2928,19 +2762,8 @@ function renderUnifiedList(items) {
     container.innerHTML = '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">No items match</div>';
     return;
   }
-  // Sort: most recent season first, then highest week first, no-week items last
-  const sorted = items.slice().sort((a, b) => {
-    const sA = parseSeason(a.title), sB = parseSeason(b.title);
-    if (sA !== sB) return sB - sA; // newer season first
-    const wA = parseWeekSort(a.title), wB = parseWeekSort(b.title);
-    // Items with no week (-1) go to the bottom
-    if (wA === -1 && wB === -1) return a.title.localeCompare(b.title);
-    if (wA === -1) return 1;  // a goes after b
-    if (wB === -1) return -1; // b goes after a
-    if (wA !== wB) return wB - wA; // higher week first
-    return a.title.localeCompare(b.title);
-  });
-  container.innerHTML = sorted.map(i => `
+  // Auto-select all filtered items
+  container.innerHTML = items.map(i => `
     <div class="cutup-item" onclick="toggleCutupCheck('${i.internalId}')">
       <input type="checkbox" id="chk-${i.internalId}" value="${i.internalId}"
         data-source="${i.source}" data-gameid="${i.id || ''}"
@@ -2989,26 +2812,14 @@ async function loadHudlCutup() {
     result: c.result||'', gainloss: c.gain_loss||'', offform: c.off_form||'',
   });
 
-  let cacheHits = 0, cacheMisses = 0;
-
   const hudlResults = await Promise.all(hudlChecked.map(async chk => {
     const id = chk.value.replace('local_', '');
     const label = chk.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || id;
-    // Check cache first
-    const cached = getCachedClips(id);
-    if (cached) {
-      cacheHits++;
-      return { label, clips: cached, error: null };
-    }
-    // Cache miss — fetch from Hudl
-    cacheMisses++;
     try {
       const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
       if (!resp.ok) throw new Error(resp.status);
       const data = await resp.json();
-      const normalized = data.clips.map(normalize);
-      setCachedClips(id, normalized, label);
-      return { label, clips: normalized, error: null };
+      return { label, clips: data.clips.map(normalize), error: null };
     } catch(e) {
       return { label, clips: [], error: e.message };
     }
@@ -3023,24 +2834,140 @@ async function loadHudlCutup() {
   const allLabels   = [...localLabels, ...hudlLabels];
   statsLabel = allLabels.length === 1 ? allLabels[0] : `${allLabels.length} sources combined`;
 
-  const cacheInfo = cacheHits > 0 ? ` (${cacheHits} cached)` : '';
-  status.textContent = `${allPlays.length} total plays loaded${cacheInfo}`;
-  showToast(`Loaded ${allPlays.length} plays${cacheInfo}`);
+  status.textContent = `${allPlays.length} total plays loaded`;
+  showToast(`Loaded ${allPlays.length} plays`);
 
   const body = document.getElementById('stats-tab-stats');
   const breakdown = [...localChecked.map(c=>({ label: c.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent, count: localPlays.length })), ...hudlResults];
-  renderStatsFromData(allPlays, statsLabel, false);
+  const breakdownHtml = allLabels.length > 1 ? `<div class="stat-card">
+    <div class="stat-card-title">Sources Loaded</div>
+    <div class="stat-big-row" style="flex-wrap:wrap">
+      ${allLabels.map((l,i) => `<div class="stat-big" style="min-width:90px">
+        <div class="stat-big-val" style="font-size:16px">${i < localChecked.length ? localPlays.length : (hudlResults[i-localChecked.length]?.clips?.length||0)}</div>
+        <div class="stat-big-lbl" style="font-size:8px;word-break:break-word">${l}</div>
+      </div>`).join('')}
+    </div>
+  </div>` : '';
+
+  if (breakdownHtml) {
+    body.innerHTML = breakdownHtml;
+    renderStatsFromData(allPlays, statsLabel, true);
+  } else {
+    renderStatsFromData(allPlays, statsLabel, false);
+  }
   setStatsTab('stats');
   updateActiveLabel(`${statsLabel} · ${allPlays.length} plays`);
 }
 
+async function loadHudlCutup() {
+  const checked = [...document.querySelectorAll('#hudl-cutup-list input[type=checkbox]:checked')];
+  if (checked.length === 0) { showToast('Check at least one cutup'); return; }
+
+  const status = document.getElementById('hudl-load-status');
+  status.textContent = `Loading ${checked.length} cutup${checked.length > 1 ? 's' : ''}…`;
+  document.getElementById('stats-tab-stats').innerHTML =
+    '<div class="empty-msg">Loading Hudl data…</div>';
+
+  // Fetch all selected cutups in parallel
+  const results = await Promise.all(checked.map(async chk => {
+    const id = chk.value;
+    const label = chk.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || id;
+    try {
+      const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
+      if (!resp.ok) throw new Error(`${resp.status}`);
+      const data = await resp.json();
+      return { id, label, clips: data.clips, error: null };
+    } catch(e) {
+      return { id, label, clips: [], error: e.message };
+    }
+  }));
+
+  // Normalize Hudl clip format to Alpha Prime play format
+  const normalize = c => ({
+    odk:      c.odk       || '',
+    qtr:      c.quarter   || '',
+    dn:       c.down      || '',
+    dist:     c.distance  || '',
+    yardln:   c.yard_line || '',
+    hash:     c.hash      || '',
+    playtype: c.play_type || '',
+    result:   c.result    || '',
+    gainloss: c.gain_loss || '',
+    offform:  c.off_form  || '',
+  });
+
+  // Build combined dataset + per-cutup breakdown
+  const allPlays = [];
+  const breakdown = [];
+  results.forEach(r => {
+    const plays = r.clips.map(normalize);
+    allPlays.push(...plays);
+    breakdown.push({ label: r.label, count: plays.length, error: r.error });
+  });
+
+  statsGameData = allPlays;
+  statsLabel = checked.length === 1
+    ? results[0].label
+    : `${checked.length} cutups combined`;
+
+  const totalLoaded = allPlays.length;
+  status.textContent = `${totalLoaded} total clips loaded`;
+  showToast(`Loaded ${totalLoaded} clips`);
+
+  const body = document.getElementById('stats-tab-stats');
+  const breakdownHtml = breakdown.length > 1 ? `<div class="stat-card">
+    <div class="stat-card-title">Cutup Breakdown</div>
+    <div class="stat-big-row" style="flex-wrap:wrap">
+      ${breakdown.map(b => `
+        <div class="stat-big" style="min-width:100px">
+          <div class="stat-big-val">${b.error ? '!' : b.count}</div>
+          <div class="stat-big-lbl" style="font-size:9px;word-break:break-word">${b.label}</div>
+        </div>`).join('')}
+    </div>
+  </div>` : '';
+
+  // Render breakdown card first, then append stat charts
+  if (breakdownHtml) {
+    body.innerHTML = breakdownHtml;
+    renderStatsFromData(allPlays, statsLabel, true);
+  } else {
+    renderStatsFromData(allPlays, statsLabel, false);
+  }
+  setStatsTab('stats');
+  updateActiveLabel(`${statsLabel} · ${totalLoaded} plays`);
+}
+
 // ── LOCAL GAME DATA ──
+function getStatsPlays() {
+  const sel = document.getElementById('stats-game-sel').value;
+  const games = getGames();
+  if (sel === 'all') return games.flatMap(g => g.plays || []);
+  const g = games.find(x => x.id === sel);
+  return g ? g.plays || [] : [];
+}
+
 function getStatsLabel() {
-  return statsLabel || '';
+  if (statsSource === 'hudl') return statsLabel;
+  const sel = document.getElementById('stats-game-sel').value;
+  if (sel === 'all') return 'All Games';
+  const g = getGames().find(x => x.id === sel);
+  if (!g) return '';
+  const wk = g.week ? ` · Wk ${g.week}` : '';
+  return `${g.home} vs ${g.away}${wk}`;
+}
+
+function renderStats() {
+  if (statsSource === 'hudl') {
+    if (statsGameData && statsLabel) renderStatsFromData(statsGameData, statsLabel);
+    return;
+  }
+  const plays = getStatsPlays().filter(p => Object.keys(p).length > 0);
+  statsGameData = plays;
+  renderStatsFromData(plays, getStatsLabel());
+  setStatsTab('stats');
 }
 
 function renderStatsFromData(plays, label, append = false) {
-  statSectionId = 0;
   const body = document.getElementById('stats-tab-stats');
   if (!plays || plays.length === 0) {
     if (!append) body.innerHTML = '<div class="empty-msg">No play data found.</div>';
@@ -3234,7 +3161,7 @@ function renderStatsFromData(plays, label, append = false) {
         ${tfl>0?'<div class="stat-big"><div class="stat-big-val">'+tfl+'</div><div class="stat-big-lbl">TFL</div></div>':''}
         ${ints>0?'<div class="stat-big"><div class="stat-big-val">'+ints+'</div><div class="stat-big-lbl">INT</div></div>':''}
       </div>` : '') +
-      Object.entries(defResults).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([r,c])=>barRow(r,c,def.length)).join(''), {defense:true});
+      Object.entries(defResults).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([r,c])=>barRow(r,c,def.length)).join(''));
   }
 
   // HASH
@@ -3282,24 +3209,10 @@ function renderStatsFromData(plays, label, append = false) {
   if (append) { body.innerHTML += html; } else { body.innerHTML = html; }
 }
 
-let statSectionId = 0;
-function statSection(title, subtitle, content, opts = {}) {
-  const sid = 'ss-' + (statSectionId++);
-  const defClass = opts.defense ? ' defense' : '';
-  return '<div class="stat-card' + defClass + '">'
-    + '<div class="stat-section-toggle" onclick="toggleStatSection(\'' + sid + '\')">'
-    + '<div class="stat-card-title" style="margin-bottom:0">' + title
+function statSection(title, subtitle, content) {
+  return '<div class="stat-card"><div class="stat-card-title">' + title
     + (subtitle ? '<span style="font-weight:400;color:var(--muted);margin-left:6px;font-size:10px">' + subtitle + '</span>' : '')
-    + '</div><span class="stat-toggle-icon">▼</span></div>'
-    + '<div class="stat-section-body" id="' + sid + '" style="margin-top:12px">' + content + '</div></div>';
-}
-
-function toggleStatSection(id) {
-  const body = document.getElementById(id);
-  const toggle = body?.previousElementSibling;
-  if (!body) return;
-  body.classList.toggle('collapsed');
-  toggle?.classList.toggle('collapsed');
+    + '</div>' + content + '</div>';
 }
 
 function barRow(label, count, total) {
@@ -3346,22 +3259,16 @@ async function sendChat() {
   if (!msg) return;
   input.value = '';
 
-  const messagesEl = document.getElementById('chat-messages');
+  const messages = document.getElementById('chat-messages');
+
+  // Auto-switch to AI tab
   setStatsTab('ai');
 
-  function appendMsg(cls, html) {
-    const div = document.createElement('div');
-    div.className = 'chat-msg ' + cls;
-    div.innerHTML = html;
-    messagesEl.appendChild(div);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    return div;
-  }
-
-  if (!Array.isArray(chatHistory)) chatHistory = [];
+  // Add user message
   chatHistory.push({ role: 'user', content: msg });
-  appendMsg('user', msg);
-  const thinkingDiv = appendMsg('assistant thinking', 'Analyzing your data…');
+  messages.innerHTML += `<div class="chat-msg user">${msg}</div>`;
+  messages.innerHTML += `<div class="chat-msg assistant thinking" id="thinking-msg">Analyzing your data…</div>`;
+  messages.scrollTop = messages.scrollHeight;
 
   const label = getStatsLabel();
   const gameLocation = (() => {
@@ -3373,65 +3280,9 @@ async function sendChat() {
   const seasonMatch = label.match(/'(\d{2})/);
   const season = seasonMatch ? `20${seasonMatch[1]}` : 'unknown';
 
-  const systemPrompt = `You are a football analytics assistant for a coaching staff. You have complete play-by-play data. Always calculate stats directly from the data — never estimate or approximate when an exact count is possible.
+  const systemPrompt = `You are a football analytics assistant for a coaching staff. You have access to play-by-play data from their games. Analyze the data and answer coaching questions concisely and directly. Use football terminology. When referencing numbers, be specific. Keep answers under 200 words unless a detailed breakdown is requested.
 
-## DATA SCHEMA
-- odk: "O"=offense, "D"=defense, "K"=kickoff/special teams, "S"=special teams
-- qtr: quarter (1, 2, 3, 4)
-- down: down number (1, 2, 3, 4)
-- dist: EXACT yards needed for a first down (a single number like 3 or 10)
-- yardLine: field position (negative = own side of field, e.g. -30 = own 30; positive = opponent's side, e.g. 15 = opp 15)
-- hash: L=left hash, M=middle, R=right hash
-- playType: "Run", "Pass", or special teams type
-- result: outcome — e.g. "Rush", "Complete", "Incomplete", "Sack", "1st DN", "Rush TD", "Complete TD", "Interception", "Fumble", "Penalty", "Rush Safety", "Sack Safety", etc.
-- gainLoss: exact yards gained (positive) or lost (negative)
-- formation: offensive formation name
-
-## HOW TO CALCULATE COMMON STATS
-
-**First Downs:** A play earns a first down when gainLoss >= dist, OR result contains "TD", OR result is "1st DN". Count all offensive plays meeting any of these conditions.
-
-**3rd Down Conversion Rate:** Of all plays where down=3, count those where gainLoss >= dist OR result contains "TD" OR result="1st DN". Rate = conversions / total 3rd downs.
-
-**4th Down Conversion Rate:** Same logic as 3rd down but where down=4.
-
-**Yards Per Play:** Sum of all gainLoss values for offensive plays (odk="O") divided by count of offensive plays.
-
-**Yards Per Carry:** Sum gainLoss for plays where playType="Run", divide by run count.
-
-**Yards Per Pass Attempt:** Sum gainLoss for plays where playType="Pass" (including incomplete = 0 yards), divide by pass attempt count.
-
-**Completion Rate:** Count plays where result contains "Complete" divided by total pass attempts (playType="Pass").
-
-**Red Zone:** Plays where yardLine >= 1 AND yardLine <= 20 (inside opponent's 20).
-
-**Red Zone Efficiency:** Of red zone offensive plays, what percentage resulted in a TD (result contains "TD").
-
-**Sack Rate:** Count plays where result contains "Sack" divided by total pass attempts.
-
-**Turnover Rate:** Count plays where result contains "Interception" or "Fumble".
-
-**Explosive Plays:** Runs gaining 10+ yards (gainLoss >= 10, playType="Run") and passes gaining 15+ yards (gainLoss >= 15, playType="Pass").
-
-**Negative Plays:** Plays where gainLoss < 0 (sacks, tackles for loss).
-
-**Scoring Drives:** Drives (by series number if available) that ended in a TD or FG.
-
-**Time of Possession proxy:** Count of offensive plays — more plays generally = more possession.
-
-**Defensive Stats:** When odk="D", gainLoss represents yards allowed. Track sacks (result contains "Sack"), TFLs (gainLoss < 0), interceptions (result contains "Interception"), pass breakups (result contains "Batted" or "Tipped" or "Dropped").
-
-**Pass/Run Tendencies by Down:** For each down (1-4), what % of offensive plays were runs vs passes.
-
-**Formation Efficiency:** Group plays by formation, calculate yards per play and first down rate for each.
-
-**Hash Tendencies:** Run/pass split and average gain by hash mark.
-
-**Quarter Breakdown:** Plays, yards, and scoring by quarter.
-
-Always lead with the direct answer and key numbers first, then supporting detail. Never build up to a conclusion — give the number first.
-
-Current dataset: ${label}
+Current game/dataset: ${label}
 Game location: ${gameLocation}
 Season: ${season}
 Play data:
@@ -3439,14 +3290,14 @@ ${buildDataSummary()}`;
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000);
+    const timeout = setTimeout(() => controller.abort(), 120000); // 2 min
     const resp = await fetch(`${HUDL_API}/api/claude`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        max_tokens: 2048,
         system: systemPrompt,
         messages: chatHistory
       })
@@ -3455,87 +3306,29 @@ ${buildDataSummary()}`;
 
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-    const reply = data.content?.[0]?.text || "Sorry, I couldn't get a response.";
+    const reply = data.content?.[0]?.text || 'Sorry, I couldn\'t get a response.';
     chatHistory.push({ role: 'assistant', content: reply });
 
-    thinkingDiv.remove();
-
-    const savedMsg = msg;
-    const savedReply = reply;
-    const saveId = 'save_' + Date.now();
-    window[saveId] = () => saveInsight(savedMsg, savedReply);
-
-    const replyDiv = document.createElement('div');
-    replyDiv.className = 'chat-msg assistant';
-    replyDiv.innerHTML = formatChatResponse(reply)
-      + `<div style="margin-top:8px;text-align:right">
-          <button onclick="window['${saveId}']()"
-            style="font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);
-                   border-radius:4px;padding:3px 8px;cursor:pointer;font-family:var(--font-ui)">📌 SAVE</button>
-         </div>`;
-    messagesEl.appendChild(replyDiv);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-
+    document.getElementById('thinking-msg')?.remove();
+    const savedMsg = msg; // capture for closure
+    messages.innerHTML += `<div class="chat-msg assistant">
+      ${formatChatResponse(reply)}
+      <div style="margin-top:8px;text-align:right">
+        <button onclick="saveInsight(${JSON.stringify(savedMsg)}, ${JSON.stringify(reply)})"
+          style="font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);
+                 border-radius:4px;padding:3px 8px;cursor:pointer;font-family:var(--font-ui)">📌 SAVE</button>
+      </div>
+    </div>`;
+    messages.scrollTop = messages.scrollHeight;
   } catch(e) {
-    thinkingDiv.remove();
+    document.getElementById('thinking-msg')?.remove();
     const errMsg = e.name === 'AbortError'
       ? 'Request timed out — dataset may be too large. Try loading a single game cutup instead.'
       : `Error: ${e.message}`;
-    appendMsg('assistant', errMsg);
+    messages.innerHTML += `<div class="chat-msg assistant">${errMsg}</div>`;
+    messages.scrollTop = messages.scrollHeight;
     chatHistory.pop();
   }
-}
-
-// ════════════════════════════════════════
-// VOICE INPUT
-// ════════════════════════════════════════
-let voiceRecognition = null;
-let isRecording = false;
-
-function toggleVoiceInput() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showToast('Voice input not supported in this browser');
-    return;
-  }
-  const btn = document.getElementById('voice-btn');
-  if (isRecording) {
-    voiceRecognition.stop();
-    isRecording = false;
-    btn.classList.remove('recording');
-    btn.textContent = '🎤';
-    return;
-  }
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  voiceRecognition = new SpeechRecognition();
-  voiceRecognition.continuous = false;
-  voiceRecognition.interimResults = false;
-  voiceRecognition.lang = 'en-US';
-  voiceRecognition.onstart = () => {
-    isRecording = true;
-    btn.classList.add('recording');
-    btn.textContent = '⏹';
-  };
-  voiceRecognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    document.getElementById('chat-input').value = transcript;
-    isRecording = false;
-    btn.classList.remove('recording');
-    btn.textContent = '🎤';
-    // Auto-send after voice input
-    sendChat();
-  };
-  voiceRecognition.onerror = (event) => {
-    isRecording = false;
-    btn.classList.remove('recording');
-    btn.textContent = '🎤';
-    if (event.error !== 'aborted') showToast('Voice error: ' + event.error);
-  };
-  voiceRecognition.onend = () => {
-    isRecording = false;
-    btn.classList.remove('recording');
-    btn.textContent = '🎤';
-  };
-  voiceRecognition.start();
 }
 
 // ════════════════════════════════════════
@@ -3601,162 +3394,12 @@ function renderInsights() {
 }
 
 // ════════════════════════════════════════
-// NAVIGATION HELPERS
-// ════════════════════════════════════════
-let statsReturnView = 'view-landing';
-let archiveSelectMode = false;
-let archiveSelected = new Set();
-
-function goTrackersHub() { updateHubSubs(); showView('view-trackers-hub'); }
-function goImportGameData() { showView('view-import-game'); }
-function goSettings() { showView('view-settings'); }
-function leaveStats() { showView(statsReturnView); }
-
-function updateHubSubs() {
-  const games = getGames(); const tmpls = getTmpls();
-  document.getElementById('arch-sub').textContent = games.length > 0 ? games.length + ' game' + (games.length!==1?'s':'') + ' saved' : 'View previous games';
-  document.getElementById('tmpl-sub').textContent = tmpls.length + ' template' + (tmpls.length!==1?'s':'') + ' · tap to edit';
-}
-
-function goStatsFromTracker() {
-  if (!game) return;
-  statsReturnView = 'view-tracker';
-  const plays = (game.plays || []).filter(p => Object.keys(p).length > 0);
-  statsGameData = plays;
-  const weekStr = game.week ? ' · Wk ' + game.week : '';
-  statsLabel = game.home + ' vs ' + game.away + weekStr;
-  statsSource = 'local';
-  chatHistory = [];
-  document.getElementById('chat-messages').innerHTML =
-    '<div class="chat-msg assistant">Hi Coach! Data loaded — ask me anything about this game.</div>';
-  showView('view-stats');
-  renderStatsFromData(plays, statsLabel, false);
-  updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
-  setStatsTab('stats');
-  closeFilterDrawer();
-}
-
-function goStatsFromArchive(gameId) {
-  const g = getGames().find(x => x.id === gameId);
-  if (!g) return;
-  statsReturnView = 'view-archive';
-  const plays = (g.plays || []).filter(p => Object.keys(p).length > 0);
-  statsGameData = plays;
-  const weekStr = g.week ? ' · Wk ' + g.week : '';
-  statsLabel = g.home + ' vs ' + g.away + weekStr;
-  statsSource = 'local';
-  chatHistory = [];
-  document.getElementById('chat-messages').innerHTML =
-    '<div class="chat-msg assistant">Hi Coach! Data loaded — ask me anything about this game.</div>';
-  showView('view-stats');
-  renderStatsFromData(plays, statsLabel, false);
-  updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
-  setStatsTab('stats');
-  closeFilterDrawer();
-}
-
-function openEditGameModal() {
-  if (!game) return;
-  document.getElementById('eg-home').value = game.home || '';
-  document.getElementById('eg-away').value = game.away || '';
-  document.getElementById('eg-week').value = game.week || '';
-  document.getElementById('eg-date').value = game.date || '';
-  openModal('m-edit-game');
-}
-
-function saveEditedGameInfo() {
-  if (!game) return;
-  game.home = document.getElementById('eg-home').value.trim() || 'HOME';
-  game.away = document.getElementById('eg-away').value.trim() || 'AWAY';
-  game.week = document.getElementById('eg-week').value.trim();
-  game.date = document.getElementById('eg-date').value.trim();
-  persist();
-  const weekStr = game.week ? ' · WK ' + game.week : '';
-  document.getElementById('tracker-title').textContent = game.home.toUpperCase() + ' VS ' + game.away.toUpperCase() + weekStr;
-  closeModal('m-edit-game');
-  showToast('Game info updated');
-}
-
-let exportXlsxGameId = null;
-
-function openExportXlsxModal() {
-  if (!game) return;
-  exportXlsxGameId = game.id;
-  document.getElementById('export-xlsx-info').textContent = 'Export "' + game.home + ' vs ' + game.away + '" as spreadsheet';
-  openModal('m-export-xlsx');
-}
-
-function exportXlsxLocal() {
-  closeModal('m-export-xlsx');
-  if (Array.isArray(exportXlsxGameId)) {
-    exportXlsxGameId.forEach(id => { const g = getGames().find(x => x.id === id); if (g) exportGameToXlsx(g); });
-    archiveSelected.clear(); archiveSelectMode = false; renderArchive();
-  } else {
-    const g = getGames().find(x => x.id === exportXlsxGameId);
-    if (g) exportGameToXlsx(g);
-  }
-}
-
-function exportXlsxDrive() {
-  closeModal('m-export-xlsx');
-  if (Array.isArray(exportXlsxGameId)) {
-    exportXlsxGameId.forEach(id => { const g = getGames().find(x => x.id === id); if (g) driveExportGameXlsx(g); });
-    archiveSelected.clear(); archiveSelectMode = false; renderArchive();
-  } else {
-    const g = getGames().find(x => x.id === exportXlsxGameId);
-    if (g) driveExportGameXlsx(g);
-  }
-}
-
-function driveExportGameXlsx(g) {
-  driveEnsureAuth(function() {
-    var tmpls = getTmpls(); var tmpl = tmpls.find(function(t){return t.id === g.tmplId;}) || tmpls[0]; var allCols = getCols();
-    var gameCols = tmpl ? tmpl.colIds.map(function(id){return allCols.find(function(c){return c.id===id;});}).filter(Boolean) : allCols;
-    var seenNames = new Set(); var exportCols = gameCols.filter(function(c){if(seenNames.has(c.name))return false;seenNames.add(c.name);return true;});
-    var nameToKeys = {}; gameCols.forEach(function(c){var k=c.dataKey||c.id;if(!nameToKeys[c.name])nameToKeys[c.name]=[];if(!nameToKeys[c.name].includes(k))nameToKeys[c.name].push(k);});
-    var headers = ['Play'].concat(exportCols.map(function(c){return c.name;}));
-    var rows = g.plays.map(function(p,i){return [i+1].concat(exportCols.map(function(c){var keys=nameToKeys[c.name]||[c.dataKey||c.id];var raw=keys.map(function(k){return p[k]||'';}).find(function(v){return v!=='';}) || '';return raw.includes('|')?raw.split('|')[1]:raw;}));});
-    var ws = XLSX.utils.aoa_to_sheet([headers].concat(rows)); var wb = XLSX.utils.book_new();
-    var sheetName = (g.home+'_vs_'+g.away).replace(/[^a-z0-9_]/gi,'_').slice(0,31);
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    var xlsxData = XLSX.write(wb, {bookType:'xlsx', type:'base64'});
-    var wkStr = g.week ? '_wk'+g.week : ''; var dtStr = g.date ? '_'+g.date.replace(/\//g,'-') : '';
-    var filename = sheetName+wkStr+dtStr+'.xlsx';
-    var byteString = atob(xlsxData); var ab = new ArrayBuffer(byteString.length); var ia = new Uint8Array(ab);
-    for (var i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-    driveUploadFile(filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', new Blob([ab]), function(){showToast('Saved XLSX to Drive!');});
-  });
-}
-
-function toggleArchiveSelect() {
-  archiveSelectMode = !archiveSelectMode;
-  archiveSelected.clear();
-  document.getElementById('arch-select-btn').textContent = archiveSelectMode ? 'DONE' : 'SELECT';
-  document.getElementById('arch-export-btn').style.display = archiveSelectMode ? '' : 'none';
-  renderArchive();
-}
-
-function toggleArchiveCheck(id) {
-  if (archiveSelected.has(id)) archiveSelected.delete(id); else archiveSelected.add(id);
-  var el = document.getElementById('archck-' + id);
-  if (el) { el.classList.toggle('checked', archiveSelected.has(id)); el.textContent = archiveSelected.has(id) ? '✓' : ''; }
-  document.getElementById('arch-export-btn').textContent = archiveSelected.size > 0 ? '⬇ EXPORT (' + archiveSelected.size + ')' : '⬇ EXPORT';
-}
-
-function exportSelectedGamesXlsx() {
-  if (archiveSelected.size === 0) { showToast('Select at least one game'); return; }
-  exportXlsxGameId = Array.from(archiveSelected);
-  document.getElementById('export-xlsx-info').textContent = 'Export ' + archiveSelected.size + ' game' + (archiveSelected.size>1?'s':'') + ' as spreadsheet' + (archiveSelected.size>1?'s':'');
-  openModal('m-export-xlsx');
-}
-
-// ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
-if (localStorage.getItem('hd_ver') !== '8') {
+if (localStorage.getItem('hd_ver') !== '7') {
   localStorage.removeItem('hd_cols');
   localStorage.removeItem('hd_tmpls');
-  localStorage.setItem('hd_ver', '8');
+  localStorage.setItem('hd_ver', '7');
 }
 if (!localStorage.getItem('hd_cols'))  saveCols(defaultColumns());
 if (!localStorage.getItem('hd_tmpls')) saveTmpls([defaultTemplate()]);
