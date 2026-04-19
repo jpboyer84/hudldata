@@ -2750,6 +2750,7 @@ function formatChatResponse(text) {
 }
 let statsGameData = null;
 let statsReturnView = 'view-landing';
+let statSectionId = 0;
 let statsSource = 'local';
 let statsLabel = '';
 let hudlLibrary = null;
@@ -3384,16 +3385,6 @@ function renderStatsFromData(plays, label, append = false) {
   document.getElementById('stats-sub-quarter').innerHTML = qtrHtml || '<div class="empty-msg">No quarter data.</div>';
 }
 
-  const off = plays.filter(p => p.odk === 'O');
-  const def = plays.filter(p => p.odk === 'D');
-  const st  = plays.filter(p => p.odk === 'K' || p.odk === 'S');
-  const runs = off.filter(isRun);
-  const passes = off.filter(isPass);
-  const offGL = off.map(getGL).filter(v=>v!==null);
-  const runGL = runs.map(getGL).filter(v=>v!==null);
-  const passGL = passes.map(getGL).filter(v=>v!==null);
-
-let statSectionId = 0;
 function statSection(title, subtitle, content, opts = {}) {
   const sid = 'ss-' + (statSectionId++);
   const defClass = opts.defense ? ' defense' : '';
