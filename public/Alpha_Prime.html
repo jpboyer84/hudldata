@@ -3463,7 +3463,7 @@ async function runSpotlightAnalysis(plays) {
   const formMap = {};
   off.forEach(p => { const f = getForm(p); if(f) { if(!formMap[f]) formMap[f]={plays:0,gl:[],runs:0,passes:0}; formMap[f].plays++; const g=getGL(p); if(g!==null)formMap[f].gl.push(g); if(isRun(p))formMap[f].runs++; if(isPass(p))formMap[f].passes++; } });
   const formStats = Object.entries(formMap).sort((a,b)=>b[1].plays-a[1].plays).slice(0,8).map(([f,d])=>({
-    formation: f, plays: d.plays, pct: Math.round(d.plays/off.length*100),
+    formation: f, plays: d.plays, playsWithYardage: d.gl.length, pct: Math.round(d.plays/off.length*100),
     runPct: Math.round(d.runs/d.plays*100), passPct: Math.round(d.passes/d.plays*100),
     avg: avg(d.gl)
   }));
@@ -3486,7 +3486,8 @@ async function runSpotlightAnalysis(plays) {
 
   const summaryObj = {
     totalPlays: active.length,
-    offense: { plays: off.length, avgYPP: avg(offGL), runPlays: runs.length, passPlays: passes.length,
+    offense: { plays: off.length, playsWithYardage: offGL.length, missingYardage: off.length - offGL.length,
+      avgYPP: avg(offGL), runPlays: runs.length, passPlays: passes.length,
       runPct: off.length ? Math.round(runs.length/off.length*100) : 0,
       passPct: off.length ? Math.round(passes.length/off.length*100) : 0,
       negPlayPct: offGL.length ? Math.round(negPlays/offGL.length*100) : 0,
@@ -3499,7 +3500,7 @@ async function runSpotlightAnalysis(plays) {
     defense: { plays: def.length },
     downTendencies: dnStats,
     formations: formStats,
-    hashTendencies: Object.entries(hashMap).map(([h,d])=>({hash:h, plays:d.plays, runPct:Math.round(d.runs/d.plays*100), avg:avg(d.gl)})),
+    hashTendencies: Object.entries(hashMap).map(([h,d])=>({hash:h, plays:d.plays, playsWithYardage:d.gl.length, missingYardage:d.plays-d.gl.length, runPct:Math.round(d.runs/d.plays*100), avg:avg(d.gl)})),
     quarterTrends: Object.entries(qtrMap).sort((a,b)=>a[0]-b[0]).map(([q,d])=>({qtr:q, offPlays:d.off, defPlays:d.def, avgYds:avg(d.gl)})),
     dataLabel: statsLabel
   };
@@ -3513,7 +3514,11 @@ Return ONLY a valid JSON array (no markdown, no preamble) of 4-5 insight objects
 - "tag": one of "O", "D", "K", "G" (G = general)
 - "priority": "high" if exploitable/alarming, "medium" if notable, "low" if interesting
 
-Focus on patterns a coach would miss by eyeballing: predictable tendencies, efficiency outliers, down-and-distance anomalies, underused formations, field position issues. Be specific.`;
+CRITICAL RULES:
+- Check "playsWithYardage" and "missingYardage" fields. If a category has fewer than 10 plays with yardage data, do NOT make YPP/average claims about it — the sample is too small.
+- Never compare averages between groups where one has significant missing data.
+- Focus on patterns with solid sample sizes: run/pass tendencies, down-and-distance predictability, formation usage rates, overall efficiency.
+- Be specific with numbers but honest about limitations.`;
 
   try {
     const resp = await fetch(`${HUDL_API}/api/claude`, {
