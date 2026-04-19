@@ -3360,7 +3360,7 @@ async function sendChat() {
 
   if (!Array.isArray(chatHistory)) chatHistory = [];
   chatHistory.push({ role: 'user', content: msg });
-  appendMsg('user', msg);
+  appendMsg('user', msg);  // Always show just the question, not the data payload
   const thinkingDiv = appendMsg('assistant thinking', 'Analyzing your data…');
 
   const label = getStatsLabel();
@@ -3373,69 +3373,46 @@ async function sendChat() {
   const seasonMatch = label.match(/'(\d{2})/);
   const season = seasonMatch ? `20${seasonMatch[1]}` : 'unknown';
 
-  const systemPrompt = `You are a football analytics assistant for a coaching staff. You have complete play-by-play data. Always calculate stats directly from the data — never estimate or approximate when an exact count is possible.
+  // System prompt: instructions only, NO data (data goes in first user message)
+  const systemPrompt = `You are a football analytics assistant for a coaching staff. You have complete play-by-play data provided in the conversation. Always calculate stats directly from the data — never estimate when you can count exactly.
 
 ## DATA SCHEMA
-- odk: "O"=offense, "D"=defense, "K"=kickoff/special teams, "S"=special teams
-- qtr: quarter (1, 2, 3, 4)
-- down: down number (1, 2, 3, 4)
-- dist: EXACT yards needed for a first down (a single number like 3 or 10)
-- yardLine: field position (negative = own side of field, e.g. -30 = own 30; positive = opponent's side, e.g. 15 = opp 15)
-- hash: L=left hash, M=middle, R=right hash
-- playType: "Run", "Pass", or special teams type
-- result: outcome — e.g. "Rush", "Complete", "Incomplete", "Sack", "1st DN", "Rush TD", "Complete TD", "Interception", "Fumble", "Penalty", "Rush Safety", "Sack Safety", etc.
+- odk: "O"=offense, "D"=defense, "K"/"S"=special teams
+- qtr: quarter (1-4)
+- down: down number (1-4)
+- dist: EXACT yards needed for a first down (single number)
+- yardLine: field position (negative=own side, positive=opponent side)
+- hash: L/M/R
+- playType: "Run" or "Pass"
+- result: "Rush", "Complete", "Incomplete", "Sack", "1st DN", "Rush TD", "Complete TD", "Interception", "Fumble", "Penalty", etc.
 - gainLoss: exact yards gained (positive) or lost (negative)
 - formation: offensive formation name
 
-## HOW TO CALCULATE COMMON STATS
+## HOW TO CALCULATE STATS
+**First Downs:** gainLoss >= dist, OR result contains "TD", OR result = "1st DN"
+**3rd/4th Down Conversion:** same logic filtered by down=3 or down=4
+**Yards Per Play:** sum(gainLoss for odk="O") / count(odk="O" plays)
+**Yards Per Carry:** sum(gainLoss for playType="Run") / count(runs)
+**Yards Per Pass:** sum(gainLoss for playType="Pass") / count(pass attempts)
+**Completion Rate:** count(result contains "Complete") / count(playType="Pass")
+**Red Zone:** yardLine >= 1 AND yardLine <= 20
+**Red Zone TD%:** of red zone plays, % with result containing "TD"
+**Sack Rate:** count(result contains "Sack") / count(playType="Pass")
+**Turnovers:** count(result contains "Interception" or "Fumble")
+**Explosive Plays:** runs with gainLoss >= 10, passes with gainLoss >= 15
+**Negative Plays:** gainLoss < 0
+**Defensive Stats:** when odk="D" — yards allowed, sacks, TFLs (gainLoss<0), INTs
 
-**First Downs:** A play earns a first down when gainLoss >= dist, OR result contains "TD", OR result is "1st DN". Count all offensive plays meeting any of these conditions.
+Always answer with the number first, then brief context. Use a short table or bullet points. Never list individual plays unless asked. Never build up to a conclusion — lead with the answer.`;
 
-**3rd Down Conversion Rate:** Of all plays where down=3, count those where gainLoss >= dist OR result contains "TD" OR result="1st DN". Rate = conversions / total 3rd downs.
+  // On the FIRST question: embed the full dataset in the user message so it only travels once.
+  // On follow-ups: just send the question — data is already in the conversation history.
+  const isFirstMessage = chatHistory.length === 0;
+  const userContent = isFirstMessage
+    ? `Dataset: ${label} | Location: ${gameLocation} | Season: ${season}\n\nPlay data:\n${buildDataSummary()}\n\n---\n\nFirst question: ${msg}`
+    : msg;
 
-**4th Down Conversion Rate:** Same logic as 3rd down but where down=4.
-
-**Yards Per Play:** Sum of all gainLoss values for offensive plays (odk="O") divided by count of offensive plays.
-
-**Yards Per Carry:** Sum gainLoss for plays where playType="Run", divide by run count.
-
-**Yards Per Pass Attempt:** Sum gainLoss for plays where playType="Pass" (including incomplete = 0 yards), divide by pass attempt count.
-
-**Completion Rate:** Count plays where result contains "Complete" divided by total pass attempts (playType="Pass").
-
-**Red Zone:** Plays where yardLine >= 1 AND yardLine <= 20 (inside opponent's 20).
-
-**Red Zone Efficiency:** Of red zone offensive plays, what percentage resulted in a TD (result contains "TD").
-
-**Sack Rate:** Count plays where result contains "Sack" divided by total pass attempts.
-
-**Turnover Rate:** Count plays where result contains "Interception" or "Fumble".
-
-**Explosive Plays:** Runs gaining 10+ yards (gainLoss >= 10, playType="Run") and passes gaining 15+ yards (gainLoss >= 15, playType="Pass").
-
-**Negative Plays:** Plays where gainLoss < 0 (sacks, tackles for loss).
-
-**Scoring Drives:** Drives (by series number if available) that ended in a TD or FG.
-
-**Time of Possession proxy:** Count of offensive plays — more plays generally = more possession.
-
-**Defensive Stats:** When odk="D", gainLoss represents yards allowed. Track sacks (result contains "Sack"), TFLs (gainLoss < 0), interceptions (result contains "Interception"), pass breakups (result contains "Batted" or "Tipped" or "Dropped").
-
-**Pass/Run Tendencies by Down:** For each down (1-4), what % of offensive plays were runs vs passes.
-
-**Formation Efficiency:** Group plays by formation, calculate yards per play and first down rate for each.
-
-**Hash Tendencies:** Run/pass split and average gain by hash mark.
-
-**Quarter Breakdown:** Plays, yards, and scoring by quarter.
-
-Always lead with the direct answer and key numbers first, then supporting detail. Never build up to a conclusion — give the number first. Do not list individual plays unless specifically asked to show your work. Keep responses concise — a table or a few bullet points is better than paragraphs.
-
-Current dataset: ${label}
-Game location: ${gameLocation}
-Season: ${season}
-Play data:
-${buildDataSummary()}`;
+  chatHistory.push({ role: 'user', content: userContent });
 
   try {
     const controller = new AbortController();
@@ -3446,7 +3423,7 @@ ${buildDataSummary()}`;
       signal: controller.signal,
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        max_tokens: 1024,
         system: systemPrompt,
         messages: chatHistory
       })
