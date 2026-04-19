@@ -2735,6 +2735,7 @@ function formatChatResponse(text) {
     .replace(/\n/g, '<br>');
 }
 let statsGameData = null;
+let statsReturnView = 'view-landing';
 let statsSource = 'local';
 let statsLabel = '';
 let hudlLibrary = null;
@@ -2742,7 +2743,6 @@ let hudlCat = 'all';
 let chatHistory = [];
 
 function goStats() {
-  try {
   statsReturnView = 'view-landing';
   chatHistory = [];
   document.getElementById('chat-messages').innerHTML =
@@ -2759,7 +2759,6 @@ function goStats() {
     filterHudlList();
     loadHudlLibrary();
   }, 50);
-  } catch(e) { showToast('goStats error: ' + e.message); console.error(e); }
 }
 
 // unified source — tracker items always included when hudlCat is 'all' or 'tracker'
@@ -3868,7 +3867,6 @@ function renderInsights() {
 // ════════════════════════════════════════
 // NAVIGATION HELPERS
 // ════════════════════════════════════════
-let statsReturnView = 'view-landing';
 let archiveSelectMode = false;
 let archiveSelected = new Set();
 
