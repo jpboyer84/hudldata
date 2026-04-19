@@ -3026,7 +3026,7 @@ async function loadHudlCutup() {
 
   const status = document.getElementById('hudl-load-status');
   status.textContent = `Loading ${checked.length} item${checked.length > 1 ? 's' : ''}…`;
-  document.getElementById('stats-tab-stats').innerHTML = '<div class="empty-msg">Loading data…</div>';
+  document.getElementById('stats-sub-overview').innerHTML = '<div class="empty-msg">Loading data…</div>';
 
   // Separate local games from Hudl cutups
   const localChecked = checked.filter(c => c.dataset.source === 'local');
@@ -3099,6 +3099,13 @@ function getStatsLabel() {
 
 function renderStatsFromData(plays, label, append = false) {
   statSectionId = 0;
+  if (!plays || plays.length === 0) {
+    ['overview','offense','defense','field','quarter'].forEach(s => {
+      const el = document.getElementById('stats-sub-' + s);
+      if (el) el.innerHTML = '<div class="empty-msg">No play data found.</div>';
+    });
+    return;
+  }
 
   const pct = (n, total) => total > 0 ? Math.round((n/total)*100) : 0;
   const avg = arr => arr.length > 0 ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : '—';
