@@ -3224,7 +3224,14 @@ function renderStatsFromData(plays, label, append = false) {
     const dnLabels = {'1':'1ST DOWN','2':'2ND DOWN','3':'3RD DOWN','4':'4TH DOWN'};
     const dnCounts = tally(plays, p=>p.dn);
     const third = off.filter(p=>p.dn==='3');
-    const thirdConv = third.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('first')||r.includes('td')||r.includes('conv'); });
+    const thirdConv = third.filter(p=>{
+      const r=(p.result||'').toLowerCase();
+      if (r.includes('td')) return true;
+      const gl = getGL(p);
+      const dist = num(p.dist);
+      if (gl !== null && dist !== null && gl >= dist) return true;
+      return r.includes('first') || r.includes('1st') || r.includes('conv');
+    });
     const dnTable = ['1','2','3','4'].filter(d=>off.some(p=>p.dn===d)).map(d=>{
       const dnOff = off.filter(p=>p.dn===d);
       const dRuns = dnOff.filter(isRun).length;
@@ -3252,7 +3259,14 @@ function renderStatsFromData(plays, label, append = false) {
   }
 
   // First Downs
-  const fdPlays = off.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('first')||r.includes('1st'); });
+  const fdPlays = off.filter(p=>{
+    const r=(p.result||'').toLowerCase();
+    if (r.includes('td')) return true;
+    const gl = getGL(p);
+    const dist = num(p.dist);
+    if (gl !== null && dist !== null && dist > 0 && gl >= dist) return true;
+    return r.includes('first') || r.includes('1st');
+  });
   if (fdPlays.length > 0) {
     offHtml += statSection('FIRST DOWNS', fdPlays.length + ' first downs earned', `
       <div class="stat-big-row" style="margin-bottom:10px">
@@ -3526,7 +3540,14 @@ async function runSpotlightAnalysis(plays, append = false) {
 
   // 3rd down
   const third = off.filter(p=>p.dn==='3');
-  const thirdConv = third.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('first')||r.includes('td'); });
+  const thirdConv = third.filter(p=>{
+    const r=(p.result||'').toLowerCase();
+    if (r.includes('td')) return true;
+    const gl = getGL(p);
+    const dist = num(p.dist);
+    if (gl !== null && dist !== null && gl >= dist) return true;
+    return r.includes('first') || r.includes('1st') || r.includes('conv');
+  });
 
   // Defense stats
   const defGL = def.map(getGL).filter(v=>v!==null);
@@ -3538,7 +3559,15 @@ async function runSpotlightAnalysis(plays, append = false) {
   const tfl = def.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('tfl')||r.includes('for loss'); }).length;
   const ints = def.filter(p=>{ const r=(p.result||'').toLowerCase(); return r.includes('int')||r.includes('interception'); }).length;
   const defThird = def.filter(p=>p.dn==='3');
-  const defThirdStop = defThird.filter(p=>{ const r=(p.result||'').toLowerCase(); return !r.includes('first')&&!r.includes('td')&&!r.includes('conv'); });
+  const defThirdStop = defThird.filter(p=>{
+    const r=(p.result||'').toLowerCase();
+    if (r.includes('td')) return false;
+    const gl = getGL(p);
+    const dist = num(p.dist);
+    if (gl !== null && dist !== null && gl >= dist) return false;
+    if (r.includes('first') || r.includes('1st') || r.includes('conv')) return false;
+    return true;
+  });
   const defNegPlays = defGL.filter(v=>v<0).length;
 
   // Defense down tendencies
