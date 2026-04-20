@@ -1453,10 +1453,10 @@ function saveSpotlightFeedback(d) { localStorage.setItem('hd_spotlight_feedback'
 // PLAYBOOK / AI CONTEXT
 // ════════════════════════════════════════
 const PLAYBOOK_DEFAULTS = {
-  team: `Team Name = Hanover Central Wildcats (HCHS)
-School = Hanover Central High School, Cedar Lake, Indiana
-Rivalry Games (Big 3) = Hobart, Andrean, Lowell (Red Devils)
-Big 3 Filter = filter plays where game title contains "Hobart", "Andrean", or "Lowell"`,
+  team: `Team Name = Your School Name (Abbreviation)
+School = Full School Name, City, State
+Rivalry Games = Opponent 1, Opponent 2, Opponent 3
+Big 3 Filter = filter plays where game title contains opponent names`,
 
   terms: `KOR = Kick Off Return
 KO = Kickoff
@@ -1464,23 +1464,18 @@ TFL = Tackle For Loss
 YPR = Yards Per Rush
 YPP = Yards Per Pass Attempt`,
 
-  runplays: `Bolt = Counter Left
-Screw = Counter Right
-Nail = Power Left
-Hammer = Power Right
-Soldier = Iso Left
-Rambo = Iso Right
-Zelda = Inside Zone Left
-Zebra = Inside Zone Right`,
+  runplays: `Play Name = Concept (e.g. Power Right)
+Play Name = Concept (e.g. Counter Left)
+Play Name = Concept (e.g. Inside Zone Right)`,
 
-  passplays: ``,
+  passplays: `Play Name = Concept (e.g. Four Verticals)
+Play Name = Concept (e.g. Shallow Cross)`,
 
-  formations: ``,
+  formations: `Formation Name = Personnel grouping (e.g. 11 personnel — 1 RB, 1 TE, 3 WR)
+Formation Name = Personnel grouping`,
 
-  tags: `Down = Extra blocker down blocks (adds a TE or FB)
-TUG = Tackle and Guard pull
-Q = QB Run (QB keeps the ball)
-Fly = Y receiver motions across formation pre-snap`,
+  tags: `Tag Name = What it does (e.g. extra blocker added)
+Motion Name = How the player moves pre-snap`,
 
   statrules: `First Down = gainLoss >= dist, OR result contains "TD", OR result is "1st DN"
 3rd/4th Down Conversion = same logic as First Down
