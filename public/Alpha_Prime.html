@@ -507,20 +507,21 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .faq-item {
   border: 1px solid var(--border); border-radius: 10px;
   margin-bottom: 8px; overflow: hidden; background: var(--surface);
+  display: block; width: 100%;
 }
 .faq-q {
   display: flex; justify-content: space-between; align-items: center;
   padding: 14px 16px; font-family: var(--font-btn); font-weight: 900;
   font-size: 13px; cursor: pointer; gap: 10px; line-height: 1.3;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: transparent; width: 100%; box-sizing: border-box;
+  user-select: none; -webkit-user-select: none;
 }
 .faq-q:active { background: var(--surface2); }
 .faq-arrow { flex-shrink: 0; font-size: 10px; color: var(--muted); transition: transform .2s; }
 .faq-item.open .faq-arrow { transform: rotate(180deg); }
 .faq-a {
-  display: none; padding: 0 16px 14px; font-size: 13px;
+  display: none; padding: 12px 16px 14px; font-size: 13px;
   color: var(--muted); line-height: 1.6; border-top: 1px solid var(--border);
-  padding-top: 12px;
 }
 .faq-item.open .faq-a { display: block; }
 @keyframes pulse-rec { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
@@ -945,7 +946,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   </div>
 
   <!-- ── FAQ TAB ── -->
-  <div id="help-panel-faq" class="tab-panel sbody" style="gap:0">
+  <div id="help-panel-faq" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 24px;display:block">
 
     <div class="help-section-title">🏈 GAME TRACKERS</div>
 
@@ -1081,7 +1082,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   </div>
 
   <!-- ── ASK AI TAB ── -->
-  <div id="help-panel-ai" class="tab-panel" style="display:none;flex-direction:column">
+  <div id="help-panel-ai" style="flex:1;overflow:hidden;flex-direction:column;display:none">
     <div class="chat-messages" id="help-chat-messages">
       <div class="chat-msg assistant">Hi Coach! I know everything about how Alpha Prime works. Ask me anything — <em>"How do I export to Excel?"</em>, <em>"What does the Spotlight tab do?"</em>, or <em>"How do I create a custom column?"</em></div>
     </div>
@@ -1093,6 +1094,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     </div>
   </div>
 </div>
+
+<!-- ══════════════════════════════════════
+     MODAL: XLSX IMPORT — OVERWRITE OR NEW
 ══════════════════════════════════════ -->
 <div class="overlay" id="m-xlsx-dest">
   <div class="modal" style="max-width:360px">
@@ -4597,8 +4601,8 @@ let helpChatHistory = [];
 function setHelpTab(tab) {
   document.getElementById('help-tab-faq')?.classList.toggle('active', tab === 'faq');
   document.getElementById('help-tab-ai')?.classList.toggle('active', tab === 'ai');
-  document.getElementById('help-panel-faq').style.display = tab === 'faq' ? '' : 'none';
-  document.getElementById('help-panel-ai').style.display  = tab === 'ai'  ? '' : 'none';
+  document.getElementById('help-panel-faq').style.display = tab === 'faq' ? 'block' : 'none';
+  document.getElementById('help-panel-ai').style.display  = tab === 'ai'  ? 'flex'  : 'none';
   if (tab === 'ai') {
     setTimeout(() => document.getElementById('help-chat-input')?.focus(), 80);
   }
