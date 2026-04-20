@@ -501,29 +501,38 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
 /* Help page */
 .help-section-title {
-  font-family: var(--font-btn); font-weight: 900; font-size: 11px;
-  letter-spacing: 0.1em; color: var(--yellow); padding: 18px 2px 8px;
+  font-family: var(--font-btn); font-weight: 900; font-size: 14px;
+  letter-spacing: 0.06em; color: var(--text); padding: 12px 14px;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent; border-radius: 10px;
 }
+.help-section-title:active { background: var(--surface2); }
+.help-section-icon { font-size: 11px; color: var(--muted); transition: transform .2s; }
+.help-section.collapsed .help-section-icon { transform: rotate(-90deg); }
+.help-section-body { overflow: hidden; }
+.help-section.collapsed .help-section-body { display: none; }
 .faq-item {
-  border: 1px solid var(--border); border-radius: 10px;
-  margin-bottom: 8px; overflow: hidden; background: var(--surface);
-  display: block; width: 100%;
+  margin-bottom: 6px; display: block; width: 100%;
 }
 .faq-q {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 16px; font-family: var(--font-btn); font-weight: 900;
-  font-size: 13px; cursor: pointer; gap: 10px; line-height: 1.3;
+  padding: 14px 14px; font-family: var(--font-btn); font-weight: 900;
+  font-size: 15px; cursor: pointer; gap: 10px; line-height: 1.35;
   -webkit-tap-highlight-color: transparent; width: 100%; box-sizing: border-box;
-  user-select: none; -webkit-user-select: none;
+  user-select: none; -webkit-user-select: none; color: var(--text);
 }
-.faq-q:active { background: var(--surface2); }
-.faq-arrow { flex-shrink: 0; font-size: 10px; color: var(--muted); transition: transform .2s; }
+.faq-q:active { opacity: 0.7; }
+.faq-arrow { flex-shrink: 0; font-size: 11px; color: var(--muted); transition: transform .2s; }
 .faq-item.open .faq-arrow { transform: rotate(180deg); }
 .faq-a {
-  display: none; padding: 12px 16px 14px; font-size: 13px;
-  color: var(--muted); line-height: 1.6; border-top: 1px solid var(--border);
+  display: none; padding: 4px 14px 18px; font-size: 14px;
+  color: #ccc; line-height: 1.7;
 }
+.faq-a strong { color: var(--yellow); }
+.faq-a em { color: var(--text); font-style: italic; }
 .faq-item.open .faq-a { display: block; }
+.faq-divider { height: 1px; background: var(--border); margin: 2px 0; }
 @keyframes pulse-rec { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
 
 /* Hudl cutup checklist */
@@ -546,7 +555,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 ══════════════════════════════════════ -->
 <div class="view active" id="view-landing">
   <div class="lbody">
-    <div class="landing-logo">HUDL DATA</div>
+    <div class="landing-logo">HUDL TAGGER</div>
     <div class="lcard" onclick="goTrackersHub()">
       <div class="lcard-icon">🏈</div>
       <div>
@@ -946,137 +955,228 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   </div>
 
   <!-- ── FAQ TAB ── -->
-  <div id="help-panel-faq" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 24px;display:block">
+  <div id="help-panel-faq" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 10px 24px;display:block">
 
-    <div class="help-section-title">🏈 WHAT IS THIS APP?</div>
+    <!-- ── GETTING STARTED ── -->
+    <div class="help-section" id="hs-overview">
+      <div class="help-section-title" onclick="toggleHelpSection('hs-overview')">📱 GETTING STARTED <span class="help-section-icon">▼</span></div>
+      <div class="help-section-body">
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">What is Alpha Prime? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Alpha Prime is a football coaching app that lives on your iPad. It has two main jobs: <strong>(1) Track plays during a game</strong> — tap buttons to record what happened on every single play. <strong>(2) Analyze your plays after the game</strong> — see stats, charts, and AI insights about what worked and what didn't.</div>
-    </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">What is Hudl Tagger? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Hudl Tagger is a football play-tracking and analytics tool designed for coaching staffs, built to work on phones and tablets. It does three things:<br><br>
+            <strong>1. Tag game film</strong> — Pull in Hudl cutups and break down plays with your own terminology.<br><br>
+            <strong>2. Track plays live</strong> — Use it on the sideline during games to record every snap in real time, tap by tap.<br><br>
+            <strong>3. Analyze everything</strong> — Visualize your data with charts, stat breakdowns, and an AI assistant that answers questions about your plays in plain English.</div>
+        </div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">Is this for game days or for film study? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a"><strong>Both!</strong> On game day, use the <strong>Game Tracker</strong> to record plays in real time — tap buttons right on the sideline. After the game (or during film study), use <strong>Stats &amp; Analysis</strong> to dig into what your data shows. You can also pull in plays directly from your Hudl film to analyze.</div>
-    </div>
+        <div class="faq-divider"></div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">What are the main features? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">
-        <strong>🏈 Game Trackers</strong> — Record every play, tap by tap, during a live game. Save it all automatically.<br><br>
-        <strong>📊 Stats &amp; Analysis</strong> — See charts and breakdowns of your plays. Ask the AI questions about your data and get instant answers.<br><br>
-        <strong>⚙️ Settings</strong> — Tell the AI about your playbook (play names, formations, etc.) so it understands your terminology.<br><br>
-        <strong>❓ Help</strong> — You're here! Get answers to any question about the app.
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">What can I actually do with this app? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Here's everything at your fingertips:<br><br>
+            <strong>Live Game Tracking</strong> — Record downs, formations, play types, results, and more with customizable tap-to-tag columns. Auto-saves every tap.<br><br>
+            <strong>Custom Templates &amp; Columns</strong> — Build your own tracking sheets. Create columns with the exact buttons your staff needs — offense, defense, special teams, scout, whatever you want.<br><br>
+            <strong>AI-Powered Spotlight</strong> — Load any game and the AI instantly surfaces the biggest offensive and defensive takeaways. No searching through data — it tells you what matters.<br><br>
+            <strong>Ask AI Anything</strong> — Type a question like <em>"What's our 3rd down conversion rate in the red zone?"</em> and get an instant answer with real numbers from your data.<br><br>
+            <strong>Visual Stat Dashboards</strong> — Full breakdowns of run/pass splits, down &amp; distance tendencies, formation efficiency, hash tendencies, quarter-by-quarter performance, and more.<br><br>
+            <strong>Playbook Context</strong> — Teach the AI your play names, formations, personnel groupings, and terminology so it speaks your language.<br><br>
+            <strong>Export &amp; Backup</strong> — Export games to Excel spreadsheets. Back up everything to your device or Google Drive. Move data between devices seamlessly.<br><br>
+            <strong>Voice Input</strong> — Ask the AI questions using your voice — useful when your hands are full on the sideline.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Is this for game days or film study? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><strong>Both.</strong> On game day, open the <strong>Game Tracker</strong> and tag plays in real time from the sideline or the press box. During film sessions, load your Hudl cutups into <strong>Stats &amp; Analysis</strong> and dig into what the data shows — formations, tendencies, efficiency, all of it.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How can this help my coaching staff? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Replace paper charts and scattered spreadsheets with one tool that does everything. After a game you can instantly answer questions like: <em>What was our 3rd down conversion rate? Which formation gained the most yards? Where did our defense struggle?</em> The AI handles all the number crunching — just ask in plain English and get your answer.</div>
+        </div>
+
       </div>
     </div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">How can this help my coaching staff? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Instead of keeping paper charts or messy spreadsheets, everything is in one place on your iPad. After a game you can instantly see things like: <em>What was our 3rd down conversion rate? Which formation gained the most yards? Where did our defense struggle?</em> The AI does all the math for you — just ask the question in plain English.</div>
-    </div>
+    <!-- ── TRACKING PLAYS ── -->
+    <div class="help-section" id="hs-tracking">
+      <div class="help-section-title" onclick="toggleHelpSection('hs-tracking')">🏈 TRACKING PLAYS <span class="help-section-icon">▼</span></div>
+      <div class="help-section-body">
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">Does it connect to Hudl? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Yes! Alpha Prime connects to your Hudl account. You can pull in play data from your Hudl film cutups and run stats and AI analysis on that data — even if you didn't manually track the game yourself in the app.</div>
-    </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I start tracking a game? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">From the home screen, tap <strong>Game Trackers → New Game Tracker</strong>. Pick a template (this sets up your columns), enter the team names if you want, then tap <strong>START GAME</strong>. The tracking sheet opens and you're ready to go.</div>
+        </div>
 
-    <div class="help-section-title" style="margin-top:8px">🏈 TRACKING PLAYS</div>
+        <div class="faq-divider"></div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">How do I start tracking a game? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">From the home screen, tap <strong>Game Trackers → New Game Tracker</strong>. Pick a template (this sets up your columns), enter the team names if you want, then tap <strong>START GAME</strong>. You're in — the tracking sheet is ready to go.</div>
-    </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I record a play? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Each row is one play. Tap the buttons in each column to record what happened — the down, formation, play type, result, whatever your template tracks. When the play is over, tap <strong>NEXT →</strong> to advance to the next row.</div>
+        </div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">How do I record a play? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Each row on the screen is one play. Tap the buttons in each column to record what happened — things like the down, the formation, the play type, or the result. When the play is done, tap <strong>NEXT →</strong> to move to the next row and start the next play.</div>
-    </div>
+        <div class="faq-divider"></div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">What are columns and templates? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">A <strong>column</strong> is one category you track per play — like "Formation" or "Result." Each column has buttons with the options you can tap (like "Spread", "I-Form", etc.). A <strong>template</strong> is a saved set of columns you want to use for a game. You can make different templates for offense, defense, or special teams.</div>
-    </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">I made a mistake — how do I fix it? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Tap <strong>← PREV</strong> to go back to the play you need to correct. Tap the right buttons — they'll overwrite the old values. Then hit <strong>NEXT →</strong> to return to where you were. If you want to completely wipe a play, tap <strong>✕ ROW</strong> in the header bar.</div>
+        </div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">I made a mistake on a play — how do I fix it? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">No problem! Tap <strong>← PREV</strong> to go back to the play you need to fix. Just tap the correct buttons — your new taps overwrite the old ones. Then tap <strong>NEXT →</strong> to come back to where you were. You can also tap <strong>✕ ROW</strong> in the header to wipe the whole play and start it fresh.</div>
-    </div>
+        <div class="faq-divider"></div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">How do I jump to a specific play number? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Tap the play number shown in the bar at the top of the sheet. A box pops up — type the play number you want and tap <strong>GO</strong>. Done.</div>
-    </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I jump to a specific play? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Tap the play number chip in the bar at the top of the tracking sheet. A dialog pops up — type the play number and tap <strong>GO</strong>.</div>
+        </div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">How do I save my game? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Alpha Prime saves automatically as you go — every tap is saved instantly. You don't need to do anything. When you're done, tap <strong>← BACK</strong> and your game will show up in the Archive.</div>
-    </div>
+        <div class="faq-divider"></div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">How do I export a game to a spreadsheet? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">While inside a game, tap <strong>⬇ XLSX</strong> in the top bar. Choose to save the file to your device or to Google Drive. This creates an Excel spreadsheet (.xlsx) with all your play data.</div>
-    </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Do I need to save my game? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Nope — every tap auto-saves instantly. When you're done, just tap <strong>← BACK</strong> and your game will be in the <strong>Archive</strong> whenever you need it.</div>
+        </div>
 
-    <div class="help-section-title" style="margin-top:8px">📊 STATS &amp; ANALYSIS</div>
+        <div class="faq-divider"></div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">How do I see stats for my games? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">From the home screen, tap <strong>Stats &amp; Analysis</strong>. Then tap <strong>FILTER ▼</strong> at the top to pick which games or Hudl cutups you want to analyze. Check the ones you want, then tap <strong>LOAD →</strong>. The app will pull in the data and show you everything.</div>
-    </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I export a game to Excel? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Inside a game, tap <strong>⬇ XLSX</strong> in the header. Choose to save the file to your device or to Google Drive. From the <strong>Archive</strong>, you can also select multiple games and export them all into one spreadsheet.</div>
+        </div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">What is the Spotlight tab? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">The <strong>⚡ Spotlight</strong> tab is the first thing you see after loading data. The AI automatically reads through all your plays and pops up the most important things it found — like if your offense is struggling on 3rd down, or if the opponent loves to run on 1st down. No setup needed. It just tells you what matters.</div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">How do I ask the AI a question about my plays? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Tap the <strong>💬 Ask a Question</strong> tab in Stats &amp; Analysis. Load your data first using FILTER, then just type your question like you're texting someone — for example: <em>"What's our 3rd down conversion rate?"</em> or <em>"Which formation works best on 2nd and short?"</em> The AI will answer with real numbers from your plays.</div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">What kind of questions can I ask? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Almost anything about your play data. Here are some examples:<br><br>
-        <em>"What's our yards per carry?"</em><br>
-        <em>"How often do we pass on 3rd and long?"</em><br>
-        <em>"What formation gained the most yards?"</em><br>
-        <em>"How did our defense do in the red zone?"</em><br>
-        <em>"What was our completion rate?"</em><br><br>
-        The AI knows your play names and formations if you set those up in Settings.
       </div>
     </div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">What are the different Stats tabs for? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">
-        <strong>OVERVIEW</strong> — the big picture: total plays, yards per play, run vs. pass split.<br><br>
-        <strong>OFFENSE</strong> — how your offense did: down &amp; distance, formations, 3rd down conversions.<br><br>
-        <strong>DEFENSE</strong> — how your defense did: yards allowed, opponent tendencies, sacks and TFLs.<br><br>
-        <strong>FIELD</strong> — where on the field things happened: hash marks, red zone, field position.<br><br>
-        <strong>BY QTR</strong> — how each quarter went for both offense and defense.
+    <!-- ── TEMPLATES & COLUMNS ── -->
+    <div class="help-section" id="hs-templates">
+      <div class="help-section-title" onclick="toggleHelpSection('hs-templates')">📐 TEMPLATES &amp; COLUMNS <span class="help-section-icon">▼</span></div>
+      <div class="help-section-body">
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">What are columns and templates? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">A <strong>column</strong> is one category you track per play — like "Formation" or "Result." Each column has a set of buttons with the options you can tap. A <strong>template</strong> is a saved layout of columns that you use for a game. You might have separate templates for offense, defense, or scout film.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I create a new template? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Go to <strong>Game Trackers → Templates → + NEW</strong>. Name your template, then tap columns from the available list to add them. Drag to reorder. Tap <strong>CREATE TEMPLATE</strong> when you're done.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I create a custom column? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Go to <strong>Game Trackers → Templates → COLUMNS → + NEW</strong>. Give the column a name, then tap <strong>＋ ADD BUTTON</strong> to add each option coaches can tap during tracking. Save it, and the column becomes available in any template.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I reorder columns or switch templates during a game? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">In the <strong>Template Builder</strong>, press and hold any column in the selected list and drag it to reorder. During a live game, tap the <strong>template chip</strong> in the sheet bar to switch to a different template — your play data stays intact.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I save the current game layout as a template? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Inside a tracker, tap <strong>+ TMPL</strong> in the header. Give it a name and save. It'll show up in your template list for future games.</div>
+        </div>
+
       </div>
     </div>
 
-    <div class="help-section-title" style="margin-top:8px">⚙️ SETTINGS &amp; SETUP</div>
+    <!-- ── STATS & ANALYSIS ── -->
+    <div class="help-section" id="hs-stats">
+      <div class="help-section-title" onclick="toggleHelpSection('hs-stats')">📊 STATS &amp; ANALYSIS <span class="help-section-icon">▼</span></div>
+      <div class="help-section-body">
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">How do I teach the AI my play names? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Go to <strong>Settings → AI Context</strong>. Tap <strong>Run Plays</strong> or <strong>Pass Plays</strong> and type in your play names and what they mean — one per line, like this: <em>Bolt = Counter Left</em>. Now when you ask the AI about "Bolt," it knows exactly what that play is.</div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I see stats for my games? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">From the home screen, tap <strong>Stats &amp; Analysis → FILTER ▼</strong>. Select the games or cutups you want to analyze — you can filter by season, home/away, conference, or Big 3. Check the ones you want, then tap <strong>LOAD →</strong>.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">What is the Spotlight tab? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><strong>⚡ Spotlight</strong> fires automatically every time you load data. The AI reads through all your plays and surfaces the most important findings — things like a high 3rd-down conversion rate, or a formation that's consistently losing yards. Each insight has a <strong>?</strong> button to explain how it was calculated, and 👍/👎 buttons to tell the AI what's useful to you.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I ask the AI a question about my plays? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Tap the <strong>ASK AI</strong> tab. Make sure data is loaded (use FILTER first), then type your question the same way you'd ask an assistant coach — <em>"What's our 3rd down conversion rate?"</em>, <em>"Which formation gains the most yards?"</em>, or <em>"How did we do in the red zone?"</em>. You can also use the 🎤 button to ask by voice.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">What are the different Stats sub-tabs? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">
+            <strong>OVERVIEW</strong> — total plays, yards per play, and your run vs. pass split.<br><br>
+            <strong>OFFENSE</strong> — down &amp; distance breakdowns, formation efficiency, 3rd down conversions, and play type tendencies.<br><br>
+            <strong>DEFENSE</strong> — yards allowed, opponent run/pass tendencies, sacks, TFLs, interceptions, and stop rate.<br><br>
+            <strong>FIELD</strong> — hash mark tendencies, red zone efficiency, and field position data.<br><br>
+            <strong>BY QTR</strong> — quarter-by-quarter performance for both offense and defense.
+          </div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Can I save an AI response for later? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Yes — tap the <strong>📌 SAVE</strong> button underneath any AI answer. It gets stored in the <strong>📌 SAVED</strong> tab so you can reference it later — during halftime adjustments, post-game meetings, or weekly prep.</div>
+        </div>
+
+      </div>
     </div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">How do I set up my team info? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Go to <strong>Settings → AI Context → Team Info</strong>. Enter your team name, school name, and your big rivalry opponents. Once saved, the AI will know who you are and can do things like automatically filter for your rivalry games when you ask about them.</div>
-    </div>
+    <!-- ── SETUP & SETTINGS ── -->
+    <div class="help-section" id="hs-settings">
+      <div class="help-section-title" onclick="toggleHelpSection('hs-settings')">⚙️ SETUP &amp; SETTINGS <span class="help-section-icon">▼</span></div>
+      <div class="help-section-body">
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">How do I back up my data so I don't lose it? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Go to <strong>Settings → Save Full Backup</strong>. Tap <strong>Save to Device</strong> to download a backup file, or <strong>Save to Drive</strong> to save it to Google Drive. Do this regularly — especially before updating your iPad or switching to a new device.</div>
-    </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I teach the AI my play names? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Go to <strong>Settings → Run Plays</strong> or <strong>Pass Plays</strong>. Type your play names and what they mean — one per line, like: <em>Bolt = Counter Left</em>. Now when you ask the AI about "Bolt," it knows exactly what play you're talking about. You can do the same for formations, tags, and terminology.</div>
+        </div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">My Hudl cutups aren't showing up — what do I do? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">The app saves a copy of your Hudl data to speed things up, but that copy can get stale. Go to <strong>Settings → Hudl Data Cache → Clear Cache</strong>. The next time you open the filter in Stats &amp; Analysis, it will fetch a fresh list from Hudl.</div>
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I set up my team info? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Go to <strong>Settings → Team Info</strong>. Enter your team name, school, and rivalry opponents. Once saved, the AI will know who you are and can automatically filter for rivalry games when you ask about them.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I back up my data? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Go to <strong>Settings → Save Full Backup</strong>. Choose <strong>Save to Device</strong> to download a .json file, or <strong>Save to Drive</strong> for Google Drive. Do this regularly, especially before switching devices. Your entire setup — games, templates, columns, and AI settings — gets saved.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">How do I move data to a new phone or tablet? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Save a backup to Google Drive on your current device (<strong>Settings → Save to Drive</strong>). On the new device, open the app and go to <strong>Settings → Restore → From Drive</strong>. Everything carries over — games, templates, playbook settings, all of it.</div>
+        </div>
+
+        <div class="faq-divider"></div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">My cutup list seems outdated — what do I do? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">The app caches your cutup list for up to 24 hours to speed things up. If you've recently added new cutups and they're not appearing, go to <strong>Settings → Hudl Data Cache → Clear Cache</strong>. The next time you open the filter, it will pull a fresh list.</div>
+        </div>
+
+      </div>
     </div>
 
     <div style="height:24px"></div>
@@ -1085,7 +1185,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   <!-- ── ASK AI TAB ── -->
   <div id="help-panel-ai" style="flex:1;overflow:hidden;flex-direction:column;display:none">
     <div class="chat-messages" id="help-chat-messages">
-      <div class="chat-msg assistant">Hi Coach! I know everything about how Alpha Prime works. Ask me anything — <em>"How do I export to Excel?"</em>, <em>"What does the Spotlight tab do?"</em>, or <em>"How do I create a custom column?"</em></div>
+      <div class="chat-msg assistant">Hi Coach! I know everything about how Hudl Tagger works. Ask me anything — <em>"How do I export to Excel?"</em>, <em>"What does the Spotlight tab do?"</em>, or <em>"How do I create a custom column?"</em></div>
     </div>
     <div class="chat-input-row">
       <input class="chat-input" id="help-chat-input"
@@ -4612,15 +4712,21 @@ function setHelpTab(tab) {
 function toggleFaq(qEl) {
   const item = qEl.closest('.faq-item');
   const isOpen = item.classList.contains('open');
-  // Close all others
-  document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+  // Close all others in same section
+  item.closest('.help-section-body')?.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
   if (!isOpen) item.classList.add('open');
 }
 
-const HELP_SYSTEM_PROMPT = `You are a friendly help assistant for Alpha Prime — a football play-tracking and game management app built for high school coaching staffs, primarily used on iPad during games. Your job is to answer questions about how to USE the app. Be concise, direct, and practical. Use bold for button names and screen names.
+function toggleHelpSection(id) {
+  const section = document.getElementById(id);
+  if (!section) return;
+  section.classList.toggle('collapsed');
+}
+
+const HELP_SYSTEM_PROMPT = `You are a friendly help assistant for Hudl Tagger — a football play-tracking and analytics app built for coaching staffs, designed for phones and tablets. Your job is to answer questions about how to USE the app. Be concise, direct, and practical. Use bold for button names and screen names.
 
 ## APP OVERVIEW
-Alpha Prime has four main sections accessible from the home screen:
+Hudl Tagger has four main sections accessible from the home screen:
 - **Game Trackers** — create, track, and archive games play-by-play
 - **Stats & Analysis** — AI-powered analysis of play data with charts and chat
 - **Settings** — AI context editors, backup/restore, Hudl cache
