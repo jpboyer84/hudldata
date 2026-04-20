@@ -903,7 +903,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <div class="settings-group-title">🤖 AI Context</div>
       <div class="settings-group-sub">Tell the AI about your program. Everything here is injected into every AI prompt — Spotlight, Ask AI, and Methodology explanations.</div>
       <div class="settings-row">
-        <div class="settings-btn" onclick="openPbSection('team')"><span class="settings-btn-icon">🏫</span>TEAM INFO<span class="settings-btn-label">Name, rivals, Big 3</span></div>
+        <div class="settings-btn" onclick="openPbSection('team')"><span class="settings-btn-icon">🏫</span>TEAM INFO<span class="settings-btn-label">Name, school, rivals</span></div>
         <div class="settings-btn" onclick="openPbSection('terms')"><span class="settings-btn-icon">🗣</span>TERMINOLOGY<span class="settings-btn-label">Abbrevs &amp; vocab</span></div>
       </div>
       <div class="settings-row">
@@ -916,6 +916,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       </div>
       <div class="settings-row">
         <div class="settings-btn" onclick="openPbSection('statrules')"><span class="settings-btn-icon">📐</span>STAT RULES<span class="settings-btn-label">How stats are calculated</span></div>
+        <div class="settings-btn" onclick="openPbSection('general')"><span class="settings-btn-icon">📝</span>GENERAL<span class="settings-btn-label">Anything else for the AI</span></div>
       </div>
     </div>
     <div class="settings-group">
@@ -1560,8 +1561,7 @@ function saveSpotlightFeedback(d) { localStorage.setItem('hd_spotlight_feedback'
 const PLAYBOOK_DEFAULTS = {
   team: `Team Name = Your School Name (Abbreviation)
 School = Full School Name, City, State
-Rivalry Games = Opponent 1, Opponent 2, Opponent 3
-Big 3 Filter = filter plays where game title contains opponent names`,
+Rivalry Games = Opponent 1, Opponent 2, Opponent 3`,
 
   terms: `KOR = Kick Off Return
 KO = Kickoff
@@ -1593,7 +1593,9 @@ Goal Line = yardLine >= 1 AND yardLine <= 5
 Sack Rate = result contains "Sack" / total pass attempts
 Explosive Run = gainLoss >= 10 on a Run play
 Explosive Pass = gainLoss >= 15 on a Pass play
-Negative Play = gainLoss < 0`
+Negative Play = gainLoss < 0`,
+
+  general: ``
 };
 
 // Section metadata — title, hint, prompt heading
@@ -1604,7 +1606,8 @@ const PB_SECTIONS = {
   passplays:  { title: '🎯 PASS PLAYS',         hint: 'Play Name = Concept, one per line. Add your pass play names and route concepts.',                                   heading: 'PASS PLAY NAMES' },
   formations: { title: '🗂 FORMATIONS',         hint: 'Formation Name = Personnel / description, one per line. The AI will use these when discussing formation tendencies.', heading: 'FORMATIONS & PERSONNEL' },
   tags:       { title: '🏷 TAGS & MOTION',      hint: 'Tag = What it means, one per line. These are modifiers added to play names.',                                       heading: 'PLAY TAGS & MOTION' },
-  statrules:  { title: '📐 STAT RULES',         hint: 'Stat Name = How it\'s calculated, one per line. Defines thresholds and logic for key statistics.',                  heading: 'STAT CALCULATION RULES' }
+  statrules:  { title: '📐 STAT RULES',         hint: 'Stat Name = How it\'s calculated, one per line. Defines thresholds and logic for key statistics.',                  heading: 'STAT CALCULATION RULES' },
+  general:    { title: '📝 GENERAL NOTES',      hint: 'Free-form notes for the AI. Anything you want it to know that doesn\'t fit in another section — coaching philosophy, special situations, personnel notes, whatever.',  heading: 'GENERAL COACHING NOTES' }
 };
 
 let pbEditorSection = null;
@@ -1625,6 +1628,7 @@ function getPlaybookContext() {
   if (pb.formations?.trim()) parts.push('## FORMATIONS & PERSONNEL\n'     + pb.formations.trim());
   if (pb.tags?.trim())       parts.push('## PLAY TAGS & MOTION\n'         + pb.tags.trim());
   if (pb.statrules?.trim())  parts.push('## STAT CALCULATION RULES\n'     + pb.statrules.trim());
+  if (pb.general?.trim())    parts.push('## GENERAL COACHING NOTES\n'     + pb.general.trim());
   return parts.length ? '\n\n## COACH-DEFINED CONTEXT\n' + parts.join('\n\n') : '';
 }
 
