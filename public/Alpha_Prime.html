@@ -955,6 +955,21 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   </div>
 </div>
 
+<div class="overlay" id="m-methodology" style="display:none" onclick="if(event.target===this)closeModal('m-methodology')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <div class="modal-title">HOW THIS WAS CALCULATED</div>
+      <div class="modal-x" onclick="closeModal('m-methodology')">✕</div>
+    </div>
+    <div class="modal-body" id="methodology-body" style="font-size:12px;line-height:1.6;color:var(--text)">
+      Loading…
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('m-methodology')">CLOSE</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- ══════════════════════════════════════
@@ -3682,6 +3697,7 @@ CRITICAL RULES:
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <span class="spotlight-tag">${(tagLabel[ins.tag] || 'GENERAL')}</span>
           <div style="display:flex;gap:2px;flex-shrink:0">
+            <button onclick="showMethodology('${insJson}')" style="background:none;border:1px solid var(--border);border-radius:50%;width:22px;height:22px;font-size:11px;cursor:pointer;color:var(--muted);font-family:var(--font-btn);font-weight:900;line-height:1" title="How was this calculated?">?</button>
             <button onclick="rateSpotlight(this, '${insJson}', true)" style="background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px;opacity:0.4" title="Useful">👍</button>
             <button onclick="rateSpotlight(this, '${insJson}', false)" style="background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px;opacity:0.4" title="Not useful">👎</button>
           </div>
@@ -3745,6 +3761,31 @@ function rateSpotlight(btn, insightJson, liked) {
   buttons.forEach(b => b.style.opacity = '0.2');
   btn.style.opacity = '1';
   showToast(liked ? '👍 Noted — will prioritize similar insights' : '👎 Noted — will deprioritize similar insights');
+}
+
+async function showMethodology(insightJson) {
+  const insight = JSON.parse(insightJson);
+  openModal('m-methodology');
+  const body = document.getElementById('methodology-body');
+  body.innerHTML = '<div style="color:var(--muted)">Asking AI to explain…</div>';
+
+  try {
+    const resp = await fetch(`${HUDL_API}/api/claude`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 600,
+        system: `You are a football analytics assistant explaining how a specific stat was calculated to a coach. Be clear and specific — explain exactly which plays were counted, what fields were checked, and what the numbers mean. Use plain language. Keep it under 120 words. No bullet points, just 1-2 short paragraphs.`,
+        messages: [{ role: 'user', content: `Explain exactly how this insight was calculated:\n\nStat: "${insight.stat}"\nHeadline: "${insight.headline}"\n\nData fields available per play: odk (O=offense, D=defense, K=special teams), qtr (1-4), dn (down 1-4), dist (yards needed for first down), gainloss (actual yards gained), playtype, result, hash (L/M/R), offform.\n\nConversions are detected by: gainloss >= dist, OR result contains "TD". Explain which plays were counted and how the percentage or number was derived.` }]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || 'Could not generate explanation.';
+    body.innerHTML = formatChatResponse(text);
+  } catch(e) {
+    body.innerHTML = `<div style="color:var(--muted)">Could not load explanation: ${e.message}</div>`;
+  }
 }
 
 // ── CLAUDE CHAT ──
