@@ -498,6 +498,31 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 }
 .chat-voice:active { opacity: 0.7; }
 .chat-voice.recording { background: rgba(255,68,68,0.15); border-color: var(--red); color: var(--red); animation: pulse-rec 1s infinite; }
+
+/* Help page */
+.help-section-title {
+  font-family: var(--font-btn); font-weight: 900; font-size: 11px;
+  letter-spacing: 0.1em; color: var(--yellow); padding: 18px 2px 8px;
+}
+.faq-item {
+  border: 1px solid var(--border); border-radius: 10px;
+  margin-bottom: 8px; overflow: hidden; background: var(--surface);
+}
+.faq-q {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 16px; font-family: var(--font-btn); font-weight: 900;
+  font-size: 13px; cursor: pointer; gap: 10px; line-height: 1.3;
+  -webkit-tap-highlight-color: transparent;
+}
+.faq-q:active { background: var(--surface2); }
+.faq-arrow { flex-shrink: 0; font-size: 10px; color: var(--muted); transition: transform .2s; }
+.faq-item.open .faq-arrow { transform: rotate(180deg); }
+.faq-a {
+  display: none; padding: 0 16px 14px; font-size: 13px;
+  color: var(--muted); line-height: 1.6; border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.faq-item.open .faq-a { display: block; }
 @keyframes pulse-rec { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
 
 /* Hudl cutup checklist */
@@ -540,6 +565,13 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <div>
         <div class="lcard-title">SETTINGS</div>
         <div class="lcard-sub">Backup & restore your data</div>
+      </div>
+    </div>
+    <div class="lcard" onclick="goHelp()">
+      <div class="lcard-icon">❓</div>
+      <div>
+        <div class="lcard-title">HELP</div>
+        <div class="lcard-sub">FAQ &amp; ask the AI anything</div>
       </div>
     </div>
   </div>
@@ -858,6 +890,25 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   </div>
   <div class="settings-body">
     <div class="settings-group">
+      <div class="settings-group-title">🤖 AI Context</div>
+      <div class="settings-group-sub">Tell the AI about your program. Everything here is injected into every AI prompt — Spotlight, Ask AI, and Methodology explanations.</div>
+      <div class="settings-row">
+        <div class="settings-btn" onclick="openPbSection('team')"><span class="settings-btn-icon">🏫</span>TEAM INFO<span class="settings-btn-label">Name, rivals, Big 3</span></div>
+        <div class="settings-btn" onclick="openPbSection('terms')"><span class="settings-btn-icon">🗣</span>TERMINOLOGY<span class="settings-btn-label">Abbrevs &amp; vocab</span></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-btn" onclick="openPbSection('runplays')"><span class="settings-btn-icon">🏃</span>RUN PLAYS<span class="settings-btn-label">Names &amp; concepts</span></div>
+        <div class="settings-btn" onclick="openPbSection('passplays')"><span class="settings-btn-icon">🎯</span>PASS PLAYS<span class="settings-btn-label">Names &amp; concepts</span></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-btn" onclick="openPbSection('formations')"><span class="settings-btn-icon">🗂</span>FORMATIONS<span class="settings-btn-label">Personnel &amp; groupings</span></div>
+        <div class="settings-btn" onclick="openPbSection('tags')"><span class="settings-btn-icon">🏷</span>TAGS &amp; MOTION<span class="settings-btn-label">Play modifiers</span></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-btn" onclick="openPbSection('statrules')"><span class="settings-btn-icon">📐</span>STAT RULES<span class="settings-btn-label">How stats are calculated</span></div>
+      </div>
+    </div>
+    <div class="settings-group">
       <div class="settings-group-title">💾 Save Full Backup</div>
       <div class="settings-group-sub">Save all your games, templates, and columns to a safe location. Useful for backing up or moving to another device.</div>
       <div class="settings-row">
@@ -878,7 +929,170 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 </div>
 
 <!-- ══════════════════════════════════════
-     MODAL: XLSX IMPORT — OVERWRITE OR NEW
+     HELP
+══════════════════════════════════════ -->
+<div class="view" id="view-help">
+  <div class="hdr">
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
+    <div class="hdr-title">HELP</div>
+    <div style="width:60px"></div>
+  </div>
+
+  <!-- Tab bar -->
+  <div style="display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0">
+    <button class="stats-tab active" id="help-tab-faq" onclick="setHelpTab('faq')">FAQ</button>
+    <button class="stats-tab"        id="help-tab-ai"  onclick="setHelpTab('ai')">🤖 ASK AI</button>
+  </div>
+
+  <!-- ── FAQ TAB ── -->
+  <div id="help-panel-faq" class="tab-panel sbody" style="gap:0">
+
+    <div class="help-section-title">🏈 GAME TRACKERS</div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I start tracking a new game? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">From the home screen tap <strong>Game Trackers → New Game Tracker</strong>. Choose a template, enter the team names (optional), then tap <strong>START GAME</strong>. You'll land in the play tracker sheet ready to go.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I record a play? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Each row is one play. Tap any button in a column to record that value for the current play. Use <strong>NEXT →</strong> to advance to the next play, or <strong>← PREV</strong> to go back and edit. Tap <strong>+ ADD ROWS</strong> at any time to add more rows to the sheet.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I navigate to a specific play number? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Tap the play number chip in the top bar (the sheet row indicator). A <strong>Go To Play</strong> dialog will appear — type any play number and tap GO.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I switch to a different template mid-game? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Tap the template chip in the top sheet bar to open a template picker. Your existing play data is preserved — only the column layout changes.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I clear a row or all plays? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">In the tracker header, <strong>✕ ROW</strong> clears only the current play. <strong>✕ ALL</strong> wipes all play data for the game (you'll be asked to confirm). Neither action deletes the game itself.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I export a game to Excel? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Inside a game tracker, tap <strong>⬇ XLSX</strong> in the header. Choose to save to your device or Google Drive. From the Archive you can also select multiple games and export them all at once.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I save the current layout as a template? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Inside a tracker tap <strong>+ TMPL</strong> in the header. Give it a name and tap SAVE. It will appear in your template list for future games.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I switch between 1-column and 2-column layout? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Tap <strong>▤ 1COL / 2COL</strong> in the tracker header to toggle the layout. 2-column shows two columns side-by-side — useful on a wider iPad.</div>
+    </div>
+
+    <div class="help-section-title" style="margin-top:8px">📐 TEMPLATES &amp; COLUMNS</div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I create a new template? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Go to <strong>Game Trackers → Templates → + NEW</strong>. Give it a name, then tap columns from the Available list to add them to the template. Drag to reorder. Tap <strong>CREATE TEMPLATE</strong> when done.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I create a custom column? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Go to <strong>Templates → COLUMNS → + NEW</strong>. Enter a column name, then tap <strong>＋ ADD BUTTON</strong> to add each button option. Each button is a value coaches can tap during tracking. Save when done — the column is now available in any template.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I reorder columns in a template? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">In the Template Builder, press and hold a column in the Selected list, then drag it to the position you want. This works with both touch and mouse.</div>
+    </div>
+
+    <div class="help-section-title" style="margin-top:8px">📊 STATS &amp; ANALYSIS</div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I load data for analysis? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Go to <strong>Stats &amp; Analysis</strong> and tap <strong>FILTER ▼</strong>. You can filter by season, home/away, conference, or Big 3. You can also select individual Hudl cutups or your locally-tracked games from the checklist. Tap <strong>LOAD →</strong> to run the analysis.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">What is the Spotlight tab? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a"><strong>⚡ Spotlight</strong> auto-fires every time you load data. The AI analyzes your plays and surfaces the most important offensive and defensive insights as cards. Each card has a <strong>?</strong> button to explain how the stat was calculated, plus 👍/👎 buttons to train the AI on what's useful to you.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I ask the AI a custom question about my plays? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Go to <strong>Stats &amp; Analysis → ASK AI</strong>. Load data first using FILTER, then type any question in the chat box. You can use voice input with the 🎤 button. Tap 📌 SAVE on any answer to keep it for later reference.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">What kind of questions can I ask the AI? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Anything about your play data — for example: <em>"What's our 3rd down conversion rate?"</em>, <em>"Show me run/pass split by formation"</em>, <em>"How did we do in the red zone against Hobart?"</em>, <em>"What's our most effective run play on 2nd and short?"</em>. The AI knows your playbook terminology from Settings.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">What's the difference between the STATS sub-tabs? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a"><strong>OVERVIEW</strong> — totals and efficiency summary. <strong>OFFENSE</strong> — down &amp; distance, formations, play types, 3rd down conversions. <strong>DEFENSE</strong> — yards allowed, opponent tendencies, sacks/TFLs/INTs. <strong>FIELD</strong> — hash tendencies and field position zones. <strong>BY QTR</strong> — quarter-by-quarter breakdown for both O and D.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">What does "Big 3" mean in the filter? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Big 3 refers to HCHS's three biggest rivalry games — against Hobart, Andrean, and Lowell (Red Devils). Selecting Big 3 in the filter loads only plays from those games for focused rivalry analysis.</div>
+    </div>
+
+    <div class="help-section-title" style="margin-top:8px">📥 IMPORT &amp; EXPORT</div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I import game data from a spreadsheet? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Go to <strong>Game Trackers → Import Game Data → From Device</strong>. Select your .xlsx file. If any columns aren't recognized, a mapping dialog will let you match them to existing columns. You can import as a new game or overwrite an existing one.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I back up and restore all my data? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Go to <strong>Settings → Save Full Backup</strong>. Save to your device (downloads a .json file) or to Google Drive. To restore, go to <strong>Settings → Restore Full Backup</strong> and load the file. You can choose to merge with or overwrite existing data.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I move data to a new device or iPad? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Save a full backup to Google Drive from your current device (<strong>Settings → Save to Drive</strong>), then on the new device open the app and go to <strong>Settings → Restore → From Drive</strong>. All your games, templates, and AI settings will carry over.</div>
+    </div>
+
+    <div class="help-section-title" style="margin-top:8px">🤖 AI &amp; SETTINGS</div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I teach the AI my play names and formations? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Go to <strong>Settings → AI Context</strong>. There are individual editors for Team Info, Terminology, Run Plays, Pass Plays, Formations, Tags &amp; Motion, and Stat Rules. Use <strong>Name = Description</strong> format, one per line. Everything you enter here is automatically injected into every AI prompt.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">How do I customize what the Spotlight AI focuses on? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">On any Spotlight insight card, tap 👍 if it's useful or 👎 if it's not. The AI remembers your feedback and adjusts future insights accordingly — generating more of what you find valuable and fewer of what you don't.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">The AI gave me a wrong number — what should I do? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">The AI calculates directly from your loaded play data. If a number looks wrong, check that your data is loaded correctly (the active label under the filter bar shows what's loaded). You can also tap <strong>?</strong> on any Spotlight card to see exactly how that stat was calculated.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">What is the Hudl cache and when should I clear it? <span class="faq-arrow">▼</span></div>
+      <div class="faq-a">The app caches Hudl cutup lists for up to 24 hours to speed up loading. If you've recently added new cutups to Hudl and they're not showing up, go to <strong>Settings → Hudl Data Cache → Clear Cache</strong> to force a fresh fetch.</div>
+    </div>
+
+    <div style="height:24px"></div>
+  </div>
+
+  <!-- ── ASK AI TAB ── -->
+  <div id="help-panel-ai" class="tab-panel" style="display:none;flex-direction:column">
+    <div class="chat-messages" id="help-chat-messages">
+      <div class="chat-msg assistant">Hi Coach! I know everything about how Alpha Prime works. Ask me anything — <em>"How do I export to Excel?"</em>, <em>"What does the Spotlight tab do?"</em>, or <em>"How do I create a custom column?"</em></div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-input" id="help-chat-input"
+        placeholder="Ask anything about the app…"
+        onkeydown="if(event.key==='Enter')sendHelpChat()" />
+      <button class="chat-send" onclick="sendHelpChat()">ASK →</button>
+    </div>
+  </div>
+</div>
 ══════════════════════════════════════ -->
 <div class="overlay" id="m-xlsx-dest">
   <div class="modal" style="max-width:360px">
@@ -951,6 +1165,33 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('m-json-import')">Cancel</button>
       <button class="btn btn-primary" onclick="confirmJsonImport()">IMPORT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: AI CONTEXT EDITOR (single-section)
+══════════════════════════════════════ -->
+<div class="overlay" id="m-pb-editor" onclick="if(event.target===this)closePbEditor()">
+  <div class="modal" style="max-width:480px;max-height:88vh;display:flex;flex-direction:column">
+    <div class="modal-hdr" style="flex-shrink:0">
+      <div class="modal-title" id="pb-editor-title">EDIT</div>
+      <div class="modal-x" onclick="closePbEditor()">✕</div>
+    </div>
+    <div style="flex-shrink:0;padding:10px 18px 4px">
+      <div style="font-size:11px;color:var(--muted);line-height:1.5" id="pb-editor-hint"></div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:8px 18px 12px">
+      <textarea id="pb-editor-ta" class="fi"
+        style="width:100%;min-height:260px;font-size:12px;line-height:1.8;
+               resize:vertical;font-family:monospace;box-sizing:border-box"></textarea>
+    </div>
+    <div class="modal-foot" style="flex-shrink:0;justify-content:space-between">
+      <button class="btn btn-secondary" id="pb-editor-reset" style="font-size:11px">↺ RESET DEFAULT</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="closePbEditor()">CANCEL</button>
+        <button class="btn btn-primary" onclick="savePbSection()">SAVE</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1207,6 +1448,119 @@ function getGames() { return JSON.parse(localStorage.getItem('hd_games') || '[]'
 function saveGames(d){ localStorage.setItem('hd_games', JSON.stringify(d)); }
 function getSpotlightFeedback() { return JSON.parse(localStorage.getItem('hd_spotlight_feedback') || '{"liked":[],"disliked":[]}'); }
 function saveSpotlightFeedback(d) { localStorage.setItem('hd_spotlight_feedback', JSON.stringify(d)); }
+
+// ════════════════════════════════════════
+// PLAYBOOK / AI CONTEXT
+// ════════════════════════════════════════
+const PLAYBOOK_DEFAULTS = {
+  team: `Team Name = Hanover Central Wildcats (HCHS)
+School = Hanover Central High School, Cedar Lake, Indiana
+Rivalry Games (Big 3) = Hobart, Andrean, Lowell (Red Devils)
+Big 3 Filter = filter plays where game title contains "Hobart", "Andrean", or "Lowell"`,
+
+  terms: `KOR = Kick Off Return
+KO = Kickoff
+TFL = Tackle For Loss
+YPR = Yards Per Rush
+YPP = Yards Per Pass Attempt`,
+
+  runplays: `Bolt = Counter Left
+Screw = Counter Right
+Nail = Power Left
+Hammer = Power Right
+Soldier = Iso Left
+Rambo = Iso Right
+Zelda = Inside Zone Left
+Zebra = Inside Zone Right`,
+
+  passplays: ``,
+
+  formations: ``,
+
+  tags: `Down = Extra blocker down blocks (adds a TE or FB)
+TUG = Tackle and Guard pull
+Q = QB Run (QB keeps the ball)
+Fly = Y receiver motions across formation pre-snap`,
+
+  statrules: `First Down = gainLoss >= dist, OR result contains "TD", OR result is "1st DN"
+3rd/4th Down Conversion = same logic as First Down
+Yards Per Carry = sum gainLoss for Run plays / run count
+Yards Per Pass Attempt = includes incomplete passes at 0 yards
+Completion Rate = result contains "Complete" / total pass attempts
+Red Zone = yardLine >= 1 AND yardLine <= 20 (opponent's 20-yard line to goal line)
+Score Zone = yardLine >= 1 AND yardLine <= 10
+Goal Line = yardLine >= 1 AND yardLine <= 5
+Sack Rate = result contains "Sack" / total pass attempts
+Explosive Run = gainLoss >= 10 on a Run play
+Explosive Pass = gainLoss >= 15 on a Pass play
+Negative Play = gainLoss < 0`
+};
+
+// Section metadata — title, hint, prompt heading
+const PB_SECTIONS = {
+  team:       { title: '🏫 TEAM INFO',         hint: 'Key = Value format, one per line. Tells the AI who you are, your rivalries, and how to identify specific games.',  heading: 'TEAM INFO' },
+  terms:      { title: '🗣 TERMINOLOGY',        hint: 'Abbreviation = Full meaning, one per line. The AI will understand these shorthand terms in your questions.',        heading: 'COACHING TERMINOLOGY' },
+  runplays:   { title: '🏃 RUN PLAYS',          hint: 'Play Name = Concept, one per line. The AI will recognize these names when they appear in your play data.',          heading: 'RUN PLAY NAMES' },
+  passplays:  { title: '🎯 PASS PLAYS',         hint: 'Play Name = Concept, one per line. Add your pass play names and route concepts.',                                   heading: 'PASS PLAY NAMES' },
+  formations: { title: '🗂 FORMATIONS',         hint: 'Formation Name = Personnel / description, one per line. The AI will use these when discussing formation tendencies.', heading: 'FORMATIONS & PERSONNEL' },
+  tags:       { title: '🏷 TAGS & MOTION',      hint: 'Tag = What it means, one per line. These are modifiers added to play names.',                                       heading: 'PLAY TAGS & MOTION' },
+  statrules:  { title: '📐 STAT RULES',         hint: 'Stat Name = How it\'s calculated, one per line. Defines thresholds and logic for key statistics.',                  heading: 'STAT CALCULATION RULES' }
+};
+
+let pbEditorSection = null;
+
+function getPlaybook() {
+  try { return { ...PLAYBOOK_DEFAULTS, ...JSON.parse(localStorage.getItem('hd_playbook') || 'null') }; }
+  catch { return { ...PLAYBOOK_DEFAULTS }; }
+}
+function savePlaybookData(d) { localStorage.setItem('hd_playbook', JSON.stringify(d)); }
+
+function getPlaybookContext() {
+  const pb = getPlaybook();
+  const parts = [];
+  if (pb.team?.trim())       parts.push('## TEAM INFO\n'                  + pb.team.trim());
+  if (pb.terms?.trim())      parts.push('## COACHING TERMINOLOGY\n'       + pb.terms.trim());
+  if (pb.runplays?.trim())   parts.push('## RUN PLAY NAMES\n'             + pb.runplays.trim());
+  if (pb.passplays?.trim())  parts.push('## PASS PLAY NAMES\n'            + pb.passplays.trim());
+  if (pb.formations?.trim()) parts.push('## FORMATIONS & PERSONNEL\n'     + pb.formations.trim());
+  if (pb.tags?.trim())       parts.push('## PLAY TAGS & MOTION\n'         + pb.tags.trim());
+  if (pb.statrules?.trim())  parts.push('## STAT CALCULATION RULES\n'     + pb.statrules.trim());
+  return parts.length ? '\n\n## COACH-DEFINED CONTEXT\n' + parts.join('\n\n') : '';
+}
+
+function openPbSection(key) {
+  const meta = PB_SECTIONS[key];
+  if (!meta) return;
+  pbEditorSection = key;
+  const pb = getPlaybook();
+  document.getElementById('pb-editor-title').textContent = meta.title;
+  document.getElementById('pb-editor-hint').textContent  = meta.hint;
+  document.getElementById('pb-editor-ta').value = pb[key] ?? PLAYBOOK_DEFAULTS[key] ?? '';
+  document.getElementById('pb-editor-reset').onclick = () => {
+    showConfirm('Reset to Default?', 'Replace this section with the original default content?', () => {
+      document.getElementById('pb-editor-ta').value = PLAYBOOK_DEFAULTS[key] ?? '';
+      showToast('Reset — tap SAVE to apply.');
+    });
+  };
+  openModal('m-pb-editor');
+  // Focus textarea after modal opens
+  setTimeout(() => document.getElementById('pb-editor-ta').focus(), 120);
+}
+
+function savePbSection() {
+  if (!pbEditorSection) return;
+  const pb = getPlaybook();
+  pb[pbEditorSection] = document.getElementById('pb-editor-ta').value;
+  savePlaybookData(pb);
+  closeModal('m-pb-editor');
+  showToast('Saved! AI will use this on your next question.');
+}
+
+function closePbEditor() {
+  closeModal('m-pb-editor');
+  pbEditorSection = null;
+}
+
 function addSpotlightFeedback(insight, liked) {
   const fb = getSpotlightFeedback();
   const entry = { headline: insight.headline, stat: insight.stat, tag: insight.tag, ts: Date.now() };
@@ -2184,7 +2538,8 @@ function exportBackupAll() {
     games: getGames(),
     columns: getCols(),
     templates: getTmpls(),
-    spotlightFeedback: getSpotlightFeedback()
+    spotlightFeedback: getSpotlightFeedback(),
+    playbook: getPlaybook()
   };
   downloadJson(data, `hudldata_backup_${datestamp()}.json`);
   showToast('Backup exported!');
@@ -2458,6 +2813,11 @@ function confirmJsonImport() {
       (incoming.disliked || []).forEach(x => { if (!mergedDisliked.some(e => e.headline === x.headline)) mergedDisliked.push(x); });
       saveSpotlightFeedback({ liked: mergedLiked.slice(-20), disliked: mergedDisliked.slice(-20) });
     }
+  }
+
+  // Import playbook context if present
+  if (jsonImportData.playbook) {
+    savePlaybookData(jsonImportData.playbook);
   }
 
   closeModal('m-json-import');
@@ -3625,6 +3985,7 @@ async function runSpotlightAnalysis(plays, append = false) {
   };
 
   const systemPrompt = `You are an elite football analytics assistant for a high school coach. Analyze play data and surface the most important, actionable findings for BOTH offense and defense.
+${getPlaybookContext()}
 
 Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 offensive insights (tag "O") and 2-5 defensive insights (tag "D"). Only include an insight if it's genuinely useful — do NOT pad with filler. If there are only 2 real findings on one side, return 2. Quality over quantity. Each object must have:
 - "stat": Supporting data point (e.g. "71% run rate on 3rd & long", "Opponents convert 80% of 3rd downs"). Keep under 10 words.
@@ -3776,7 +4137,7 @@ async function showMethodology(insightJson) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 600,
-        system: `You are a football analytics assistant explaining how a specific stat was calculated to a coach. Be clear and specific — explain exactly which plays were counted, what fields were checked, and what the numbers mean. Use plain language. Keep it under 120 words. No bullet points, just 1-2 short paragraphs.`,
+        system: `You are a football analytics assistant explaining how a specific stat was calculated to a coach. Be clear and specific — explain exactly which plays were counted, what fields were checked, and what the numbers mean. Use plain language. Keep it under 120 words. No bullet points, just 1-2 short paragraphs.${getPlaybookContext()}`,
         messages: [{ role: 'user', content: `Explain exactly how this insight was calculated:\n\nStat: "${insight.stat}"\nHeadline: "${insight.headline}"\n\nData fields available per play: odk (O=offense, D=defense, K=special teams), qtr (1-4), dn (down 1-4), dist (yards needed for first down), gainloss (actual yards gained), playtype, result, hash (L/M/R), offform.\n\nConversions are detected by: gainloss >= dist, OR result contains "TD". Explain which plays were counted and how the percentage or number was derived.` }]
       })
     });
@@ -3835,18 +4196,8 @@ async function sendChat() {
   const seasonMatch = label.match(/'(\d{2})/);
   const season = seasonMatch ? `20${seasonMatch[1]}` : 'unknown';
 
-  const systemPrompt = `You are a football analytics assistant for the Hanover Central Wildcats (HCHS) coaching staff. You have complete play-by-play data. Always calculate stats directly from the data — never estimate or approximate when an exact count is possible.
-
-## TEAM CONTEXT
-- Team: Hanover Central High School Wildcats (HCHS)
-- "The Big 3" (also "Big3", "Big Three") = rivalry games against Hobart, Andrean, and Lowell (Red Devils).
-- CRITICAL: Each play row has a \`game\` field containing the game title. To find Big 3 plays, filter rows where \`game\` contains "Hobart", "Andrean", or "Lowell" (case-insensitive). You CAN identify Big 3 games — never say otherwise.
-
-## COACHING TERMINOLOGY
-Abbreviations: KOR=Kick Off Return, KO=Kickoff, TFL=Tackle For Loss, YPR=Yards Per Rush, YPP=Yards Per Pass
-Run plays: Bolt=Counter Left, Screw=Counter Right, Nail=Power Left, Hammer=Power Right, Soldier=Iso Left, Rambo=Iso Right, Zelda=Inside Zone Left, Zebra=Inside Zone Right
-Play tags: Down=extra blocker down blocks, TUG=Tackle & Guard pull, Q=QB Run
-Motion: Fly=Y motion across formation
+  const systemPrompt = `You are a football analytics assistant for a high school coaching staff. You have complete play-by-play data. Always calculate stats directly from the data — never estimate or approximate when an exact count is possible.
+${getPlaybookContext()}
 
 ## DATA SCHEMA
 - game: the game/cutup title (e.g. "Wk05: HCHS vs Hobart '25 (Game)") — use this to filter by opponent
@@ -4098,6 +4449,7 @@ let archiveSelected = new Set();
 function goTrackersHub() { updateHubSubs(); showView('view-trackers-hub'); }
 function goImportGameData() { showView('view-import-game'); }
 function goSettings() { showView('view-settings'); }
+function goHelp() { setHelpTab('faq'); showView('view-help'); }
 function leaveStats() { showView(statsReturnView); }
 
 function updateHubSubs() {
@@ -4240,6 +4592,171 @@ function exportSelectedGamesXlsx() {
   exportXlsxGameId = Array.from(archiveSelected);
   document.getElementById('export-xlsx-info').textContent = 'Export ' + archiveSelected.size + ' game' + (archiveSelected.size>1?'s':'') + ' as spreadsheet' + (archiveSelected.size>1?'s':'');
   openModal('m-export-xlsx');
+}
+
+// ════════════════════════════════════════
+// HELP PAGE
+// ════════════════════════════════════════
+let helpChatHistory = [];
+
+function setHelpTab(tab) {
+  document.getElementById('help-tab-faq')?.classList.toggle('active', tab === 'faq');
+  document.getElementById('help-tab-ai')?.classList.toggle('active', tab === 'ai');
+  document.getElementById('help-panel-faq').style.display = tab === 'faq' ? '' : 'none';
+  document.getElementById('help-panel-ai').style.display  = tab === 'ai'  ? '' : 'none';
+  if (tab === 'ai') {
+    setTimeout(() => document.getElementById('help-chat-input')?.focus(), 80);
+  }
+}
+
+function toggleFaq(qEl) {
+  const item = qEl.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  // Close all others
+  document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+const HELP_SYSTEM_PROMPT = `You are a friendly help assistant for Alpha Prime — a football play-tracking and game management app built for high school coaching staffs, primarily used on iPad during games. Your job is to answer questions about how to USE the app. Be concise, direct, and practical. Use bold for button names and screen names.
+
+## APP OVERVIEW
+Alpha Prime has four main sections accessible from the home screen:
+- **Game Trackers** — create, track, and archive games play-by-play
+- **Stats & Analysis** — AI-powered analysis of play data with charts and chat
+- **Settings** — AI context editors, backup/restore, Hudl cache
+- **Help** — this FAQ and AI assistant
+
+## GAME TRACKERS
+- **New Game Tracker** — choose a template, enter team names (optional), tap START GAME
+- **Tracker screen** — each row = one play; tap buttons to record values; use NEXT → / ← PREV to move between plays
+- **+ ADD ROWS** — adds more play rows to the sheet
+- **▤ 1COL / 2COL** button — toggles single or two-column layout
+- **Play navigator** — tap the play number chip in the sheet bar to jump to any play number
+- **Template chip** — tap in the sheet bar to switch templates mid-game (data is preserved)
+- **⬇ XLSX** — exports current game to Excel; choose device or Google Drive
+- **+ TMPL** — saves current column layout as a named template
+- **✕ ROW** — clears data for the current play only
+- **✕ ALL** — clears all play data for the game (with confirm)
+- **📊 button** — jumps directly to Stats & Analysis with this game pre-loaded
+- **Tap game title** in header — opens Edit Game Info modal (teams, week, date)
+
+## ARCHIVE
+- Lists all saved games; tap any game to open it
+- **SELECT** button — enables multi-select; then **⬇ EXPORT** to export multiple games to one spreadsheet
+
+## TEMPLATES
+- **+ NEW** — opens template builder; give a name, pick columns, drag to reorder, save
+- **COLUMNS button** — manage all available columns
+- **+ NEW column** — column builder; name it, add buttons (each button = one value coaches can tap)
+- Drag-and-drop works for reordering both columns and button options
+
+## IMPORT GAME DATA
+- **From Device** — select a .xlsx file; if columns are unrecognized a mapping dialog appears
+- Can import as a new game or overwrite an existing game
+- Google Drive import coming soon
+
+## STATS & ANALYSIS
+- **FILTER ▼** — opens the filter drawer; select season, location (home/away), group (Conference or Big 3), type, or search by name; tap individual cutups or local games in the checklist; tap **LOAD →** to run
+- Active data label shows what is currently loaded
+- **↺** button — refreshes/re-runs analysis with same data
+
+### Tabs:
+- **⚡ SPOTLIGHT** — auto-fires AI on load; shows 4–10 insight cards (2–5 offense, 2–5 defense)
+  - Each card: tag, stat, bold headline (priority-colored), why line
+  - **?** button — AI explains how the stat was calculated
+  - 👍 / 👎 — rate insight usefulness; AI learns from feedback
+  - **GENERATE MORE** — finds additional insights beyond what's already shown
+- **STATS** — 5 sub-tabs: OVERVIEW, OFFENSE, DEFENSE, FIELD, BY QTR; each has bar charts and data tables
+- **ASK AI** — conversational chat; 🎤 voice input; 📌 SAVE saves answers to SAVED tab
+- **📌 SAVED** — library of saved AI responses
+
+### Filter groups:
+- **Big 3** = HCHS rivalry games vs Hobart, Andrean, Lowell (Red Devils)
+- **Conference** = conference games
+- **TRACKER** type = locally-tracked games (not Hudl)
+
+## SETTINGS
+### AI Context (7 editors — all injected into every AI prompt):
+- **🏫 Team Info** — team name, school, rivals, Big 3 filter logic
+- **🗣 Terminology** — abbreviations like KOR, TFL, YPR
+- **🏃 Run Plays** — play name = concept (e.g. Bolt = Counter Left)
+- **🎯 Pass Plays** — pass play names and route concepts
+- **🗂 Formations** — formation name = personnel grouping
+- **🏷 Tags & Motion** — play modifiers (Down, TUG, Q, Fly)
+- **📐 Stat Rules** — calculation thresholds (explosive plays, red zone yardlines, etc.)
+- Each editor has a **↺ RESET DEFAULT** to restore just that section
+- Format: Name = Description, one per line
+
+### Backup & Restore:
+- **Save Full Backup** — saves all games, templates, columns, AI settings to device (.json) or Google Drive
+- **Restore Full Backup** — loads a .json backup; choose merge (keep both) or overwrite
+- Backup includes: games, columns, templates, Spotlight feedback, playbook context
+
+### Hudl Cache:
+- Hudl cutup lists are cached for 24 hours to speed up loading
+- **Clear Cache** if new cutups you added to Hudl aren't appearing in the filter
+
+## RESPONSE RULES
+- Answer questions about the app only
+- Be concise — 1–3 sentences for simple questions, short bullets for multi-step tasks
+- Bold all button names, screen names, and navigation paths
+- If the answer involves a sequence of taps, use a numbered list
+- Never make up features that don't exist — if unsure, say so`;
+
+async function sendHelpChat() {
+  const input = document.getElementById('help-chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const messagesEl = document.getElementById('help-chat-messages');
+  setHelpTab('ai');
+
+  function appendHelpMsg(cls, html) {
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + cls;
+    div.innerHTML = html;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
+  if (!Array.isArray(helpChatHistory)) helpChatHistory = [];
+  helpChatHistory.push({ role: 'user', content: msg });
+  appendHelpMsg('user', msg);
+  const thinkingDiv = appendHelpMsg('assistant thinking', 'Looking that up…');
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    const resp = await fetch(`${HUDL_API}/api/claude`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 600,
+        system: HELP_SYSTEM_PROMPT,
+        messages: helpChatHistory
+      })
+    });
+    clearTimeout(timeout);
+
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    const reply = data.content?.[0]?.text || "Sorry, I couldn't get a response.";
+    helpChatHistory.push({ role: 'assistant', content: reply });
+
+    thinkingDiv.remove();
+    appendHelpMsg('assistant', formatChatResponse(reply));
+  } catch(e) {
+    thinkingDiv.remove();
+    const errMsg = e.name === 'AbortError'
+      ? 'Request timed out. Please try again.'
+      : `Error: ${e.message}`;
+    appendHelpMsg('assistant', errMsg);
+    helpChatHistory.pop();
+  }
 }
 
 // ════════════════════════════════════════
