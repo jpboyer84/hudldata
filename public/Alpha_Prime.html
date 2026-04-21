@@ -219,7 +219,8 @@ body {
 }
 .nav-btn:active { opacity: 0.8; }
 .nav-prev { background: #111113; color: #999; border-right: 1px solid var(--border); }
-.nav-new { background: var(--accent); color: #ffffff; font-weight: 700; }
+.nav-mid { background: #111113; color: #999; }
+.nav-new { background: var(--accent); color: #ffffff; font-weight: 700; border-left: 1px solid var(--border); }
 .nav-next { background: #111113; color: #999; border-left: 1px solid var(--border); }
 
 /* ════════════════════════════════════════
@@ -763,8 +764,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   <div class="tracker-body" id="tracker-body"></div>
   <div class="nav-bar">
     <button class="nav-btn nav-prev" onclick="prevPlay()">← Prev</button>
+    <button class="nav-btn nav-mid" onclick="addRows()">+ Rows</button>
     <button class="nav-btn nav-new" onclick="nextPlay()">Next play →</button>
-    <button class="nav-btn nav-next" onclick="addRows()">+ Rows</button>
   </div>
 </div>
 
@@ -1502,17 +1503,17 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   </div>
 </div>
 
-<div class="overlay" id="m-methodology" style="display:none" onclick="if(event.target===this)closeModal('m-methodology')">
+<div class="overlay" id="m-methodology" onclick="if(event.target===this)closeModal('m-methodology')">
   <div class="modal" style="max-width:420px">
-    <div class="modal-head">
-      <div class="modal-title">HOW THIS WAS CALCULATED</div>
+    <div class="modal-hdr">
+      <div class="modal-title">How this was calculated</div>
       <div class="modal-x" onclick="closeModal('m-methodology')">✕</div>
     </div>
-    <div class="modal-body" id="methodology-body" style="font-size:12px;line-height:1.6;color:var(--text)">
+    <div class="modal-body" id="methodology-body" style="font-size:13px;line-height:1.6;color:var(--text)">
       Loading…
     </div>
     <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('m-methodology')">CLOSE</button>
+      <button class="btn btn-secondary" onclick="closeModal('m-methodology')">Close</button>
     </div>
   </div>
 </div>
@@ -4744,25 +4745,28 @@ CRITICAL RULES:
     const otherInsights = spotlightInsights.filter(i => i.tag !== 'O' && i.tag !== 'D');
 
     const escHtml = s => s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    const renderCards = (list) => list
+    const renderCards = (list, side) => list
       .sort((a,b) => (priorityOrder[a.priority]||1) - (priorityOrder[b.priority]||1))
       .map((ins, i) => {
-        const insJson = escHtml(JSON.stringify({headline:ins.headline,stat:ins.stat,tag:ins.tag}));
+        // Find this insight's index in the global array for stable reference
+        const globalIdx = spotlightInsights.indexOf(ins);
         const cat = ins.category || (ins.priority === 'high' ? 'alert' : ins.priority === 'low' ? 'intel' : 'tendency');
         const catLabel = { alert: 'ALERT', tendency: 'TENDENCY', edge: 'EDGE', intel: 'INTEL' };
         const tagLabel2 = tagLabel[ins.tag] || 'GENERAL';
-        return `<div class="spotlight-card cat-${cat}">
+        // Offense = accent orange, Defense = blue
+        const sideColor = side === 'O' ? 'var(--accent)' : side === 'D' ? 'var(--blue)' : 'var(--muted)';
+        return `<div class="spotlight-card cat-${cat}" style="border-left-color:${sideColor}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div style="display:flex;gap:6px;align-items:center">
             <span class="spotlight-tag tag-${cat}">${catLabel[cat] || 'INTEL'}</span>
-            <span style="font-size:10px;color:var(--muted)">${tagLabel2}</span>
+            <span style="font-size:11px;color:${sideColor};font-weight:600">${tagLabel2}</span>
           </div>
           <div style="display:flex;gap:4px;flex-shrink:0">
-            <button onclick="rateSpotlight(this, '${insJson}', true)" class="spot-rate" data-dir="up" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;opacity:0.35" title="Useful">👍</button>
-            <button onclick="rateSpotlight(this, '${insJson}', false)" class="spot-rate" data-dir="down" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;opacity:0.35" title="Not useful">👎</button>
+            <button onclick="rateSpotlightByIdx(this,${globalIdx},true)" class="spot-rate" data-dir="up" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;opacity:0.35" title="Useful">👍</button>
+            <button onclick="rateSpotlightByIdx(this,${globalIdx},false)" class="spot-rate" data-dir="down" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;opacity:0.35" title="Not useful">👎</button>
           </div>
         </div>
-        <div class="spotlight-stat" onclick="showMethodology('${insJson}')" style="cursor:pointer">${ins.stat}</div>
+        <div class="spotlight-stat" onclick="showMethodologyByIdx(${globalIdx})" style="cursor:pointer">${ins.stat}</div>
         <div class="spotlight-headline">${ins.headline}</div>
         <div class="spotlight-why">${ins.why}</div>
       </div>`;
@@ -4779,16 +4783,16 @@ CRITICAL RULES:
     if (legend) legend.style.display = 'flex';
 
     if (offInsights.length > 0) {
-      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:600;color:var(--muted2);margin-bottom:6px;margin-top:4px;letter-spacing:0.06em">OFFENSE</div>`;
-      html += renderCards(offInsights);
+      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:600;color:var(--accent);margin-bottom:6px;margin-top:4px;letter-spacing:0.06em">OFFENSE</div>`;
+      html += renderCards(offInsights, 'O');
     }
     if (defInsights.length > 0) {
-      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:600;color:var(--muted2);margin-bottom:6px;margin-top:14px;letter-spacing:0.06em">DEFENSE</div>`;
-      html += renderCards(defInsights);
+      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:600;color:var(--blue);margin-bottom:6px;margin-top:14px;letter-spacing:0.06em">DEFENSE</div>`;
+      html += renderCards(defInsights, 'D');
     }
     if (otherInsights.length > 0) {
       html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:600;color:var(--muted2);margin-bottom:6px;margin-top:14px;letter-spacing:0.06em">GENERAL</div>`;
-      html += renderCards(otherInsights);
+      html += renderCards(otherInsights, 'G');
     }
 
     html += `<div style="display:flex;gap:8px;margin-top:14px">
@@ -4824,18 +4828,44 @@ function rateSpotlight(btn, insightJson, liked) {
   const isAlreadyActive = btn.style.opacity === '1';
 
   if (isAlreadyActive) {
-    // Undo — reset both buttons to neutral
     removeSpotlightFeedback(insight);
     upBtn.style.opacity = '0.35';
     downBtn.style.opacity = '0.35';
     showToast('Rating removed');
   } else {
-    // Rate it
     addSpotlightFeedback(insight, liked);
     upBtn.style.opacity = liked ? '1' : '0.15';
     downBtn.style.opacity = liked ? '0.15' : '1';
     showToast(liked ? '👍 Will prioritize similar insights' : '👎 Will deprioritize similar insights');
   }
+}
+
+function rateSpotlightByIdx(btn, idx, liked) {
+  const ins = spotlightInsights[idx];
+  if (!ins) return;
+  const insight = { headline: ins.headline, stat: ins.stat, tag: ins.tag };
+  const container = btn.parentElement;
+  const upBtn = container.querySelector('[data-dir="up"]');
+  const downBtn = container.querySelector('[data-dir="down"]');
+  const isAlreadyActive = btn.style.opacity === '1';
+
+  if (isAlreadyActive) {
+    removeSpotlightFeedback(insight);
+    upBtn.style.opacity = '0.35';
+    downBtn.style.opacity = '0.35';
+    showToast('Rating removed');
+  } else {
+    addSpotlightFeedback(insight, liked);
+    upBtn.style.opacity = liked ? '1' : '0.15';
+    downBtn.style.opacity = liked ? '0.15' : '1';
+    showToast(liked ? '👍 Will prioritize similar' : '👎 Will deprioritize similar');
+  }
+}
+
+function showMethodologyByIdx(idx) {
+  const ins = spotlightInsights[idx];
+  if (!ins) { showToast('Insight not found'); return; }
+  showMethodology(JSON.stringify({ headline: ins.headline, stat: ins.stat, tag: ins.tag }));
 }
 
 async function showMethodology(insightJson) {
