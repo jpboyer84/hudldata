@@ -630,6 +630,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div style="display:flex;gap:5px">
       <button class="hdr-btn" id="layout-btn" onclick="toggleLayout()">▤ 1COL</button>
       <button class="hdr-btn blue" onclick="goStatsFromTracker()">📊</button>
+      <button class="hdr-btn white" onclick="openTrackerColPicker()">+ COL</button>
       <button class="hdr-btn white" onclick="saveAsTemplate()">+ TMPL</button>
       <button class="hdr-btn" onclick="openExportXlsxModal()">⬇ XLSX</button>
       <button class="hdr-btn yellow" onclick="clearRow()">✕ ROW</button>
@@ -768,6 +769,18 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       </div>
     </div>
     <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('m-edit-game')">Cancel</button><button class="btn btn-primary" onclick="saveEditedGameInfo()">SAVE</button></div>
+  </div>
+</div>
+
+<!-- MODAL: TRACKER COLUMN PICKER -->
+<div class="overlay" id="m-tracker-cols" onclick="if(event.target===this)closeModal('m-tracker-cols')">
+  <div class="modal" style="max-width:420px;max-height:85vh;display:flex;flex-direction:column">
+    <div class="modal-hdr" style="flex-shrink:0">
+      <div class="modal-title">COLUMNS</div>
+      <div class="modal-x" onclick="closeModal('m-tracker-cols')">✕</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0" id="tracker-col-picker-body">
+    </div>
   </div>
 </div>
 
@@ -2380,6 +2393,61 @@ function confirmSaveAsTemplate() {
   saveTmpls(tmpls);
   closeModal('m-save-tmpl');
   showToast(`"${name}" saved as template!`);
+}
+
+// ════════════════════════════════════════
+// TRACKER COLUMN PICKER (add/remove columns live)
+// ════════════════════════════════════════
+function openTrackerColPicker() {
+  renderTrackerColPicker();
+  openModal('m-tracker-cols');
+}
+
+function renderTrackerColPicker() {
+  const allCols = getCols();
+  const activeIds = new Set(activeCols.map(c => c.id));
+  const body = document.getElementById('tracker-col-picker-body');
+
+  let h = '<div style="padding:10px 14px 4px;font-size:10px;color:var(--muted);letter-spacing:0.06em;font-family:var(--font-btn);font-weight:900">ACTIVE COLUMNS</div>';
+
+  // Active columns — shown with remove button
+  activeCols.forEach(c => {
+    h += `<div class="cutup-item" style="justify-content:space-between">
+      <div class="cutup-item-label">${c.name}</div>
+      <button onclick="removeTrackerCol('${c.id}')" style="background:none;border:1px solid var(--red);color:var(--red);
+        border-radius:6px;padding:4px 10px;font-family:var(--font-btn);font-weight:900;font-size:10px;cursor:pointer">REMOVE</button>
+    </div>`;
+  });
+
+  // Available columns not currently active
+  const available = allCols.filter(c => !activeIds.has(c.id));
+  if (available.length > 0) {
+    h += '<div style="padding:12px 14px 4px;font-size:10px;color:var(--muted);letter-spacing:0.06em;font-family:var(--font-btn);font-weight:900;border-top:2px solid var(--border)">AVAILABLE COLUMNS</div>';
+    available.forEach(c => {
+      h += `<div class="cutup-item" style="justify-content:space-between">
+        <div class="cutup-item-label" style="color:var(--muted)">${c.name}</div>
+        <button onclick="addTrackerCol('${c.id}')" style="background:none;border:1px solid var(--green,#4f4);color:var(--green,#4f4);
+          border-radius:6px;padding:4px 10px;font-family:var(--font-btn);font-weight:900;font-size:10px;cursor:pointer">+ ADD</button>
+      </div>`;
+    });
+  }
+
+  body.innerHTML = h;
+}
+
+function addTrackerCol(colId) {
+  const allCols = getCols();
+  const col = allCols.find(c => c.id === colId);
+  if (!col || activeCols.find(c => c.id === colId)) return;
+  activeCols.push(col);
+  renderTrackerColPicker();
+  renderTracker();
+}
+
+function removeTrackerCol(colId) {
+  activeCols = activeCols.filter(c => c.id !== colId);
+  renderTrackerColPicker();
+  renderTracker();
 }
 
 
