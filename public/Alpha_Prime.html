@@ -3360,7 +3360,7 @@ async function confirmPickerStats() {
     if (cached) { cacheHits++; return { label, clips: cached, error: null }; }
     cacheMisses++;
     try {
-      const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
+      const resp = await fetch(`${HUDL_API}/api/clips/${encodeURIComponent(id)}?count=1000`);
       if (!resp.ok) throw new Error(resp.status);
       const data = await resp.json();
       const normalized = data.clips.map(normalize);
@@ -3413,7 +3413,7 @@ async function confirmPickerTracker() {
     if (cached) {
       clips = cached;
     } else {
-      const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
+      const resp = await fetch(`${HUDL_API}/api/clips/${encodeURIComponent(id)}?count=1000`);
       if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
       const data = await resp.json();
       clips = data.clips.map(normalize);
