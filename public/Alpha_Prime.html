@@ -1985,7 +1985,7 @@ function renderSheetBar() {
   </div>`;
   activeCols.forEach(col => {
     const key = col.dataKey || col.id;
-    const raw = play[key] || '';
+    const raw = String(play[key] || '');
     const v = raw.includes('|') ? raw.split('|')[1] : raw;
     h += `<div class="s-cell"><div class="s-cell-lbl">${col.name}</div><div class="s-cell-val">${v||'·'}</div></div>`;
   });
@@ -3430,9 +3430,10 @@ async function confirmPickerStats() {
   });
 
   const normalize = c => ({
-    odk: c.odk||'', qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
-    yardln: c.yard_line||'', hash: c.hash||'', playtype: c.play_type||'',
-    result: c.result||'', gainloss: c.gain_loss||'', offform: c.off_form||'',
+    odk: String(c.odk||''), qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
+    yardln: String(c.yard_line||''), hash: String(c.hash||''), playtype: String(c.play_type||''),
+    result: String(c.result||''), gainloss: String(c.gain_loss||''), offform: String(c.off_form||''),
+    offplay: String(c.off_play||''),
   });
 
   let cacheHits = 0, cacheMisses = 0;
@@ -3485,9 +3486,10 @@ async function confirmPickerTracker() {
   status.textContent = 'Loading plays…';
 
   const normalize = c => ({
-    odk: c.odk||'', qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
-    yardln: c.yard_line||'', hash: c.hash||'', playtype: c.play_type||'',
-    result: c.result||'', gainloss: c.gain_loss||'', offform: c.off_form||'',
+    odk: String(c.odk||''), qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
+    yardln: String(c.yard_line||''), hash: String(c.hash||''), playtype: String(c.play_type||''),
+    result: String(c.result||''), gainloss: String(c.gain_loss||''), offform: String(c.off_form||''),
+    offplay: String(c.off_play||''),
   });
 
   try {
