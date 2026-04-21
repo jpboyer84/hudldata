@@ -1639,6 +1639,18 @@ function savePlaybookData(d) { localStorage.setItem('hd_playbook', JSON.stringif
 function getPlaybookContext() {
   const pb = getPlaybook();
   const parts = [];
+  // Universal football conventions the AI should always understand
+  parts.push(`## PERSONNEL SHORTHAND
+When a number is followed by "p" (e.g. 11p, 10p, 21p, 12p), it means personnel grouping. The two digits represent the number of RBs and TEs on the field (WRs fill the remaining spots to make 5 skill players).
+10p = 10 personnel (1 RB, 0 TE, 4 WR)
+11p = 11 personnel (1 RB, 1 TE, 3 WR)
+12p = 12 personnel (1 RB, 2 TE, 2 WR)
+13p = 13 personnel (1 RB, 3 TE, 1 WR)
+20p = 20 personnel (2 RB, 0 TE, 3 WR)
+21p = 21 personnel (2 RB, 1 TE, 2 WR)
+22p = 22 personnel (2 RB, 2 TE, 1 WR)
+23p = 23 personnel (2 RB, 3 TE, 0 WR)
+This convention applies everywhere — in formation names (e.g. "Red Near = 11p" means Red Near uses 11 personnel), in data fields, and in coach questions.`);
   if (pb.team?.trim())       parts.push('## TEAM INFO\n'                  + pb.team.trim());
   if (pb.terms?.trim())      parts.push('## COACHING TERMINOLOGY\n'       + pb.terms.trim());
   if (pb.runplays?.trim())   parts.push('## RUN PLAY NAMES\n'             + pb.runplays.trim());
@@ -1647,7 +1659,7 @@ function getPlaybookContext() {
   if (pb.tags?.trim())       parts.push('## PLAY TAGS & MOTION\n'         + pb.tags.trim());
   if (pb.statrules?.trim())  parts.push('## STAT CALCULATION RULES\n'     + pb.statrules.trim());
   if (pb.general?.trim())    parts.push('## GENERAL COACHING NOTES\n'     + pb.general.trim());
-  return parts.length ? '\n\n## COACH-DEFINED CONTEXT\n' + parts.join('\n\n') : '';
+  return '\n\n## COACH-DEFINED CONTEXT\n' + parts.join('\n\n');
 }
 
 function openPbSection(key) {
