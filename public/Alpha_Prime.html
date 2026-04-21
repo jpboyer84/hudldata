@@ -629,46 +629,79 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
      LANDING
 ══════════════════════════════════════ -->
 <div class="view active" id="view-landing">
-  <div class="lbody">
-    <div class="landing-logo">
-      <div class="landing-logo-icon">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M4 8L14 3L24 8V20L14 25L4 20V8Z" stroke="#fff" stroke-width="2" fill="none"/><path d="M14 3V25" stroke="#fff" stroke-width="1.5" opacity="0.5"/><path d="M4 8L14 13L24 8" stroke="#fff" stroke-width="1.5" opacity="0.5"/><path d="M14 13V25" stroke="#fff" stroke-width="2"/></svg>
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
+
+      <!-- Logo -->
+      <div style="padding:60px 24px 0;text-align:center">
+        <div class="landing-logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M4 8L14 3L24 8V20L14 25L4 20V8Z" stroke="#fff" stroke-width="2" fill="none"/><path d="M14 3V25" stroke="#fff" stroke-width="1.5" opacity="0.5"/><path d="M4 8L14 13L24 8" stroke="#fff" stroke-width="1.5" opacity="0.5"/><path d="M14 13V25" stroke="#fff" stroke-width="2"/></svg>
+        </div>
+        <div class="landing-logo-title">ASSISTANT COACH</div>
+        <div class="landing-logo-sub">HANOVER CENTRAL WILDCATS</div>
       </div>
-      <div class="landing-logo-title">ASSISTANT COACH</div>
-      <div class="landing-logo-sub">HANOVER CENTRAL WILDCATS</div>
-    </div>
-    <div class="lcard" onclick="goTrackersHub()">
-      <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="12" rx="2" stroke="#e8590c" stroke-width="1.5"/><path d="M3 8H17" stroke="#e8590c" stroke-width="1.5"/><path d="M7 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/><path d="M11 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/></svg></div>
-      <div style="flex:1;min-width:0">
-        <div class="lcard-title">Game trackers</div>
-        <div class="lcard-sub" id="trackers-sub">Track, archive & manage games</div>
+
+      <!-- Main cards -->
+      <div style="flex:1;padding:32px 20px 20px;display:flex;flex-direction:column;gap:10px">
+
+        <div class="lcard" onclick="goTrackersHub()">
+          <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="12" rx="2" stroke="#e8590c" stroke-width="1.5"/><path d="M3 8H17" stroke="#e8590c" stroke-width="1.5"/><path d="M7 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/><path d="M11 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/></svg></div>
+          <div style="flex:1;min-width:0">
+            <div class="lcard-title">Game trackers</div>
+            <div class="lcard-sub" id="trackers-sub">Track, archive & manage games</div>
+          </div>
+          <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+
+        <div class="lcard" onclick="goStats()">
+          <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 16V7" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M8 16V4" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M12 16V10" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M16 16V6" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div style="flex:1;min-width:0">
+            <div class="lcard-title">Stats & analysis</div>
+            <div class="lcard-sub" id="stats-sub">AI-powered breakdowns</div>
+          </div>
+          <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+
+        <div class="lcard" onclick="openHudlPicker('stats')">
+          <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="10" rx="2" stroke="#e8590c" stroke-width="1.5"/><path d="M8 8.5V11.5L11 10L8 8.5Z" fill="#e8590c"/></svg></div>
+          <div style="flex:1;min-width:0">
+            <div class="lcard-title">Hudl film</div>
+            <div class="lcard-sub">Browse and load cutups</div>
+          </div>
+          <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+
+        <!-- Small cards row -->
+        <div style="display:flex;gap:10px;margin-top:2px">
+          <div class="lcard-sm" onclick="goImportGameData()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:8px"><path d="M10 4V16M4 10H16" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div class="lcard-sm-label">Import</div>
+          </div>
+          <div class="lcard-sm" onclick="goHelp()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:8px"><circle cx="10" cy="10" r="7" stroke="#555" stroke-width="1.5"/><circle cx="10" cy="7" r="1" fill="#555"/><path d="M10 10V14" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div class="lcard-sm-label">Help</div>
+          </div>
+          <div class="lcard-sm" onclick="goSettings()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:8px"><circle cx="10" cy="10" r="3" stroke="#555" stroke-width="1.5"/><path d="M10 3V5M10 15V17M17 10H15M5 10H3" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div class="lcard-sm-label">Settings</div>
+          </div>
+        </div>
+
       </div>
-      <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
-    <div class="lcard" onclick="goStats()">
-      <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 16V7" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M8 16V4" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M12 16V10" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M16 16V6" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/></svg></div>
-      <div style="flex:1;min-width:0">
-        <div class="lcard-title">Stats & analysis</div>
-        <div class="lcard-sub" id="stats-sub">AI-powered breakdowns</div>
+
+    <!-- Status bar - last game tracked -->
+    <div style="padding:16px 20px 24px;border-top:1px solid #1a1a1c;flex-shrink:0">
+      <div id="landing-last-game" style="background:#161618;border:1px solid #222224;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:#555;margin-bottom:2px">Last game tracked</div>
+          <div style="font-size:14px;font-weight:600;color:#ccc" id="landing-last-game-name">No games yet</div>
+        </div>
+        <div style="font-size:11px;color:#444" id="landing-last-game-time"></div>
       </div>
-      <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
-    <div class="lcard" onclick="goSettings()">
-      <div class="lcard-icon neutral"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="#555" stroke-width="1.5"/><path d="M10 3V5M10 15V17M17 10H15M5 10H3M14.95 5.05L13.54 6.46M6.46 13.54L5.05 14.95M14.95 14.95L13.54 13.54M6.46 6.46L5.05 5.05" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg></div>
-      <div style="flex:1;min-width:0">
-        <div class="lcard-title">Settings</div>
-        <div class="lcard-sub">Backup, restore & AI context</div>
-      </div>
-      <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
-    </div>
-    <div class="lcard" onclick="goHelp()">
-      <div class="lcard-icon neutral"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#555" stroke-width="1.5"/><circle cx="10" cy="7" r="1" fill="#555"/><path d="M10 10V14" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg></div>
-      <div style="flex:1;min-width:0">
-        <div class="lcard-title">Help</div>
-        <div class="lcard-sub">FAQ &amp; ask the AI anything</div>
-      </div>
-      <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
-    </div>
+
   </div>
 </div>
 
@@ -2068,6 +2101,27 @@ function updateLanding() {
   const games = getGames();
   document.getElementById('trackers-sub').textContent =
     games.length > 0 ? `${games.length} game${games.length!==1?'s':''} · track, archive & manage` : 'Track, archive & manage games';
+
+  // Update "last game tracked" status bar
+  const nameEl = document.getElementById('landing-last-game-name');
+  const timeEl = document.getElementById('landing-last-game-time');
+  if (nameEl && games.length > 0) {
+    // Find most recently modified game
+    const sorted = [...games].sort((a,b) => parseInt(b.id) - parseInt(a.id));
+    const last = sorted[0];
+    const label = (last.home && last.away) ? `${last.home} vs ${last.away}` : 'Untitled game';
+    const weekStr = last.week ? ` · Week ${last.week}` : '';
+    nameEl.textContent = label + weekStr;
+    // Time ago
+    const ms = Date.now() - parseInt(last.id);
+    const mins = Math.floor(ms / 60000);
+    const hrs = Math.floor(mins / 60);
+    const days = Math.floor(hrs / 24);
+    timeEl.textContent = days > 0 ? `${days}d ago` : hrs > 0 ? `${hrs}h ago` : mins > 0 ? `${mins}m ago` : 'just now';
+  } else if (nameEl) {
+    nameEl.textContent = 'No games yet';
+    timeEl.textContent = '';
+  }
 }
 
 // ════════════════════════════════════════
