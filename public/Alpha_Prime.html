@@ -1878,7 +1878,7 @@ function renderColumnList() {
   const cols = getCols().slice().sort((a,b) => a.name.localeCompare(b.name));
   const body = document.getElementById('col-list-body');
   const sub = document.getElementById('col-sub');
-  sub.textContent = `${cols.length} column${cols.length!==1?'s':''}`;
+  if (sub) sub.textContent = `${cols.length} column${cols.length!==1?'s':''}`;
   let h = '';
   cols.forEach(col => {
     // Built-in columns can be edited but not deleted
