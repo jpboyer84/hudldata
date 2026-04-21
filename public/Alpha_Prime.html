@@ -2020,7 +2020,90 @@ function gridCls(n) {
 
 function esc(s) { return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
+// ════════════════════════════════════════
+// PLAYBOOK → COLUMN BUTTON AUTO-SYNC
+// ════════════════════════════════════════
+// Maps column IDs/names to playbook sections. Playbook entries are merged
+// into the button list at render time — saved column data is never modified.
+const PLAYBOOK_COL_MAP = {
+  // By column ID
+  offform: 'formations',
+  // By column name (lowercase) — catches custom columns
+  'formation': 'formations', 'formations': 'formations', 'off form': 'formations',
+  'run play': 'runplays', 'run plays': 'runplays',
+  'pass play': 'passplays', 'pass plays': 'passplays',
+  'motion': 'tags', 'tag': 'tags', 'tags': 'tags', 'tags & motion': 'tags',
+  'off play': 'runplays', 'play': 'runplays', 'play name': 'runplays', 'play call': 'runplays',
+};
+
+// Some columns should pull from multiple playbook sections
+const PLAYBOOK_COL_MULTI = {
+  'off play': ['runplays', 'passplays'],
+  'play': ['runplays', 'passplays'],
+  'play name': ['runplays', 'passplays'],
+  'play call': ['runplays', 'passplays'],
+};
+
+function getPlaybookNames(sectionKey) {
+  const pb = getPlaybook();
+  const text = pb[sectionKey];
+  if (!text?.trim()) return [];
+  return text.trim().split('\n')
+    .map(line => line.split('=')[0]?.trim())
+    .filter(name => name && !name.startsWith('Play Name') && !name.startsWith('Formation Name') && !name.startsWith('Tag Name') && !name.startsWith('Motion Name'));
+}
+
+function mergePlaybookButtons(col) {
+  if (!col.btns || col.btns.length === 0) return col;
+
+  const colNameLower = col.name?.toLowerCase() || '';
+  const section = PLAYBOOK_COL_MAP[col.id] || PLAYBOOK_COL_MAP[colNameLower];
+  if (!section) return col;
+
+  // Gather names from one or multiple playbook sections
+  const multiSections = PLAYBOOK_COL_MULTI[colNameLower];
+  let pbNames;
+  if (multiSections) {
+    pbNames = multiSections.flatMap(s => getPlaybookNames(s));
+  } else {
+    pbNames = getPlaybookNames(section);
+  }
+  if (pbNames.length === 0) return col;
+
+  // Build a set of existing button labels (case-insensitive)
+  const existingLabels = new Set(col.btns.map(b => (b.l || b.v || '').toLowerCase()));
+
+  // Find new entries not already in the column
+  const newNames = pbNames.filter(name => !existingLabels.has(name.toLowerCase()));
+
+  let merged = col;
+  if (newNames.length > 0) {
+    let newBtns;
+    if (col.type === 'btn_dds') {
+      // btn_dds format: each button has {l, opts[]}. Add playbook items as single-option buttons.
+      newBtns = newNames.map(name => ({ l: name, opts: [name] }));
+    } else {
+      // Standard format: {l, v}
+      newBtns = newNames.map(name => ({ l: name.toUpperCase(), v: name }));
+    }
+    merged = { ...col, btns: [...col.btns, ...newBtns] };
+  }
+
+  // Also merge into dd array for btns_dd columns
+  if (merged.dd && Array.isArray(merged.dd)) {
+    const existingDd = new Set(merged.dd.map(d => d.toLowerCase()));
+    const newDd = pbNames.filter(name => !existingDd.has(name.toLowerCase()));
+    if (newDd.length > 0) {
+      merged = { ...merged, dd: [...merged.dd, ...newDd] };
+    }
+  }
+
+  return merged;
+}
+
 function renderColInner(col, val) {
+  // Auto-merge playbook entries into column buttons at render time
+  col = mergePlaybookButtons(col);
   switch(col.type) {
     case 'buttons':     return renderBtns(col, val);
     case 'list':        return renderListBtn(col, val);
