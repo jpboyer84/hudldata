@@ -546,6 +546,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .cutup-item input[type=checkbox] { width:22px; height:22px; flex-shrink:0; accent-color:#fff; cursor:pointer; appearance:auto; -webkit-appearance:checkbox; }
 .cutup-item-label { font-family:var(--font-btn); font-weight:900; font-size:13px; flex:1; }
 .cutup-item-count { font-size:10px; color:var(--muted); flex-shrink:0; }
+.pk-single.selected { background: var(--surface2); border-left: 3px solid #fff; }
+.pk-single.selected .cutup-item-label { color: #fff; }
 </style>
 </head>
 <body>
@@ -610,6 +612,10 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div class="lcard" onclick="goImportGameData()">
       <div class="lcard-icon">📥</div>
       <div><div class="lcard-title">IMPORT GAME DATA</div><div class="lcard-sub">Upload from file or Google Drive</div></div>
+    </div>
+    <div class="lcard" onclick="openHudlPicker('tracker')">
+      <div class="lcard-icon">📺</div>
+      <div><div class="lcard-title">LOAD FROM HUDL</div><div class="lcard-sub">Import a Hudl cutup into the tracker</div></div>
     </div>
   </div>
 </div>
@@ -1276,6 +1282,52 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 </div>
 
 <!-- ══════════════════════════════════════
+     MODAL: CUTUP / DATA PICKER
+══════════════════════════════════════ -->
+<div class="overlay" id="m-cutup-picker" onclick="if(event.target===this)closeModal('m-cutup-picker')">
+  <div class="modal" style="max-width:500px;max-height:90vh;display:flex;flex-direction:column;padding:0">
+    <div class="modal-hdr" style="flex-shrink:0;padding:14px 16px">
+      <div class="modal-title" id="picker-title">SELECT DATA</div>
+      <div class="modal-x" onclick="closeModal('m-cutup-picker')">✕</div>
+    </div>
+    <!-- Search -->
+    <div style="padding:0 14px 8px;flex-shrink:0">
+      <input id="picker-search" oninput="filterPickerList()" placeholder="Search cutups & games…"
+        style="width:100%;background:#111;border:1px solid var(--border);border-radius:8px;
+               padding:9px 12px;color:var(--text);font-family:var(--font-ui);font-size:13px;outline:none;box-sizing:border-box" />
+    </div>
+    <!-- Filter chips - single scrollable row -->
+    <div style="display:flex;gap:5px;padding:0 14px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0">
+      <button class="sf-btn on" id="pk-cat-all"     onclick="setPickerCat('all')">ALL</button>
+      <button class="sf-btn"    id="pk-cat-game"    onclick="setPickerCat('game')">GAME</button>
+      <button class="sf-btn"    id="pk-cat-scout"   onclick="setPickerCat('scout')">SCOUT</button>
+      <button class="sf-btn"    id="pk-cat-jv"      onclick="setPickerCat('jv')">JV</button>
+      <button class="sf-btn"    id="pk-cat-other"   onclick="setPickerCat('other')">OTHER</button>
+      <button class="sf-btn"    id="pk-cat-tracker" onclick="setPickerCat('tracker')">TRACKED</button>
+      <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
+      <button class="sf-btn" id="pk-s-2024" onclick="togglePickerFilter('season','2024')">2024</button>
+      <button class="sf-btn" id="pk-s-2025" onclick="togglePickerFilter('season','2025')">2025</button>
+      <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
+      <button class="sf-btn" id="pk-l-home" onclick="togglePickerFilter('location','home')">HOME</button>
+      <button class="sf-btn" id="pk-l-away" onclick="togglePickerFilter('location','away')">AWAY</button>
+      <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
+      <button class="sf-btn" id="pk-g-conference" onclick="togglePickerFilter('group','conference')">CONF</button>
+      <button class="sf-btn" id="pk-g-big3"      onclick="togglePickerFilter('group','big3')">BIG 3</button>
+    </div>
+    <!-- Checklist -->
+    <div id="picker-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;border-top:1px solid var(--border)">
+      <div style="padding:16px;font-size:12px;color:var(--muted);text-align:center">Loading…</div>
+    </div>
+    <!-- Footer -->
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0">
+      <div style="font-size:11px;color:var(--muted);flex:1" id="picker-status"></div>
+      <button class="btn btn-primary" id="picker-load-btn" onclick="confirmPicker()"
+        style="padding:9px 20px;font-size:12px;white-space:nowrap">LOAD →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
      MODAL: AI CONTEXT EDITOR (single-section)
 ══════════════════════════════════════ -->
 <div class="overlay" id="m-pb-editor" onclick="if(event.target===this)closePbEditor()">
@@ -1329,65 +1381,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <button class="hdr-btn" onclick="leaveStats()">← BACK</button>
     <div class="hdr-title">STATS & ANALYSIS</div>
     <div style="display:flex;gap:5px">
-      <button class="hdr-btn white" id="stats-filter-btn" onclick="toggleFilterDrawer()">FILTER ▼</button>
+      <button class="hdr-btn white" id="stats-filter-btn" onclick="openHudlPicker('stats')">FILTER ▼</button>
       <button class="hdr-btn" onclick="refreshStats()">↺</button>
-    </div>
-  </div>
-
-  <!-- ── FILTER DRAWER (hidden by default) ── -->
-  <div id="stats-filter-drawer" style="display:none;flex-shrink:0;background:var(--surface);border-bottom:2px solid var(--col-border)">
-
-    <!-- Season -->
-    <div class="sf-row" style="padding:8px 12px 5px">
-      <span class="sf-label">SEASON</span>
-      <button class="sf-btn" id="sf-s-2024" onclick="toggleSmartFilter('season','2024')">2024</button>
-      <button class="sf-btn" id="sf-s-2025" onclick="toggleSmartFilter('season','2025')">2025</button>
-    </div>
-
-    <!-- Location -->
-    <div class="sf-row" style="padding:0 12px 5px">
-      <span class="sf-label">LOCATION</span>
-      <button class="sf-btn" id="sf-l-home" onclick="toggleSmartFilter('location','home')">HOME</button>
-      <button class="sf-btn" id="sf-l-away" onclick="toggleSmartFilter('location','away')">AWAY</button>
-    </div>
-
-    <!-- Group -->
-    <div class="sf-row" style="padding:0 12px 5px">
-      <span class="sf-label">GROUP</span>
-      <button class="sf-btn" id="sf-g-conference" onclick="toggleSmartFilter('group','conference')">CONFERENCE</button>
-      <button class="sf-btn" id="sf-g-big3" onclick="toggleSmartFilter('group','big3')">BIG 3</button>
-    </div>
-
-    <!-- Type filter -->
-    <div class="sf-row" style="padding:0 12px 5px;flex-wrap:wrap">
-      <span class="sf-label">TYPE</span>
-      <button class="sf-btn on" id="hudl-cat-all"   onclick="setHudlCat('all')"   >ALL</button>
-      <button class="sf-btn"    id="hudl-cat-game"  onclick="setHudlCat('game')"  >GAME</button>
-      <button class="sf-btn"    id="hudl-cat-scout" onclick="setHudlCat('scout')" >SCOUT</button>
-      <button class="sf-btn"    id="hudl-cat-jv"    onclick="setHudlCat('jv')"    >JV</button>
-      <button class="sf-btn"    id="hudl-cat-other" onclick="setHudlCat('other')" >OTHER</button>
-      <button class="sf-btn"    id="hudl-cat-tracker" onclick="setHudlCat('tracker')">TRACKER</button>
-    </div>
-
-    <!-- Search -->
-    <div style="padding:0 12px 5px">
-      <input id="hudl-filter-text" oninput="filterHudlList()" placeholder="Search…"
-        style="width:100%;background:#111;border:1px solid var(--border);border-radius:8px;
-               padding:7px 11px;color:var(--text);font-family:var(--font-ui);font-size:12px;outline:none" />
-    </div>
-
-    <!-- Checklist (LOCAL games + HUDL cutups combined) -->
-    <div id="hudl-cutup-list"
-      style="max-height:170px;overflow-y:auto;background:#111;
-             border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-      <div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>
-    </div>
-
-    <!-- Status + load -->
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px">
-      <div style="font-size:10px;color:var(--muted);flex:1" id="hudl-load-status"></div>
-      <button class="btn btn-primary" onclick="loadAndShowStats()"
-        style="padding:7px 16px;font-size:11px;white-space:nowrap">LOAD →</button>
     </div>
   </div>
 
@@ -3173,23 +3168,294 @@ function setStatsSubTab(sub) {
   });
 }
 
-function toggleFilterDrawer() {
-  const drawer = document.getElementById('stats-filter-drawer');
-  const btn = document.getElementById('stats-filter-btn');
-  const open = drawer.style.display !== 'none';
-  drawer.style.display = open ? 'none' : 'flex';
-  drawer.style.flexDirection = 'column';
-  btn.textContent = open ? 'FILTER ▼' : 'FILTER ▲';
-  btn.classList.toggle('white', !open);
+// ════════════════════════════════════════
+// SHARED CUTUP PICKER
+// ════════════════════════════════════════
+let pickerMode = 'stats'; // 'stats' (multi-select) or 'tracker' (single-select)
+let pickerCat = 'all';
+const pickerFilters = { season: new Set(), location: new Set(), group: new Set() };
+
+function openHudlPicker(mode) {
+  pickerMode = mode;
+  pickerCat = 'all';
+  Object.keys(pickerFilters).forEach(k => pickerFilters[k].clear());
+
+  // Reset UI
+  document.querySelectorAll('#m-cutup-picker .sf-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('pk-cat-all')?.classList.add('on');
+  document.getElementById('picker-search').value = '';
+
+  // Title and button label
+  document.getElementById('picker-title').textContent = mode === 'tracker' ? 'LOAD HUDL CUTUP' : 'SELECT DATA';
+  document.getElementById('picker-load-btn').textContent = mode === 'tracker' ? 'LOAD INTO TRACKER →' : 'LOAD →';
+
+  // Show/hide tracker-only items (hide TRACKED category for tracker mode since we only want Hudl)
+  document.getElementById('pk-cat-tracker').style.display = mode === 'tracker' ? 'none' : '';
+
+  openModal('m-cutup-picker');
+  loadHudlLibrary();
 }
 
-function closeFilterDrawer() {
-  const drawer = document.getElementById('stats-filter-drawer');
-  const btn = document.getElementById('stats-filter-btn');
-  drawer.style.display = 'none';
-  btn.textContent = 'FILTER ▼';
-  btn.classList.remove('white');
+function setPickerCat(cat) {
+  pickerCat = cat;
+  ['all','game','scout','jv','other','tracker'].forEach(c => {
+    document.getElementById(`pk-cat-${c}`)?.classList.toggle('on', c === cat);
+  });
+  filterPickerList();
 }
+
+function togglePickerFilter(category, value) {
+  const s = pickerFilters[category];
+  if (s.has(value)) s.delete(value); else s.add(value);
+  // Map category+value to button id: pk-{first letter}-{value}
+  const prefix = category === 'season' ? 's' : category === 'location' ? 'l' : 'g';
+  document.getElementById(`pk-${prefix}-${value}`)?.classList.toggle('on', s.has(value));
+  filterPickerList();
+}
+
+function matchesPickerFilters(item) {
+  const t = item.title.toLowerCase();
+  const { season, location, group } = pickerFilters;
+  if (season.size > 0) {
+    if (![...season].some(y => t.includes(`'${y.slice(2)}`))) return false;
+  }
+  if (location.size > 0) {
+    const isHome = t.includes(' vs ') && !t.includes('@');
+    const isAway = t.includes('@');
+    if (!((location.has('home') && isHome) || (location.has('away') && isAway))) return false;
+  }
+  if (group.size > 0) {
+    if (![...group].some(g => {
+      const teams = g === 'big3' ? BIG3_TEAMS : CONFERENCE_TEAMS;
+      return teams.some(team => t.includes(team));
+    })) return false;
+  }
+  return true;
+}
+
+function matchesPickerFiltersLocal(item) {
+  const { season, location, group } = pickerFilters;
+  if (season.size > 0 || group.size > 0) return false;
+  if (location.size > 0) {
+    const t = item.title.toLowerCase();
+    const isHome = t.includes(' vs ') && !t.includes('@');
+    const isAway = t.includes('@');
+    return (location.has('home') && isHome) || (location.has('away') && isAway);
+  }
+  return true;
+}
+
+function filterPickerList() {
+  const keyword = (document.getElementById('picker-search')?.value || '').toLowerCase();
+  const allItems = getUnifiedItems();
+  const filtered = allItems.filter(i => {
+    // In tracker mode, hide local games (only Hudl cutups)
+    if (pickerMode === 'tracker' && i.source === 'local') return false;
+    const catMatch = pickerCat === 'all' || i.category === pickerCat;
+    const nameMatch = !keyword || i.title.toLowerCase().includes(keyword);
+    const smartMatch = i.source === 'local' ? matchesPickerFiltersLocal(i) : matchesPickerFilters(i);
+    return catMatch && nameMatch && smartMatch;
+  });
+  renderPickerList(filtered);
+}
+
+function renderPickerList(items) {
+  const container = document.getElementById('picker-list');
+  const status = document.getElementById('picker-status');
+  const multiSelect = pickerMode === 'stats';
+
+  if (items.length === 0) {
+    container.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--muted);text-align:center">No items match</div>';
+    status.textContent = 'No items match';
+    return;
+  }
+
+  const sorted = items.slice().sort((a, b) => {
+    const sA = parseSeason(a.title), sB = parseSeason(b.title);
+    if (sA !== sB) return sB - sA;
+    const wA = parseWeekSort(a.title), wB = parseWeekSort(b.title);
+    if (wA === -1 && wB === -1) return a.title.localeCompare(b.title);
+    if (wA === -1) return 1;
+    if (wB === -1) return -1;
+    if (wA !== wB) return wB - wA;
+    return a.title.localeCompare(b.title);
+  });
+
+  if (multiSelect) {
+    container.innerHTML = sorted.map(i => `
+      <div class="cutup-item" onclick="togglePickerCheck('${i.internalId}')">
+        <input type="checkbox" id="pkchk-${i.internalId}" value="${i.internalId}"
+          data-source="${i.source}" data-gameid="${i.id || ''}"
+          checked onclick="event.stopPropagation();updatePickerStatus()" />
+        <div class="cutup-item-label">${i.source === 'local' ? '📋 ' : ''}${i.title}</div>
+        <div class="cutup-item-count">${i.clip_count ?? '?'}</div>
+      </div>`).join('');
+    updatePickerStatus();
+  } else {
+    // Single-select: tap a row to select it (radio-style)
+    container.innerHTML = sorted.map(i => `
+      <div class="cutup-item pk-single" data-id="${i.internalId}" data-source="${i.source}" data-gameid="${i.id || ''}"
+           onclick="selectPickerSingle(this)">
+        <div class="cutup-item-label">${i.title}</div>
+        <div class="cutup-item-count">${i.clip_count ?? '?'}</div>
+      </div>`).join('');
+    status.textContent = `${sorted.length} cutups — tap one to select`;
+  }
+}
+
+function togglePickerCheck(id) {
+  const chk = document.getElementById(`pkchk-${id}`);
+  if (chk) { chk.checked = !chk.checked; updatePickerStatus(); }
+}
+
+function updatePickerStatus() {
+  const checked = [...document.querySelectorAll('#picker-list input[type=checkbox]:checked')];
+  document.getElementById('picker-status').textContent =
+    checked.length === 0 ? 'Nothing selected' : `${checked.length} selected`;
+}
+
+function selectPickerSingle(el) {
+  document.querySelectorAll('#picker-list .pk-single.selected').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('picker-status').textContent = '1 selected';
+}
+
+async function confirmPicker() {
+  if (pickerMode === 'stats') {
+    await confirmPickerStats();
+  } else {
+    await confirmPickerTracker();
+  }
+}
+
+async function confirmPickerStats() {
+  const checked = [...document.querySelectorAll('#picker-list input[type=checkbox]:checked')];
+  if (checked.length === 0) { showToast('Nothing selected'); return; }
+
+  const status = document.getElementById('picker-status');
+  status.textContent = `Loading ${checked.length} item${checked.length > 1 ? 's' : ''}…`;
+  document.getElementById('stats-sub-overview').innerHTML = '<div class="empty-msg">Loading data…</div>';
+
+  const localChecked = checked.filter(c => c.dataset.source === 'local');
+  const hudlChecked  = checked.filter(c => c.dataset.source !== 'local');
+
+  const localPlays = [];
+  localChecked.forEach(c => {
+    const g = getGames().find(x => x.id === c.dataset.gameid);
+    const gameTitle = c.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || g?.title || '';
+    if (g) localPlays.push(...(g.plays || []).filter(p => Object.keys(p).length > 0).map(p => ({ ...p, _gameTitle: gameTitle })));
+  });
+
+  const normalize = c => ({
+    odk: c.odk||'', qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
+    yardln: c.yard_line||'', hash: c.hash||'', playtype: c.play_type||'',
+    result: c.result||'', gainloss: c.gain_loss||'', offform: c.off_form||'',
+  });
+
+  let cacheHits = 0, cacheMisses = 0;
+  const hudlResults = await Promise.all(hudlChecked.map(async chk => {
+    const id = chk.value.replace('local_', '');
+    const label = chk.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || id;
+    const cached = getCachedClips(id);
+    if (cached) { cacheHits++; return { label, clips: cached, error: null }; }
+    cacheMisses++;
+    try {
+      const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
+      if (!resp.ok) throw new Error(resp.status);
+      const data = await resp.json();
+      const normalized = data.clips.map(normalize);
+      setCachedClips(id, normalized, label);
+      return { label, clips: normalized, error: null };
+    } catch(e) { return { label, clips: [], error: e.message }; }
+  }));
+
+  const hudlPlays = hudlResults.flatMap(r => r.clips.map(p => ({ ...p, _gameTitle: r.label })));
+  const allPlays = [...localPlays, ...hudlPlays];
+
+  statsGameData = allPlays;
+  const localLabels = localChecked.map(c => c.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || '').filter(Boolean);
+  const hudlLabels  = hudlResults.filter(r=>!r.error).map(r=>r.label);
+  const allLabels   = [...localLabels, ...hudlLabels];
+  statsLabel = allLabels.length === 1 ? allLabels[0] : `${allLabels.length} sources combined`;
+
+  const cacheInfo = cacheHits > 0 ? ` (${cacheHits} cached)` : '';
+  showToast(`Loaded ${allPlays.length} plays${cacheInfo}`);
+  closeModal('m-cutup-picker');
+
+  try { renderStatsFromData(allPlays, statsLabel, false); } catch(e) {
+    console.error('Stats render error:', e);
+    document.getElementById('stats-sub-overview').innerHTML = '<div class="empty-msg">Error rendering stats: ' + e.message + '</div>';
+  }
+  setStatsTab('spotlight');
+  setStatsSubTab('overview');
+  updateActiveLabel(`${statsLabel} · ${allPlays.length} plays`);
+  runSpotlightAnalysis(allPlays);
+}
+
+async function confirmPickerTracker() {
+  const selected = document.querySelector('#picker-list .pk-single.selected');
+  if (!selected) { showToast('Tap a cutup to select it first'); return; }
+
+  const id = selected.dataset.id;
+  const label = selected.querySelector('.cutup-item-label')?.textContent || 'Hudl Import';
+  const status = document.getElementById('picker-status');
+  status.textContent = 'Loading plays…';
+
+  const normalize = c => ({
+    odk: c.odk||'', qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
+    yardln: c.yard_line||'', hash: c.hash||'', playtype: c.play_type||'',
+    result: c.result||'', gainloss: c.gain_loss||'', offform: c.off_form||'',
+  });
+
+  try {
+    let clips;
+    const cached = getCachedClips(id);
+    if (cached) {
+      clips = cached;
+    } else {
+      const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
+      if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
+      const data = await resp.json();
+      clips = data.clips.map(normalize);
+      setCachedClips(id, clips, label);
+    }
+
+    if (clips.length === 0) { showToast('No plays found in this cutup'); return; }
+
+    // Pad to at least 200 rows
+    const plays = clips.map(c => ({ ...c }));
+    while (plays.length < 200) plays.push({});
+
+    // Parse title for team names
+    const titleMatch = label.match(/:\s*(.+?)\s+(?:vs|@)\s+(.+?)(?:\s+'|\s+\(|$)/i);
+    const home = titleMatch ? titleMatch[1].trim() : 'HOME';
+    const away = titleMatch ? titleMatch[2].trim() : 'AWAY';
+    const weekMatch = label.match(/[Ww]k\s*0*(\d+)/);
+    const week = weekMatch ? weekMatch[1] : '';
+
+    const tmplId = getTmpls()[0]?.id || '';
+    const g = {
+      id: Date.now().toString(),
+      home, away, week, date: '',
+      tmplId, plays,
+      hudlSource: label,
+      createdAt: new Date().toISOString()
+    };
+    const games = getGames();
+    games.unshift(g);
+    saveGames(games);
+
+    closeModal('m-cutup-picker');
+    showToast(`Loaded ${clips.length} plays from Hudl`);
+    loadTracker(g.id);
+
+  } catch(e) {
+    status.textContent = `Error: ${e.message}`;
+    showToast('Failed to load cutup: ' + e.message);
+  }
+}
+
+// ── PICKER SUPPORT FUNCTIONS ──
 
 function updateActiveLabel(text) {
   const wrap = document.getElementById('stats-active-label');
@@ -3202,53 +3468,54 @@ function refreshStats() {
   hudlLibrary = null;
   localStorage.removeItem('hd_library_cache');
   localStorage.removeItem('hd_library_cache_at');
-  loadHudlLibrary();
+  showToast('Cache cleared — tap FILTER to reload');
 }
 
-async function loadAndShowStats() {
-  try {
-    await loadHudlCutup();
-  } catch(e) {
-    showToast('Load error: ' + e.message);
-    console.error('loadHudlCutup error:', e);
-  }
-  closeFilterDrawer();
-}
-
-// ── SMART FILTERS ──
-const smartFilters = { season: new Set(), location: new Set(), group: new Set() };
 const CONFERENCE_TEAMS = ['lowell','kvhs','munster','hobart','andrean','highland'];
 const BIG3_TEAMS = ['lowell','hobart','andrean'];
 
-function toggleSmartFilter(category, value) {
-  const s = smartFilters[category];
-  if (s.has(value)) s.delete(value); else s.add(value);
-  document.getElementById(`sf-${category[0]}-${value}`)?.classList.toggle('on', s.has(value));
-  filterHudlList();
+function getCutupCategory(title) {
+  const t = title.trim().toLowerCase();
+  if (t.endsWith('(practice)')) return 'practice';
+  if (t.endsWith('(game)'))     return 'game';
+  if (t.endsWith('(scout)'))    return 'scout';
+  if (t.endsWith('(jv)'))       return 'jv';
+  if (t.endsWith('(other)'))    return 'other';
+  return 'untagged';
 }
 
-function matchesSmartFilters(item) {
-  const t = item.title.toLowerCase();
-  const { season, location, group } = smartFilters;
-
-  if (season.size > 0) {
-    const matchSeason = [...season].some(y => t.includes(`'${y.slice(2)}`));
-    if (!matchSeason) return false;
-  }
-  if (location.size > 0) {
-    const isHome = t.includes(' vs ') && !t.includes('@');
-    const isAway = t.includes('@');
-    const matchLoc = (location.has('home') && isHome) || (location.has('away') && isAway);
-    if (!matchLoc) return false;
-  }
-  if (group.size > 0) {
-    const matchGroup = [...group].some(g => {
-      const teams = g === 'big3' ? BIG3_TEAMS : CONFERENCE_TEAMS;
-      return teams.some(team => t.includes(team));
+function getUnifiedItems() {
+  const items = [];
+  const games = getGames();
+  games.forEach(g => {
+    const wk = g.week ? `Wk ${g.week} · ` : '';
+    const dt = g.date ? `${g.date} · ` : '';
+    items.push({
+      source: 'local', id: g.id, internalId: 'local_' + g.id,
+      title: `${g.home} vs ${g.away} (${wk}${dt})`,
+      clip_count: g.plays ? g.plays.filter(p=>Object.keys(p).length>0).length : 0,
+      category: 'tracker'
     });
-    if (!matchGroup) return false;
+  });
+  if (hudlLibrary) {
+    hudlLibrary.forEach(i => {
+      const cat = getCutupCategory(i.title);
+      if (cat !== 'practice' && cat !== 'untagged') {
+        items.push({ source: 'hudl', ...i, category: cat });
+      }
+    });
   }
-  return true;
+  return items;
+}
+
+function parseWeekSort(title) {
+  const m = title.match(/[Ww]k\s*0*(\d+)/);
+  return m ? parseInt(m[1], 10) : -1;
+}
+
+function parseSeason(title) {
+  const m = title.match(/'(\d{2})/);
+  return m ? parseInt(m[1], 10) : 0;
 }
 
 function formatChatResponse(text) {
@@ -3266,7 +3533,6 @@ let spotlightInsights = [];
 let statsSource = 'local';
 let statsLabel = '';
 let hudlLibrary = null;
-let hudlCat = 'all';
 let chatHistory = [];
 
 function goStats() {
@@ -3274,95 +3540,12 @@ function goStats() {
   chatHistory = [];
   document.getElementById('chat-messages').innerHTML =
     '<div class="chat-msg assistant">Hi Coach! Load data using the FILTER button, then ask me anything about your plays.</div>';
-  Object.keys(smartFilters).forEach(k => smartFilters[k].clear());
-  document.querySelectorAll('.sf-btn').forEach(b => b.classList.remove('on'));
-  document.getElementById('hudl-cat-all')?.classList.add('on');
-  hudlCat = 'all';
   setStatsTab('spotlight');
   showView('view-stats');
-  setTimeout(() => {
-    const drawer = document.getElementById('stats-filter-drawer');
-    if (!drawer.style.display || drawer.style.display === 'none') toggleFilterDrawer();
-    filterHudlList();
-    loadHudlLibrary();
-  }, 50);
-}
-
-// unified source — tracker items always included when hudlCat is 'all' or 'tracker'
-
-function getCutupCategory(title) {
-  const t = title.trim().toLowerCase();
-  if (t.endsWith('(practice)')) return 'practice';
-  if (t.endsWith('(game)'))     return 'game';
-  if (t.endsWith('(scout)'))    return 'scout';
-  if (t.endsWith('(jv)'))       return 'jv';
-  if (t.endsWith('(other)'))    return 'other';
-  return 'untagged';
-}
-
-function setHudlCat(cat) {
-  hudlCat = cat;
-  ['all','game','scout','jv','other','tracker'].forEach(c => {
-    const btn = document.getElementById(`hudl-cat-${c}`);
-    if (btn) btn.classList.toggle('on', c === cat);
-  });
-  filterHudlList();
-}
-
-// Build unified item list from local games + Hudl library
-function getUnifiedItems() {
-  const items = [];
-  // Local games
-  const games = getGames();
-  games.forEach(g => {
-    const wk = g.week ? `Wk ${g.week} · ` : '';
-    const dt = g.date ? `${g.date} · ` : '';
-    items.push({
-      source: 'local',
-      id: g.id,
-      internalId: 'local_' + g.id,
-      title: `${g.home} vs ${g.away} (${wk}${dt})`,
-      clip_count: g.plays ? g.plays.filter(p=>Object.keys(p).length>0).length : 0,
-      category: 'tracker'
-    });
-  });
-  // Hudl items
-  if (hudlLibrary) {
-    hudlLibrary.forEach(i => {
-      const cat = getCutupCategory(i.title);
-      if (cat !== 'practice' && cat !== 'untagged') {
-        items.push({ source: 'hudl', ...i, category: cat });
-      }
-    });
+  // Auto-open picker if no data is loaded
+  if (!statsGameData || statsGameData.length === 0) {
+    setTimeout(() => openHudlPicker('stats'), 100);
   }
-  return items;
-}
-
-function filterHudlList() {
-  const keyword = (document.getElementById('hudl-filter-text')?.value || '').toLowerCase();
-  const allItems = getUnifiedItems();
-  const filtered = allItems.filter(i => {
-    const catMatch = hudlCat === 'all' || i.category === hudlCat;
-    const nameMatch = !keyword || i.title.toLowerCase().includes(keyword);
-    const smartMatch = i.source === 'local' ? matchesSmartFiltersLocal(i) : matchesSmartFilters(i);
-    return catMatch && nameMatch && smartMatch;
-  });
-  const status = document.getElementById('hudl-load-status');
-  status.textContent = filtered.length === 0 ? 'No items match' : `${filtered.length} items — all selected`;
-  renderUnifiedList(filtered);
-}
-
-function matchesSmartFiltersLocal(item) {
-  const { season, location, group } = smartFilters;
-  // local games don't have season tags or opponent groups — skip those filters for them
-  if (season.size > 0 || group.size > 0) return false;
-  if (location.size > 0) {
-    const t = item.title.toLowerCase();
-    const isHome = t.includes(' vs ') && !t.includes('@');
-    const isAway = t.includes('@');
-    return (location.has('home') && isHome) || (location.has('away') && isAway);
-  }
-  return true;
 }
 
 // ════════════════════════════════════════
@@ -3457,8 +3640,8 @@ function getCacheStats() {
 }
 
 async function loadHudlLibrary() {
-  const status = document.getElementById('hudl-load-status');
-  if (hudlLibrary) { filterHudlList(); return; }
+  const status = document.getElementById('picker-status');
+  if (hudlLibrary) { filterPickerList(); return; }
 
   // Try library cache first (1 hour TTL)
   const libCacheAge = Date.now() - parseInt(localStorage.getItem('hd_library_cache_at') || '0');
@@ -3467,16 +3650,16 @@ async function loadHudlLibrary() {
       const cached = JSON.parse(localStorage.getItem('hd_library_cache'));
       if (cached && cached.length > 0) {
         hudlLibrary = cached;
-        status.textContent = 'Loaded from cache';
-        filterHudlList();
+        if (status) status.textContent = 'Loaded from cache';
+        filterPickerList();
         return;
       }
     } catch {}
   }
 
-  status.textContent = 'Loading cutups from Hudl…';
-  document.getElementById('hudl-cutup-list').innerHTML =
-    '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Loading…</div>';
+  if (status) status.textContent = 'Loading cutups from Hudl…';
+  document.getElementById('picker-list').innerHTML =
+    '<div style="padding:16px;font-size:12px;color:var(--muted);text-align:center">Loading…</div>';
   try {
     const resp = await fetch(`${HUDL_API}/api/library?count=500`);
     if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
@@ -3486,141 +3669,13 @@ async function loadHudlLibrary() {
       localStorage.setItem('hd_library_cache', JSON.stringify(data.items));
       localStorage.setItem('hd_library_cache_at', Date.now().toString());
     } catch {}
-    filterHudlList();
+    filterPickerList();
   } catch(e) {
-    status.textContent = `Could not reach Hudl server: ${e.message}`;
-    document.getElementById('hudl-cutup-list').innerHTML =
-      '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">Error loading Hudl cutups</div>';
-    filterHudlList();
+    if (status) status.textContent = `Could not reach Hudl server: ${e.message}`;
+    document.getElementById('picker-list').innerHTML =
+      '<div style="padding:16px;font-size:12px;color:var(--muted);text-align:center">Error loading cutups</div>';
+    filterPickerList();
   }
-}
-
-function parseWeekSort(title) {
-  // Extract week number for sorting: "Wk05" or "Wk 02" or "Wk10"
-  const m = title.match(/[Ww]k\s*0*(\d+)/);
-  if (!m) return -1; // no week = sort last
-  return parseInt(m[1], 10);
-}
-
-function parseSeason(title) {
-  const m = title.match(/'(\d{2})/);
-  return m ? parseInt(m[1], 10) : 0;
-}
-
-function renderUnifiedList(items) {
-  const container = document.getElementById('hudl-cutup-list');
-  if (items.length === 0) {
-    container.innerHTML = '<div style="padding:12px;font-size:11px;color:var(--muted);text-align:center">No items match</div>';
-    return;
-  }
-  // Sort: most recent season first, then highest week first, no-week items last
-  const sorted = items.slice().sort((a, b) => {
-    const sA = parseSeason(a.title), sB = parseSeason(b.title);
-    if (sA !== sB) return sB - sA; // newer season first
-    const wA = parseWeekSort(a.title), wB = parseWeekSort(b.title);
-    // Items with no week (-1) go to the bottom
-    if (wA === -1 && wB === -1) return a.title.localeCompare(b.title);
-    if (wA === -1) return 1;  // a goes after b
-    if (wB === -1) return -1; // b goes after a
-    if (wA !== wB) return wB - wA; // higher week first
-    return a.title.localeCompare(b.title);
-  });
-  container.innerHTML = sorted.map(i => `
-    <div class="cutup-item" onclick="toggleCutupCheck('${i.internalId}')">
-      <input type="checkbox" id="chk-${i.internalId}" value="${i.internalId}"
-        data-source="${i.source}" data-gameid="${i.id || ''}"
-        checked
-        onclick="event.stopPropagation();updateHudlSelStatus()" />
-      <div class="cutup-item-label">${i.source === 'local' ? '📋 ' : ''}${i.title}</div>
-      <div class="cutup-item-count">${i.clip_count ?? '?'}</div>
-    </div>`).join('');
-  updateHudlSelStatus();
-}
-
-function toggleCutupCheck(id) {
-  const chk = document.getElementById(`chk-${id}`);
-  if (chk) { chk.checked = !chk.checked; updateHudlSelStatus(); }
-}
-
-function updateHudlSelStatus() {
-  const checked = [...document.querySelectorAll('#hudl-cutup-list input[type=checkbox]:checked')];
-  const status = document.getElementById('hudl-load-status');
-  status.textContent = checked.length === 0 ? 'Nothing selected' : `${checked.length} selected`;
-}
-
-async function loadHudlCutup() {
-  const checked = [...document.querySelectorAll('#hudl-cutup-list input[type=checkbox]:checked')];
-  if (checked.length === 0) { showToast('Nothing selected'); return; }
-
-  const status = document.getElementById('hudl-load-status');
-  status.textContent = `Loading ${checked.length} item${checked.length > 1 ? 's' : ''}…`;
-  document.getElementById('stats-sub-overview').innerHTML = '<div class="empty-msg">Loading data…</div>';
-
-  // Separate local games from Hudl cutups
-  const localChecked = checked.filter(c => c.dataset.source === 'local');
-  const hudlChecked  = checked.filter(c => c.dataset.source !== 'local');
-
-  // Load local plays
-  const localPlays = [];
-  localChecked.forEach(c => {
-    const g = getGames().find(x => x.id === c.dataset.gameid);
-    const gameTitle = c.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || g?.title || '';
-    if (g) localPlays.push(...(g.plays || []).filter(p => Object.keys(p).length > 0).map(p => ({ ...p, _gameTitle: gameTitle })));
-  });
-
-  // Fetch Hudl cutups in parallel
-  const normalize = c => ({
-    odk: c.odk||'', qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
-    yardln: c.yard_line||'', hash: c.hash||'', playtype: c.play_type||'',
-    result: c.result||'', gainloss: c.gain_loss||'', offform: c.off_form||'',
-  });
-
-  let cacheHits = 0, cacheMisses = 0;
-
-  const hudlResults = await Promise.all(hudlChecked.map(async chk => {
-    const id = chk.value.replace('local_', '');
-    const label = chk.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || id;
-    // Check cache first
-    const cached = getCachedClips(id);
-    if (cached) {
-      cacheHits++;
-      return { label, clips: cached, error: null };
-    }
-    // Cache miss — fetch from Hudl
-    cacheMisses++;
-    try {
-      const resp = await fetch(`${HUDL_API}/api/clips/${id}?count=1000`);
-      if (!resp.ok) throw new Error(resp.status);
-      const data = await resp.json();
-      const normalized = data.clips.map(normalize);
-      setCachedClips(id, normalized, label);
-      return { label, clips: normalized, error: null };
-    } catch(e) {
-      return { label, clips: [], error: e.message };
-    }
-  }));
-
-  const hudlPlays = hudlResults.flatMap(r => r.clips.map(p => ({ ...p, _gameTitle: r.label })));
-  const allPlays = [...localPlays, ...hudlPlays];
-
-  statsGameData = allPlays;
-  const localLabels = localChecked.map(c => c.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || '').filter(Boolean);
-  const hudlLabels  = hudlResults.filter(r=>!r.error).map(r=>r.label);
-  const allLabels   = [...localLabels, ...hudlLabels];
-  statsLabel = allLabels.length === 1 ? allLabels[0] : `${allLabels.length} sources combined`;
-
-  const cacheInfo = cacheHits > 0 ? ` (${cacheHits} cached)` : '';
-  status.textContent = `${allPlays.length} total plays loaded${cacheInfo}`;
-  showToast(`Loaded ${allPlays.length} plays${cacheInfo}`);
-
-  try { renderStatsFromData(allPlays, statsLabel, false); } catch(e) { 
-    console.error('Stats render error:', e);
-    document.getElementById('stats-sub-overview').innerHTML = '<div class="empty-msg">Error rendering stats: ' + e.message + '</div>';
-  }
-  setStatsTab('spotlight');
-  setStatsSubTab('overview');
-  updateActiveLabel(`${statsLabel} · ${allPlays.length} plays`);
-  runSpotlightAnalysis(allPlays);
 }
 
 // ── LOCAL GAME DATA ──
@@ -4578,7 +4633,7 @@ function goStatsFromTracker() {
   updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
   setStatsTab('spotlight');
   setStatsSubTab('overview');
-  closeFilterDrawer();
+
   runSpotlightAnalysis(plays);
 }
 
@@ -4599,7 +4654,7 @@ function goStatsFromArchive(gameId) {
   updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
   setStatsTab('spotlight');
   setStatsSubTab('overview');
-  closeFilterDrawer();
+
   runSpotlightAnalysis(plays);
 }
 
