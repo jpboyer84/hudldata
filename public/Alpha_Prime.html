@@ -784,6 +784,24 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   </div>
 </div>
 
+<!-- MODAL: COLUMN BUTTON EDITOR -->
+<div class="overlay" id="m-col-btn-editor" onclick="if(event.target===this)closeModal('m-col-btn-editor')">
+  <div class="modal" style="max-width:400px;max-height:85vh;display:flex;flex-direction:column">
+    <div class="modal-hdr" style="flex-shrink:0">
+      <div class="modal-title" id="cbe-title">EDIT COLUMN</div>
+      <div class="modal-x" onclick="closeModal('m-col-btn-editor')">✕</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0" id="cbe-body">
+    </div>
+    <div style="padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px">
+      <input class="fi" id="cbe-new-input" placeholder="New button label…"
+        style="flex:1;font-size:13px;padding:10px 12px"
+        onkeydown="if(event.key==='Enter')addColBtn()" />
+      <button class="btn btn-primary" onclick="addColBtn()" style="padding:10px 16px;font-size:12px;white-space:nowrap">+ ADD</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: EXPORT XLSX CHOICE -->
 <div class="overlay" id="m-export-xlsx">
   <div class="modal" style="max-width:340px">
@@ -2012,6 +2030,7 @@ function renderCard(col, val) {
   return `<div class="col-card">
     <div class="col-card-hdr">
       <div class="col-card-name">${col.name}</div>
+      <div onclick="openColBtnEditor('${col.id}')" style="font-size:12px;color:var(--muted);cursor:pointer;padding:2px 6px;-webkit-tap-highlight-color:transparent">⚙</div>
     </div>
     <div class="col-card-body" style="padding:7px">${renderColInner(col, val)}</div>
   </div>`;
@@ -2447,6 +2466,122 @@ function addTrackerCol(colId) {
 function removeTrackerCol(colId) {
   activeCols = activeCols.filter(c => c.id !== colId);
   renderTrackerColPicker();
+  renderTracker();
+}
+
+// ════════════════════════════════════════
+// COLUMN BUTTON EDITOR (from tracker)
+// ════════════════════════════════════════
+let cbeColId = null;
+
+function openColBtnEditor(colId) {
+  cbeColId = colId;
+  const allCols = getCols();
+  const col = allCols.find(c => c.id === colId);
+  if (!col) return;
+  document.getElementById('cbe-title').textContent = col.name;
+  document.getElementById('cbe-new-input').value = '';
+  renderColBtnEditor(col);
+  openModal('m-col-btn-editor');
+  setTimeout(() => document.getElementById('cbe-new-input').focus(), 120);
+}
+
+function renderColBtnEditor() {
+  const allCols = getCols();
+  const col = allCols.find(c => c.id === cbeColId);
+  if (!col) return;
+  const body = document.getElementById('cbe-body');
+
+  if (col.type === 'btn_dds') {
+    // btn_dds: buttons have {l, opts[]}
+    body.innerHTML = col.btns.map((b, i) =>
+      `<div class="cutup-item" style="justify-content:space-between">
+        <div class="cutup-item-label">${b.l}</div>
+        <button onclick="removeColBtn(${i})" style="background:none;border:1px solid var(--red);color:var(--red);
+          border-radius:6px;padding:4px 10px;font-family:var(--font-btn);font-weight:900;font-size:10px;cursor:pointer">✕</button>
+      </div>`
+    ).join('') || '<div style="padding:16px;font-size:12px;color:var(--muted);text-align:center">No buttons</div>';
+  } else if (col.btns) {
+    // Standard buttons: {l, v}
+    body.innerHTML = col.btns.map((b, i) =>
+      `<div class="cutup-item" style="justify-content:space-between">
+        <div class="cutup-item-label">${b.l}</div>
+        <button onclick="removeColBtn(${i})" style="background:none;border:1px solid var(--red);color:var(--red);
+          border-radius:6px;padding:4px 10px;font-family:var(--font-btn);font-weight:900;font-size:10px;cursor:pointer">✕</button>
+      </div>`
+    ).join('') || '<div style="padding:16px;font-size:12px;color:var(--muted);text-align:center">No buttons</div>';
+  } else if (col.dd) {
+    // Dropdown-only
+    body.innerHTML = col.dd.map((d, i) =>
+      `<div class="cutup-item" style="justify-content:space-between">
+        <div class="cutup-item-label">${d}</div>
+        <button onclick="removeColDdItem(${i})" style="background:none;border:1px solid var(--red);color:var(--red);
+          border-radius:6px;padding:4px 10px;font-family:var(--font-btn);font-weight:900;font-size:10px;cursor:pointer">✕</button>
+      </div>`
+    ).join('');
+  } else {
+    body.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--muted);text-align:center">This column type doesn\'t have editable buttons.</div>';
+  }
+}
+
+function addColBtn() {
+  const input = document.getElementById('cbe-new-input');
+  const label = input.value.trim();
+  if (!label) return;
+  input.value = '';
+
+  const allCols = getCols();
+  const col = allCols.find(c => c.id === cbeColId);
+  if (!col) return;
+
+  if (col.type === 'btn_dds') {
+    // Add as a new parent button with itself as the only option
+    if (!col.btns.some(b => b.l.toLowerCase() === label.toLowerCase())) {
+      col.btns.push({ l: label, opts: [label] });
+    }
+  } else if (col.btns) {
+    // Add as {l, v}
+    if (!col.btns.some(b => b.l.toLowerCase() === label.toUpperCase().toLowerCase())) {
+      col.btns.push({ l: label.toUpperCase(), v: label });
+    }
+  } else if (col.dd) {
+    if (!col.dd.some(d => d.toLowerCase() === label.toLowerCase())) {
+      col.dd.push(label);
+    }
+  }
+
+  saveCols(allCols);
+  // Refresh the active column reference
+  const updatedCol = allCols.find(c => c.id === cbeColId);
+  const idx = activeCols.findIndex(c => c.id === cbeColId);
+  if (idx !== -1 && updatedCol) activeCols[idx] = updatedCol;
+
+  renderColBtnEditor();
+  renderTracker();
+  input.focus();
+}
+
+function removeColBtn(btnIdx) {
+  const allCols = getCols();
+  const col = allCols.find(c => c.id === cbeColId);
+  if (!col || !col.btns) return;
+  col.btns.splice(btnIdx, 1);
+  saveCols(allCols);
+  const idx = activeCols.findIndex(c => c.id === cbeColId);
+  if (idx !== -1) activeCols[idx] = col;
+  renderColBtnEditor();
+  renderTracker();
+}
+
+function removeColDdItem(ddIdx) {
+  const allCols = getCols();
+  const col = allCols.find(c => c.id === cbeColId);
+  if (!col || !col.dd) return;
+  col.dd.splice(ddIdx, 1);
+  saveCols(allCols);
+  const idx = activeCols.findIndex(c => c.id === cbeColId);
+  if (idx !== -1) activeCols[idx] = col;
+  renderColBtnEditor();
   renderTracker();
 }
 
