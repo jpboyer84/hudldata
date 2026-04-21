@@ -16,8 +16,8 @@
   --border: #222224;
   --col-border: #2a2a2c;
   --text: #ffffff;
-  --muted: #999;
-  --muted2: #bbb;
+  --muted: #aaa;
+  --muted2: #ccc;
   --sel-bg: #ffffff;
   --sel-text: #000000;
   --accent: #e8590c;
@@ -200,7 +200,7 @@ body {
 }
 .t-btn:active { transform: scale(0.94); }
 .t-btn.sel { background: var(--sel-bg) !important; color: var(--sel-text) !important; border-color: var(--sel-bg) !important; font-weight: 700; }
-.t-btn.list-open { font-size: 18px; color: #888; }
+.t-btn.list-open { font-size: 18px; color: #aaa; }
 .t-btn.list-open.has-val { color: #fff; font-size: 18px; }
 .t-btn.sm { font-size: 15px; }
 
@@ -218,9 +218,9 @@ body {
   user-select: none;
 }
 .nav-btn:active { opacity: 0.8; }
-.nav-prev { background: #111113; color: #666; border-right: 1px solid var(--border); }
+.nav-prev { background: #111113; color: #999; border-right: 1px solid var(--border); }
 .nav-new { background: var(--accent); color: #ffffff; font-weight: 700; }
-.nav-next { background: #111113; color: #666; border-left: 1px solid var(--border); }
+.nav-next { background: #111113; color: #999; border-left: 1px solid var(--border); }
 
 /* ════════════════════════════════════════
    MODALS
@@ -446,9 +446,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .spotlight-card.high .spotlight-stat { color: var(--red); }
 .spotlight-card.medium .spotlight-stat { color: var(--yellow); }
 .spotlight-card.low .spotlight-stat { color: var(--blue); }
-.spotlight-headline { font-size: 13px; color: #bbb; margin-bottom: 4px; }
+.spotlight-headline { font-size: 14px; color: #ddd; margin-bottom: 4px; font-weight: 500; }
 
-.spotlight-why { font-size: 13px; color: #aaa; line-height: 1.5; }
+.spotlight-why { font-size: 12px; color: #bbb; line-height: 1.5; }
 .spotlight-tag { display: inline-block; font-size: 10px; font-family: var(--font-btn); font-weight: 600;
   padding: 3px 8px; border-radius: 4px; margin-bottom: 10px; letter-spacing: 0.04em; }
 .spotlight-tag.tag-alert { color: var(--red); background: rgba(239,68,68,0.1); }
@@ -699,7 +699,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
           <div style="font-size:14px;font-weight:600;color:#ccc" id="landing-last-game-name">No games yet</div>
         </div>
         <div style="font-size:11px;color:var(--muted)" id="landing-last-game-time"></div>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M6 4L10 8L6 12" stroke="#666" stroke-width="1.5" stroke-linecap="round"/></svg>
       </div>
     </div>
 
@@ -1544,7 +1544,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   <div style="display:flex;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch">
     <button class="stats-tab active" id="stab-spotlight" onclick="setStatsTab('spotlight')">Spotlight</button>
     <button class="stats-tab"        id="stab-stats"     onclick="setStatsTab('stats')">Stats</button>
-    <button class="stats-tab"        id="stab-ai"        onclick="setStatsTab('ai')">Ask AI</button>
+    <button class="stats-tab"        id="stab-ai"        onclick="setStatsTab('ai')">Ask</button>
     <button class="stats-tab"        id="stab-insights"  onclick="setStatsTab('insights')">Saved</button>
   </div>
 
@@ -4676,9 +4676,9 @@ async function runSpotlightAnalysis(plays, append = false) {
 ${getPlaybookContext()}
 
 Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 offensive insights (tag "O") and 2-5 defensive insights (tag "D"). Only include an insight if it's genuinely useful — do NOT pad with filler. If there are only 2 real findings on one side, return 2. Quality over quantity. Each object must have:
-- "stat": The key data point — this is the BIG text the coach reads first. Short and punchy. Max 8 words. Examples: "23% on 3rd down", "72% run on 1st down", "4.1 YPC from Trips"
-- "headline": One-sentence actionable takeaway. Max 10 words.
-- "why": Supporting context. Max 8 words.
+- "stat": The key data point — BIG bold text. Be specific with numbers. Max 6 words. Examples: "23% on 3rd down", "72% run on 1st", "4.1 YPC from Trips"
+- "headline": Short actionable takeaway. Max 8 words.
+- "why": Brief supporting context. Max 6 words.
 - "tag": one of "O", "D", "K", "G" (G = general)
 - "priority": "high" if exploitable/alarming, "medium" if notable, "low" if interesting
 - "category": REQUIRED. One of:
