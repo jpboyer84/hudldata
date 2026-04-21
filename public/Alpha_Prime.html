@@ -16,8 +16,8 @@
   --border: #222224;
   --col-border: #2a2a2c;
   --text: #ffffff;
-  --muted: #555;
-  --muted2: #888;
+  --muted: #999;
+  --muted2: #bbb;
   --sel-bg: #ffffff;
   --sel-text: #000000;
   --accent: #e8590c;
@@ -446,9 +446,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .spotlight-card.high .spotlight-stat { color: var(--red); }
 .spotlight-card.medium .spotlight-stat { color: var(--yellow); }
 .spotlight-card.low .spotlight-stat { color: var(--blue); }
-.spotlight-headline { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.spotlight-headline { font-size: 13px; color: #bbb; margin-bottom: 4px; }
 
-.spotlight-why { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.spotlight-why { font-size: 13px; color: #aaa; line-height: 1.5; }
 .spotlight-tag { display: inline-block; font-size: 10px; font-family: var(--font-btn); font-weight: 600;
   padding: 3px 8px; border-radius: 4px; margin-bottom: 10px; letter-spacing: 0.04em; }
 .spotlight-tag.tag-alert { color: var(--red); background: rgba(239,68,68,0.1); }
@@ -692,13 +692,14 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
     <!-- Status bar - last game tracked -->
     <div style="padding:16px 20px 24px;border-top:1px solid #1a1a1c;flex-shrink:0">
-      <div id="landing-last-game" style="background:#161618;border:1px solid #222224;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+      <div id="landing-last-game" onclick="loadLastGame()" style="background:#161618;border:1px solid #222224;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent">
         <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0"></div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:11px;color:#555;margin-bottom:2px">Last game tracked</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:2px">Last game tracked</div>
           <div style="font-size:14px;font-weight:600;color:#ccc" id="landing-last-game-name">No games yet</div>
         </div>
-        <div style="font-size:11px;color:#444" id="landing-last-game-time"></div>
+        <div style="font-size:11px;color:var(--muted)" id="landing-last-game-time"></div>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
       </div>
     </div>
 
@@ -1871,6 +1872,13 @@ function addSpotlightFeedback(insight, liked) {
   saveSpotlightFeedback(fb);
 }
 
+function removeSpotlightFeedback(insight) {
+  const fb = getSpotlightFeedback();
+  fb.liked = fb.liked.filter(x => x.headline !== insight.headline);
+  fb.disliked = fb.disliked.filter(x => x.headline !== insight.headline);
+  saveSpotlightFeedback(fb);
+}
+
 // ════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════
@@ -2161,7 +2169,7 @@ function startGame() {
 // ════════════════════════════════════════
 // TRACKER CORE
 // ════════════════════════════════════════
-function loadTracker(gameId) {
+function loadTracker(gameId, resumePlay) {
   const games = getGames();
   game = JSON.parse(JSON.stringify(games.find(g => g.id === gameId)));
   if (!game) return;
@@ -2172,13 +2180,30 @@ function loadTracker(gameId) {
   const allCols = getCols();
   activeCols = tmpl.colIds.map(id => allCols.find(c => c.id === id)).filter(Boolean);
 
-  playIdx = 0;
+  // Restore last play position if requested
+  if (resumePlay) {
+    try {
+      const pos = JSON.parse(localStorage.getItem('hd_play_positions') || '{}');
+      const saved = pos[gameId];
+      playIdx = (typeof saved === 'number' && saved >= 0 && saved < game.plays.length) ? saved : 0;
+    } catch(e) { playIdx = 0; }
+  } else {
+    playIdx = 0;
+  }
+
   const weekStr = game.week ? ` · WK ${game.week}` : '';
   document.getElementById('tracker-title').textContent =
     `${game.home.toUpperCase()} VS ${game.away.toUpperCase()}${weekStr}`;
 
   showView('view-tracker');
   renderTracker();
+}
+
+function loadLastGame() {
+  const games = getGames();
+  if (games.length === 0) { showToast('No games yet'); return; }
+  const sorted = [...games].sort((a,b) => parseInt(b.id) - parseInt(a.id));
+  loadTracker(sorted[0].id, true);
 }
 
 function persist() {
@@ -2468,6 +2493,14 @@ function clearAll() {
 }
 
 function leaveTracker() {
+  // Save last play position for this game
+  if (game && game.id) {
+    try {
+      const pos = JSON.parse(localStorage.getItem('hd_play_positions') || '{}');
+      pos[game.id] = playIdx;
+      localStorage.setItem('hd_play_positions', JSON.stringify(pos));
+    } catch(e) {}
+  }
   goTrackersHub();
   updateLanding();
 }
@@ -4643,9 +4676,9 @@ async function runSpotlightAnalysis(plays, append = false) {
 ${getPlaybookContext()}
 
 Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 offensive insights (tag "O") and 2-5 defensive insights (tag "D"). Only include an insight if it's genuinely useful — do NOT pad with filler. If there are only 2 real findings on one side, return 2. Quality over quantity. Each object must have:
-- "stat": Supporting data point (e.g. "71% run rate on 3rd & long", "Opponents convert 80% of 3rd downs"). Keep under 10 words.
-- "headline": The actionable takeaway or recommendation. This is the BIG text the coach reads first. Max 12 words.
-- "why": Brief context on why (max 12 words)
+- "stat": The key data point — this is the BIG text the coach reads first. Short and punchy. Max 8 words. Examples: "23% on 3rd down", "72% run on 1st down", "4.1 YPC from Trips"
+- "headline": One-sentence actionable takeaway. Max 10 words.
+- "why": Supporting context. Max 8 words.
 - "tag": one of "O", "D", "K", "G" (G = general)
 - "priority": "high" if exploitable/alarming, "medium" if notable, "low" if interesting
 - "category": REQUIRED. One of:
@@ -4722,15 +4755,14 @@ CRITICAL RULES:
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div style="display:flex;gap:6px;align-items:center">
             <span class="spotlight-tag tag-${cat}">${catLabel[cat] || 'INTEL'}</span>
-            <span style="font-size:9px;color:var(--muted)">${tagLabel2}</span>
+            <span style="font-size:10px;color:var(--muted)">${tagLabel2}</span>
           </div>
-          <div style="display:flex;gap:2px;flex-shrink:0">
-            <button onclick="showMethodology('${insJson}')" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;width:26px;height:26px;font-size:11px;cursor:pointer;color:var(--muted);font-family:var(--font-btn);font-weight:600;line-height:1" title="How was this calculated?">?</button>
-            <button onclick="rateSpotlight(this, '${insJson}', true)" style="background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px;opacity:0.4" title="Useful">👍</button>
-            <button onclick="rateSpotlight(this, '${insJson}', false)" style="background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px;opacity:0.4" title="Not useful">👎</button>
+          <div style="display:flex;gap:4px;flex-shrink:0">
+            <button onclick="rateSpotlight(this, '${insJson}', true)" class="spot-rate" data-dir="up" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;opacity:0.35" title="Useful">👍</button>
+            <button onclick="rateSpotlight(this, '${insJson}', false)" class="spot-rate" data-dir="down" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;opacity:0.35" title="Not useful">👎</button>
           </div>
         </div>
-        <div class="spotlight-stat">${ins.stat}</div>
+        <div class="spotlight-stat" onclick="showMethodology('${insJson}')" style="cursor:pointer">${ins.stat}</div>
         <div class="spotlight-headline">${ins.headline}</div>
         <div class="spotlight-why">${ins.why}</div>
       </div>`;
@@ -4786,13 +4818,24 @@ CRITICAL RULES:
 
 function rateSpotlight(btn, insightJson, liked) {
   const insight = JSON.parse(insightJson);
-  addSpotlightFeedback(insight, liked);
-  // Visual feedback — highlight the tapped button, dim the other
   const container = btn.parentElement;
-  const buttons = container.querySelectorAll('button');
-  buttons.forEach(b => b.style.opacity = '0.2');
-  btn.style.opacity = '1';
-  showToast(liked ? '👍 Noted — will prioritize similar insights' : '👎 Noted — will deprioritize similar insights');
+  const upBtn = container.querySelector('[data-dir="up"]');
+  const downBtn = container.querySelector('[data-dir="down"]');
+  const isAlreadyActive = btn.style.opacity === '1';
+
+  if (isAlreadyActive) {
+    // Undo — reset both buttons to neutral
+    removeSpotlightFeedback(insight);
+    upBtn.style.opacity = '0.35';
+    downBtn.style.opacity = '0.35';
+    showToast('Rating removed');
+  } else {
+    // Rate it
+    addSpotlightFeedback(insight, liked);
+    upBtn.style.opacity = liked ? '1' : '0.15';
+    downBtn.style.opacity = liked ? '0.15' : '1';
+    showToast(liked ? '👍 Will prioritize similar insights' : '👎 Will deprioritize similar insights');
+  }
 }
 
 async function showMethodology(insightJson) {
