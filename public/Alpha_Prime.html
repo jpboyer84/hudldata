@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Alpha Prime</title>
+<title>Assistant Coach</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
@@ -180,18 +180,6 @@ body {
 }
 .col-card-arrow { color: var(--muted); font-size: 9px; }
 .col-card-body { padding: 8px; background: var(--bg); }
-
-/* Column card color accents — applied via JS data-col attribute */
-.col-card[data-col-cat="phase"] .col-card-hdr { border-left: 3px solid var(--accent); }
-.col-card[data-col-cat="phase"] .col-card-name { color: var(--accent); }
-.col-card[data-col-cat="down"] .col-card-hdr { border-left: 3px solid var(--blue); }
-.col-card[data-col-cat="down"] .col-card-name { color: var(--blue); }
-.col-card[data-col-cat="play"] .col-card-hdr { border-left: 3px solid var(--green); }
-.col-card[data-col-cat="play"] .col-card-name { color: var(--green); }
-.col-card[data-col-cat="result"] .col-card-hdr { border-left: 3px solid #a78bfa; }
-.col-card[data-col-cat="result"] .col-card-name { color: #a78bfa; }
-.col-card[data-col-cat="field"] .col-card-hdr { border-left: 3px solid var(--yellow); }
-.col-card[data-col-cat="field"] .col-card-name { color: var(--yellow); }
 
 /* BUTTON GRID INSIDE COLUMN */
 .btn-grid { display: grid; gap: 6px; }
@@ -488,8 +476,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .tab-panel.sbody { overflow-y: auto; flex-direction: column; padding: 14px; gap: 14px; }
 
 .sf-btn {
-  font-family: var(--font-btn); font-weight: 600; font-size: 10px;
-  padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
+  font-family: var(--font-btn); font-weight: 600; font-size: 11px;
+  padding: 7px 12px; border-radius: 7px; border: 1px solid var(--border);
   background: var(--surface2); color: var(--muted); cursor: pointer;
   white-space: nowrap; letter-spacing: 0.02em; flex-shrink: 0;
 }
@@ -646,7 +634,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <div class="landing-logo-icon">
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M4 8L14 3L24 8V20L14 25L4 20V8Z" stroke="#fff" stroke-width="2" fill="none"/><path d="M14 3V25" stroke="#fff" stroke-width="1.5" opacity="0.5"/><path d="M4 8L14 13L24 8" stroke="#fff" stroke-width="1.5" opacity="0.5"/><path d="M14 13V25" stroke="#fff" stroke-width="2"/></svg>
       </div>
-      <div class="landing-logo-title">ALPHA PRIME</div>
+      <div class="landing-logo-title">ASSISTANT COACH</div>
       <div class="landing-logo-sub">HANOVER CENTRAL WILDCATS</div>
     </div>
     <div class="lcard" onclick="goTrackersHub()">
@@ -1093,8 +1081,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <div class="help-section-body">
 
         <div class="faq-item">
-          <div class="faq-q" onclick="toggleFaq(this)">What is Hudl Tagger? <span class="faq-arrow">▼</span></div>
-          <div class="faq-a">Hudl Tagger is a football play-tracking and analytics tool designed for coaching staffs, built to work on phones and tablets. It does three things:<br><br>
+          <div class="faq-q" onclick="toggleFaq(this)">What is Assistant Coach? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Assistant Coach is a football play-tracking and analytics tool designed for coaching staffs, built to work on phones and tablets. It does three things:<br><br>
             <strong>1. Tag game film</strong> — Pull in Hudl cutups and break down plays with your own terminology.<br><br>
             <strong>2. Track plays live</strong> — Use it on the sideline during games to record every snap in real time, tap by tap.<br><br>
             <strong>3. Analyze everything</strong> — Visualize your data with charts, stat breakdowns, and an AI assistant that answers questions about your plays in plain English.</div>
@@ -1315,7 +1303,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   <!-- ── ASK AI TAB ── -->
   <div id="help-panel-ai" style="flex:1;overflow:hidden;flex-direction:column;display:none">
     <div class="chat-messages" id="help-chat-messages">
-      <div class="chat-msg assistant">Hi Coach! I know everything about how Hudl Tagger works. Ask me anything — <em>"How do I export to Excel?"</em>, <em>"What does the Spotlight tab do?"</em>, or <em>"How do I create a custom column?"</em></div>
+      <div class="chat-msg assistant">Hi Coach! I know everything about how Assistant Coach works. Ask me anything — <em>"How do I export to Excel?"</em>, <em>"What does the Spotlight tab do?"</em>, or <em>"How do I create a custom column?"</em></div>
     </div>
     <div class="chat-input-row">
       <input class="chat-input" id="help-chat-input"
@@ -1419,23 +1407,26 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         style="width:100%;background:#111;border:1px solid var(--border);border-radius:8px;
                padding:9px 12px;color:var(--text);font-family:var(--font-ui);font-size:13px;outline:none;box-sizing:border-box" />
     </div>
-    <!-- Filter chips - single scrollable row -->
-    <div style="display:flex;gap:5px;padding:0 14px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0">
-      <button class="sf-btn on" id="pk-cat-all"     onclick="setPickerCat('all')">ALL</button>
-      <button class="sf-btn"    id="pk-cat-game"    onclick="setPickerCat('game')">Game</button>
-      <button class="sf-btn"    id="pk-cat-scout"   onclick="setPickerCat('scout')">SCOUT</button>
-      <button class="sf-btn"    id="pk-cat-jv"      onclick="setPickerCat('jv')">JV</button>
-      <button class="sf-btn"    id="pk-cat-other"   onclick="setPickerCat('other')">OTHER</button>
-      <button class="sf-btn"    id="pk-cat-tracker" onclick="setPickerCat('tracker')">TRACKED</button>
-      <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
-      <button class="sf-btn" id="pk-s-2024" onclick="togglePickerFilter('season','2024')">2024</button>
-      <button class="sf-btn" id="pk-s-2025" onclick="togglePickerFilter('season','2025')">2025</button>
-      <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
-      <button class="sf-btn" id="pk-l-home" onclick="togglePickerFilter('location','home')">HOME</button>
-      <button class="sf-btn" id="pk-l-away" onclick="togglePickerFilter('location','away')">AWAY</button>
-      <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
-      <button class="sf-btn" id="pk-g-conference" onclick="togglePickerFilter('group','conference')">CONF</button>
-      <button class="sf-btn" id="pk-g-big3"      onclick="togglePickerFilter('group','big3')">BIG 3</button>
+    <!-- Filter chips - wrapped rows for phone visibility -->
+    <div style="padding:0 14px 8px;flex-shrink:0;display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="sf-btn on" id="pk-cat-all"     onclick="setPickerCat('all')">ALL</button>
+        <button class="sf-btn"    id="pk-cat-game"    onclick="setPickerCat('game')">Game</button>
+        <button class="sf-btn"    id="pk-cat-scout"   onclick="setPickerCat('scout')">SCOUT</button>
+        <button class="sf-btn"    id="pk-cat-jv"      onclick="setPickerCat('jv')">JV</button>
+        <button class="sf-btn"    id="pk-cat-other"   onclick="setPickerCat('other')">OTHER</button>
+        <button class="sf-btn"    id="pk-cat-tracker" onclick="setPickerCat('tracker')">TRACKED</button>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="sf-btn" id="pk-s-2024" onclick="togglePickerFilter('season','2024')">2024</button>
+        <button class="sf-btn" id="pk-s-2025" onclick="togglePickerFilter('season','2025')">2025</button>
+        <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
+        <button class="sf-btn" id="pk-l-home" onclick="togglePickerFilter('location','home')">HOME</button>
+        <button class="sf-btn" id="pk-l-away" onclick="togglePickerFilter('location','away')">AWAY</button>
+        <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
+        <button class="sf-btn" id="pk-g-conference" onclick="togglePickerFilter('group','conference')">CONF</button>
+        <button class="sf-btn" id="pk-g-big3"      onclick="togglePickerFilter('group','big3')">BIG 3</button>
+      </div>
     </div>
     <!-- Checklist -->
     <div id="picker-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;border-top:1px solid var(--border)">
@@ -2177,37 +2168,8 @@ function renderBody() {
   body.innerHTML = h;
 }
 
-// Column category mapping for visual differentiation
-const COL_CAT_MAP = {
-  // By column ID
-  odk: 'phase', playtype: 'play', offform: 'play', offplay: 'play',
-  dn: 'down', dist: 'down', series: 'down',
-  result: 'result', gainloss: 'result',
-  hash: 'field', qtr: 'field', ydln: 'field',
-};
-// By column name (lowercase)
-const COL_CAT_NAME_MAP = {
-  'odk': 'phase', 'o/d/k': 'phase', 'phase': 'phase', 'side': 'phase',
-  'down': 'down', 'dn': 'down', 'distance': 'down', 'dist': 'down', 'series': 'down',
-  'play type': 'play', 'formation': 'play', 'off form': 'play', 'off play': 'play',
-  'play call': 'play', 'play name': 'play', 'run play': 'play', 'pass play': 'play',
-  'motion': 'play', 'tag': 'play', 'tags': 'play',
-  'result': 'result', 'gain/loss': 'result', 'gn/ls': 'result', 'yards': 'result',
-  'penalty': 'result', 'turnover': 'result',
-  'hash': 'field', 'quarter': 'field', 'qtr': 'field', 'yard line': 'field', 'ydln': 'field',
-  'field zone': 'field', 'direction': 'field',
-};
-
-function getColCat(col) {
-  if (COL_CAT_MAP[col.id]) return COL_CAT_MAP[col.id];
-  const name = (col.name || '').toLowerCase();
-  if (COL_CAT_NAME_MAP[name]) return COL_CAT_NAME_MAP[name];
-  return '';
-}
-
 function renderCard(col, val) {
-  const cat = getColCat(col);
-  return `<div class="col-card" ${cat ? `data-col-cat="${cat}"` : ''}>
+  return `<div class="col-card">
     <div class="col-card-hdr">
       <div class="col-card-name">${col.name}</div>
       <div onclick="openColBtnEditor('${col.id}')" style="font-size:12px;color:var(--muted);cursor:pointer;padding:2px 6px;-webkit-tap-highlight-color:transparent">⚙</div>
@@ -5258,10 +5220,10 @@ function toggleHelpSection(id) {
   section.classList.toggle('collapsed');
 }
 
-const HELP_SYSTEM_PROMPT = `You are a friendly help assistant for Hudl Tagger — a football play-tracking and analytics app built for coaching staffs, designed for phones and tablets. Your job is to answer questions about how to USE the app. Be concise, direct, and practical. Use bold for button names and screen names.
+const HELP_SYSTEM_PROMPT = `You are a friendly help assistant for Assistant Coach — a football play-tracking and analytics app built for coaching staffs, designed for phones and tablets. Your job is to answer questions about how to USE the app. Be concise, direct, and practical. Use bold for button names and screen names.
 
 ## APP OVERVIEW
-Hudl Tagger has four main sections accessible from the home screen:
+Assistant Coach has four main sections accessible from the home screen:
 - **Game Trackers** — create, track, and archive games play-by-play
 - **Stats & Analysis** — AI-powered analysis of play data with charts and chat
 - **Settings** — AI context editors, backup/restore, Hudl cache
