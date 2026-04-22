@@ -657,31 +657,22 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       </div>
 
       <!-- Main cards -->
-      <div style="flex:1;padding:32px 20px 20px;display:flex;flex-direction:column;gap:10px">
+      <div style="flex:1;padding:32px 20px 20px;display:flex;flex-direction:column;gap:12px">
 
-        <div class="lcard" onclick="goTrackersHub()">
-          <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="12" rx="2" stroke="#e8590c" stroke-width="1.5"/><path d="M3 8H17" stroke="#e8590c" stroke-width="1.5"/><path d="M7 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/><path d="M11 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/></svg></div>
+        <div class="lcard" onclick="goTrackersHub()" style="padding:22px 22px">
+          <div class="lcard-icon" style="width:48px;height:48px;border-radius:12px"><svg viewBox="0 0 20 20" fill="none" style="width:22px;height:22px"><rect x="3" y="4" width="14" height="12" rx="2" stroke="#e8590c" stroke-width="1.5"/><path d="M3 8H17" stroke="#e8590c" stroke-width="1.5"/><path d="M7 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/><path d="M11 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/></svg></div>
           <div style="flex:1;min-width:0">
-            <div class="lcard-title">Tag a game</div>
+            <div class="lcard-title" style="font-size:18px">Tag a game</div>
             <div class="lcard-sub" id="trackers-sub">Tag, archive & manage</div>
           </div>
           <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
         </div>
 
-        <div class="lcard" onclick="goStats()">
-          <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 16V7" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M8 16V4" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M12 16V10" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M16 16V6" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div class="lcard" onclick="goStats()" style="padding:22px 22px">
+          <div class="lcard-icon" style="width:48px;height:48px;border-radius:12px"><svg viewBox="0 0 20 20" fill="none" style="width:22px;height:22px"><path d="M4 16V7" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M8 16V4" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M12 16V10" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M16 16V6" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/></svg></div>
           <div style="flex:1;min-width:0">
-            <div class="lcard-title">Stats & analysis</div>
+            <div class="lcard-title" style="font-size:18px">Stats & analysis</div>
             <div class="lcard-sub" id="stats-sub">AI-powered breakdowns</div>
-          </div>
-          <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </div>
-
-        <div class="lcard" onclick="goGameNotes()">
-          <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M5 3H15V17H5V3Z" stroke="#e8590c" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 7H12M8 10H12M8 13H10" stroke="#e8590c" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/></svg></div>
-          <div style="flex:1;min-width:0">
-            <div class="lcard-title">Game notes</div>
-            <div class="lcard-sub">Sideline observations</div>
           </div>
           <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
         </div>
@@ -725,7 +716,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 <div class="view" id="view-trackers-hub">
   <div class="hdr">
     <button class="hdr-btn" onclick="showView('view-landing')">← Back</button>
-    <div class="hdr-title">Game trackers</div>
+    <div class="hdr-title">Tag a game</div>
     <div style="width:60px"></div>
   </div>
   <div class="lbody">
@@ -767,7 +758,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div style="display:flex;gap:5px">
       <button class="hdr-btn" id="layout-btn" onclick="toggleLayout()">▤ 1COL</button>
       <button class="hdr-btn blue" onclick="goStatsFromTracker()">Stats</button>
-      <button class="hdr-btn" onclick="goNotesFromTracker()">Notes</button>
       <button class="hdr-btn white" onclick="openTrackerColPicker()">+ Col</button>
       <button class="hdr-btn white" onclick="saveAsTemplate()">+ Tmpl</button>
       <button class="hdr-btn" onclick="openExportXlsxModal()">Export</button>
@@ -1540,49 +1530,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   </div>
 </div>
 
-<!-- MODAL: NOTES GAME PICKER -->
-<div class="overlay" id="m-notes-picker" onclick="if(event.target===this)closeModal('m-notes-picker')">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-hdr">
-      <div class="modal-title">Select game</div>
-      <div class="modal-x" onclick="closeModal('m-notes-picker')">✕</div>
-    </div>
-    <div class="modal-body" style="padding:0" id="notes-picker-list"></div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════
-     GAME NOTES
-══════════════════════════════════════ -->
-<div class="view" id="view-notes">
-  <div class="hdr">
-    <button class="hdr-btn" id="notes-back-btn" onclick="leaveNotes()">← Back</button>
-    <div class="hdr-title">Game notes</div>
-    <div style="display:flex;gap:5px">
-      <button class="hdr-btn" id="notes-tracker-btn" onclick="goTrackerFromNotes()" style="display:none">Tracker</button>
-    </div>
-  </div>
-  <!-- Game selector -->
-  <div style="padding:10px 16px;background:#111113;border-bottom:1px solid var(--border);flex-shrink:0">
-    <div onclick="openNotesGamePicker()" style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4H12M4 7H10M6 10H8" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <div style="font-size:13px;color:#ccc;flex:1" id="notes-game-label">Select a game</div>
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 4L5 6L7 4" stroke="var(--muted)" stroke-width="1" stroke-linecap="round"/></svg>
-    </div>
-  </div>
-  <!-- Notes list -->
-  <div id="notes-list" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch">
-    <div class="empty-msg">Select a game to view or add notes.</div>
-  </div>
-  <!-- Add note bar -->
-  <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0">
-    <input type="text" id="notes-input" placeholder="Add a note…"
-      style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--font-ui);font-size:14px;outline:none"
-      onkeydown="if(event.key==='Enter')addGameNote()" />
-    <button onclick="addGameNote()" style="background:var(--accent);border:none;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:600;color:#fff;font-family:var(--font-btn);cursor:pointer">Add</button>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <!-- ══════════════════════════════════════
@@ -1608,10 +1555,22 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
   <!-- Top tab bar -->
   <div style="display:flex;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch">
-    <button class="stats-tab active" id="stab-stats"     onclick="setStatsTab('stats')">Stats</button>
-    <button class="stats-tab"        id="stab-scout"     onclick="setStatsTab('scout')">Scout</button>
-    <button class="stats-tab"        id="stab-ai"        onclick="setStatsTab('ai')">Ask Coach</button>
+    <button class="stats-tab active" id="stab-spotlight" onclick="setStatsTab('spotlight')">Spotlight</button>
+    <button class="stats-tab"        id="stab-stats"     onclick="setStatsTab('stats')">Stats</button>
+    <button class="stats-tab"        id="stab-ai"        onclick="setStatsTab('ai')">Ask</button>
     <button class="stats-tab"        id="stab-insights"  onclick="setStatsTab('insights')">Saved</button>
+  </div>
+
+  <!-- ── TAB: SPOTLIGHT (AI auto-analysis) ── -->
+  <div id="stats-tab-spotlight" class="tab-panel sbody">
+    <!-- Spotlight legend -->
+    <div class="spotlight-legend" id="spotlight-legend" style="display:none">
+      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--red)"></div> Alert — fix this</div>
+      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--yellow)"></div> Tendency — predictable</div>
+      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--green)"></div> Edge — exploit this</div>
+      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--blue)"></div> Intel — worth knowing</div>
+    </div>
+    <div class="empty-msg" id="spotlight-empty">Load data to get AI-powered insights.</div>
   </div>
 
   <!-- ── TAB: STATS (sub-tabbed) ── -->
@@ -1632,25 +1591,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div id="stats-sub-quarter"   class="tab-panel sbody" style="display:none"></div>
   </div>
 
-  <!-- ── TAB: SCOUT REPORT ── -->
-  <div id="stats-tab-scout" class="tab-panel sbody" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <div style="font-size:14px;font-weight:600;color:var(--text)">Scout report</div>
-      <button class="hdr-btn" onclick="openHudlPicker('scout')" id="scout-set-btn">Set scout ▼</button>
-    </div>
-    <!-- Legend -->
-    <div class="spotlight-legend" id="scout-legend" style="display:none">
-      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--red)"></div> Alert</div>
-      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--yellow)"></div> Tendency</div>
-      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--green)"></div> Edge</div>
-      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--blue)"></div> Intel</div>
-    </div>
-    <div id="scout-content">
-      <div class="empty-msg">Tap "Set scout" to pick an opponent's cutups and generate a scouting report.</div>
-    </div>
-  </div>
-
-  <!-- ── TAB: ASK COACH ── -->
+  <!-- ── TAB: ASK AI ── -->
   <div id="stats-tab-ai" class="tab-panel" style="display:none;flex-direction:column">
     <div class="chat-messages" id="chat-messages">
       <div class="chat-msg assistant">Hi Coach! Load data using the FILTER button, then ask me anything about your plays.</div>
@@ -3796,25 +3737,20 @@ const HUDL_API = 'https://hudl-mcp-production.up.railway.app';
 
 
 function setStatsTab(tab) {
-  ['stats','scout','ai','insights'].forEach(t => {
+  ['spotlight','stats','ai','insights'].forEach(t => {
     document.getElementById(`stab-${t}`)?.classList.toggle('active', t === tab);
     const panel = document.getElementById(`stats-tab-${t}`);
     if (panel) panel.style.display = t === tab ? 'flex' : 'none';
   });
   if (tab === 'insights') renderInsights();
   if (tab === 'stats') {
+    // Ensure the active sub-tab is visible
     const activeSub = document.querySelector('.stats-subtab.active');
     if (activeSub) {
       const subId = activeSub.id.replace('sstab-','');
       setStatsSubTab(subId);
     } else {
       setStatsSubTab('overview');
-    }
-  }
-  if (tab === 'scout') {
-    // If scout data is loaded and no report yet, auto-generate
-    if (scoutGameData && scoutGameData.length > 0 && !document.querySelector('#scout-content .spotlight-card')) {
-      runScoutReport(scoutGameData);
     }
   }
 }
@@ -3845,10 +3781,8 @@ function openHudlPicker(mode) {
   document.getElementById('picker-search').value = '';
 
   // Title and button label
-  const titles = { tracker: 'LOAD HUDL CUTUP', stats: 'SELECT DATA', scout: 'SET SCOUT TARGET' };
-  const btnLabels = { tracker: 'LOAD INTO TRACKER →', stats: 'LOAD →', scout: 'SCOUT →' };
-  document.getElementById('picker-title').textContent = titles[mode] || 'SELECT DATA';
-  document.getElementById('picker-load-btn').textContent = btnLabels[mode] || 'LOAD →';
+  document.getElementById('picker-title').textContent = mode === 'tracker' ? 'LOAD HUDL CUTUP' : 'SELECT DATA';
+  document.getElementById('picker-load-btn').textContent = mode === 'tracker' ? 'LOAD INTO TRACKER →' : 'LOAD →';
 
   // Show/hide tracker-only items (hide TRACKED category for tracker mode since we only want Hudl)
   document.getElementById('pk-cat-tracker').style.display = mode === 'tracker' ? 'none' : '';
@@ -3923,7 +3857,7 @@ function filterPickerList() {
 function renderPickerList(items) {
   const container = document.getElementById('picker-list');
   const status = document.getElementById('picker-status');
-  const multiSelect = pickerMode === 'stats' || pickerMode === 'scout';
+  const multiSelect = pickerMode === 'stats';
 
   if (items.length === 0) {
     container.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--muted);text-align:center">No items match</div>';
@@ -3984,70 +3918,9 @@ function selectPickerSingle(el) {
 async function confirmPicker() {
   if (pickerMode === 'stats') {
     await confirmPickerStats();
-  } else if (pickerMode === 'scout') {
-    await confirmPickerScout();
   } else {
     await confirmPickerTracker();
   }
-}
-
-async function confirmPickerScout() {
-  // Reuse stats loading logic but store in scout variables
-  const checked = [...document.querySelectorAll('#picker-list input[type=checkbox]:checked')];
-  if (checked.length === 0) { showToast('Nothing selected'); return; }
-  const status = document.getElementById('picker-status');
-  status.textContent = 'Loading scout data...';
-
-  const hudlChecked = checked.filter(c => c.dataset.source !== 'local');
-  const localChecked = checked.filter(c => c.dataset.source === 'local');
-
-  const normalize = c => ({
-    odk: String(c.odk||''), qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
-    yardln: String(c.yard_line||''), hash: String(c.hash||''), playtype: String(c.play_type||''),
-    result: String(c.result||''), gainloss: String(c.gain_loss||''), offform: String(c.off_form||''),
-    offplay: String(c.off_play||''),
-  });
-
-  const localPlays = [];
-  localChecked.forEach(c => {
-    const g = getGames().find(x => x.id === c.dataset.gameid);
-    if (g) localPlays.push(...(g.plays || []).filter(p => Object.keys(p).length > 0));
-  });
-
-  const hudlResults = await Promise.all(hudlChecked.map(async chk => {
-    const id = chk.value.replace('local_', '');
-    const label = chk.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || id;
-    const cached = getCachedClips(id);
-    if (cached) return { label, clips: cached };
-    try {
-      const resp = await fetch(HUDL_API + '/api/clips/' + encodeURIComponent(id) + '?count=1000');
-      if (!resp.ok) throw new Error(resp.status);
-      const data = await resp.json();
-      const normalized = data.clips.map(normalize);
-      setCachedClips(id, normalized, label);
-      return { label, clips: normalized };
-    } catch(e) { return { label, clips: [] }; }
-  }));
-
-  const allPlays = [...localPlays, ...hudlResults.flatMap(r => r.clips)];
-  const allLabels = [...localChecked.map(c => c.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || ''),
-                     ...hudlResults.filter(r => r.clips.length > 0).map(r => r.label)].filter(Boolean);
-
-  scoutGameData = allPlays;
-  scoutLabel = allLabels.length === 1 ? allLabels[0] : allLabels.length + ' sources combined';
-
-  // Update scout button
-  const scoutBtn = document.getElementById('scout-set-btn');
-  if (scoutBtn) {
-    let short = scoutLabel;
-    if (short.length > 18) short = short.substring(0, 16) + '\u2026';
-    scoutBtn.textContent = short + ' \u25bc';
-  }
-
-  showToast('Loaded ' + allPlays.length + ' plays for scouting');
-  closeModal('m-cutup-picker');
-  setStatsTab('scout');
-  runScoutReport(allPlays);
 }
 
 async function confirmPickerStats() {
@@ -4109,9 +3982,10 @@ async function confirmPickerStats() {
     console.error('Stats render error:', e);
     document.getElementById('stats-sub-overview').innerHTML = '<div class="empty-msg">Error rendering stats: ' + e.message + '</div>';
   }
-  setStatsTab('stats');
+  setStatsTab('spotlight');
   setStatsSubTab('overview');
   updateActiveLabel(`${statsLabel} · ${allPlays.length} plays`);
+  runSpotlightAnalysis(allPlays);
 }
 
 async function confirmPickerTracker() {
@@ -4276,211 +4150,22 @@ function goStats() {
   chatHistory = [];
   document.getElementById('chat-messages').innerHTML =
     '<div class="chat-msg assistant">Hi Coach! Load data using the FILTER button, then ask me anything about your plays.</div>';
-  setStatsTab('stats');
+  setStatsTab('spotlight');
   showView('view-stats');
+  // Update filter button to reflect current state
   const filterBtn = document.getElementById('stats-filter-btn');
   if (statsGameData && statsGameData.length > 0 && statsLabel) {
     let short = statsLabel;
-    if (short.length > 20) short = short.substring(0, 18) + '\u2026';
-    filterBtn.textContent = short + ' \u25bc';
+    if (short.length > 20) short = short.substring(0, 18) + '…';
+    filterBtn.textContent = short + ' ▼';
   } else {
-    filterBtn.textContent = 'FILTER \u25bc';
+    filterBtn.textContent = 'FILTER ▼';
+    // Auto-open picker if no data is loaded
     setTimeout(() => openHudlPicker('stats'), 100);
   }
 }
 
-let notesGameId = null;
-let notesReturnView = 'view-landing';
-
-function getGameNotes(gameId) {
-  try { return JSON.parse(localStorage.getItem('hd_notes_' + gameId) || '[]'); } catch { return []; }
-}
-function saveGameNotes(gameId, notes) {
-  localStorage.setItem('hd_notes_' + gameId, JSON.stringify(notes));
-}
-
-function goGameNotes() {
-  notesReturnView = 'view-landing';
-  document.getElementById('notes-tracker-btn').style.display = 'none';
-  const games = getGames();
-  if (games.length > 0) {
-    const sorted = [...games].sort((a,b) => parseInt(b.id) - parseInt(a.id));
-    setNotesGame(sorted[0].id);
-  } else {
-    notesGameId = null;
-    document.getElementById('notes-game-label').textContent = 'No games yet';
-    document.getElementById('notes-list').innerHTML = '<div class="empty-msg">Create a game first to add notes.</div>';
-  }
-  showView('view-notes');
-}
-
-function goNotesFromTracker() {
-  if (!game || !game.id) { showToast('No active game'); return; }
-  notesReturnView = 'view-tracker';
-  document.getElementById('notes-tracker-btn').style.display = '';
-  setNotesGame(game.id);
-  showView('view-notes');
-}
-
-function goTrackerFromNotes() {
-  if (notesGameId) loadTracker(notesGameId, true);
-}
-
-function leaveNotes() { showView(notesReturnView); }
-
-function setNotesGame(gameId) {
-  notesGameId = gameId;
-  const g = getGames().find(x => x.id === gameId);
-  if (g) {
-    const wk = g.week ? ' \u00b7 Week ' + g.week : '';
-    document.getElementById('notes-game-label').textContent = g.home + ' vs ' + g.away + wk;
-  }
-  renderNotes();
-}
-
-function renderNotes() {
-  const container = document.getElementById('notes-list');
-  if (!notesGameId) { container.innerHTML = '<div class="empty-msg">Select a game to view or add notes.</div>'; return; }
-  const notes = getGameNotes(notesGameId);
-  if (notes.length === 0) { container.innerHTML = '<div class="empty-msg">No notes yet. Add your first observation below.</div>'; return; }
-  container.innerHTML = notes.map((n, i) => {
-    const timeLabel = n.label || '';
-    const playLabel = n.play ? 'Play ' + n.play : '';
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-      '<div style="font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.04em">' + timeLabel + '</div>' +
-      '<div style="display:flex;align-items:center;gap:8px">' +
-      '<div style="font-size:11px;color:var(--muted)">' + playLabel + '</div>' +
-      '<div onclick="deleteGameNote(' + i + ')" style="font-size:14px;color:var(--muted);cursor:pointer;padding:2px 6px">\u2715</div>' +
-      '</div></div>' +
-      '<div style="font-size:14px;color:#ddd;line-height:1.5">' + n.text + '</div></div>';
-  }).join('');
-  container.scrollTop = container.scrollHeight;
-}
-
-function addGameNote() {
-  const input = document.getElementById('notes-input');
-  const text = input.value.trim();
-  if (!text || !notesGameId) return;
-  input.value = '';
-  let label = 'NOTE';
-  let playNum = null;
-  if (game && game.id === notesGameId) {
-    const play = game.plays[playIdx] || {};
-    if (play.qtr) label = 'Q' + play.qtr;
-    playNum = playIdx + 1;
-  }
-  const notes = getGameNotes(notesGameId);
-  notes.push({ text: text, label: label, play: playNum, ts: Date.now() });
-  saveGameNotes(notesGameId, notes);
-  renderNotes();
-  showToast('Note added');
-}
-
-function deleteGameNote(idx) {
-  const notes = getGameNotes(notesGameId);
-  notes.splice(idx, 1);
-  saveGameNotes(notesGameId, notes);
-  renderNotes();
-  showToast('Note deleted');
-}
-
-function openNotesGamePicker() {
-  const games = getGames();
-  if (games.length === 0) { showToast('No games yet'); return; }
-  const sorted = [...games].sort((a,b) => parseInt(b.id) - parseInt(a.id));
-  const html = sorted.map(g => {
-    const wk = g.week ? ' \u00b7 Wk ' + g.week : '';
-    const sel = g.id === notesGameId ? ' sel' : '';
-    return '<div class="dd-item' + sel + '" onclick="setNotesGame(\'' + g.id + '\');closeModal(\'m-notes-picker\')">' + g.home + ' vs ' + g.away + wk + '</div>';
-  }).join('');
-  document.getElementById('notes-picker-list').innerHTML = html;
-  openModal('m-notes-picker');
-}
-
-function getGameNotesContext() {
-  if (!notesGameId && (!game || !game.id)) return '';
-  const gid = notesGameId || (game && game.id);
-  const notes = getGameNotes(gid);
-  if (notes.length === 0) return '';
-  return '\n\nCOACH GAME NOTES:\n' + notes.map(n => '[' + n.label + (n.play ? ' Play ' + n.play : '') + '] ' + n.text).join('\n');
-}
-
-let scoutGameData = null;
-let scoutLabel = '';
-
-async function runScoutReport(plays) {
-  const panel = document.getElementById('scout-content');
-  const legend = document.getElementById('scout-legend');
-  const active = (plays || []).filter(p => Object.keys(p).length > 0);
-  if (active.length === 0) { panel.innerHTML = '<div class="empty-msg">No play data to scout.</div>'; return; }
-  panel.innerHTML = '<div class="spotlight-loading"><div class="spotlight-dot"></div><div>Generating scout report\u2026</div></div>';
-  if (legend) legend.style.display = 'flex';
-
-  const off = active.filter(p => p.odk === 'O');
-  const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
-  const getGL = p => num(p.gainloss);
-  const isRun = p => !!(p.playtype && p.playtype.toLowerCase().includes('run'));
-  const isPass = p => !!(p.playtype && p.playtype.toLowerCase().includes('pass'));
-  const avg = arr => arr.length > 0 ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : null;
-  const getForm = p => p.offform ? (p.offform.includes('|') ? p.offform.split('|')[1] : p.offform) : null;
-  const offGL = off.map(getGL).filter(v=>v!==null);
-  const runs = off.filter(isRun);
-  const formMap = {};
-  off.forEach(p => { const f = getForm(p); if(f) { if(!formMap[f]) formMap[f]={plays:0,gl:[],runs:0,passes:0}; formMap[f].plays++; const g=getGL(p); if(g!==null)formMap[f].gl.push(g); if(isRun(p))formMap[f].runs++; if(isPass(p))formMap[f].passes++; } });
-  const formStats = Object.entries(formMap).sort((a,b)=>b[1].plays-a[1].plays).slice(0,6).map(([f,d])=>({ formation: f, plays: d.plays, runPct: Math.round(d.runs/d.plays*100), avg: avg(d.gl) }));
-  const third = off.filter(p=>p.dn==='3');
-  const thirdConv = third.filter(p=>{ const gl = getGL(p); const dist = num(p.dist); if (gl !== null && dist !== null && gl >= dist) return true; const r=(p.result||'').toLowerCase(); return r.includes('td') || r.includes('first') || r.includes('1st'); });
-
-  const summary = { label: scoutLabel || statsLabel, totalPlays: active.length, offPlays: off.length,
-    runPlays: runs.length, passPlays: off.filter(isPass).length, runPct: off.length ? Math.round(runs.length/off.length*100) : 0,
-    avgYPP: avg(offGL), thirdDowns: third.length, thirdConv: thirdConv.length,
-    thirdConvPct: third.length ? Math.round(thirdConv.length/third.length*100) : 0, formations: formStats };
-
-  const systemPrompt = 'You are an elite football scouting assistant. Generate a scouting report for the OPPONENT based on their play data.\n' + getPlaybookContext() +
-    '\nReturn ONLY a valid JSON array of 4-8 scouting insights. Each must have:\n- "stat": Key finding. Max 6 words. Specific numbers.\n- "headline": Coaching recommendation. Max 8 words.\n- "why": Ultra-brief context. Max 6 words.\n- "tag": "O" (opponent offense) or "D" (opponent defense)\n- "category": "alert" (exploit weakness), "tendency" (predictable pattern), "edge" (they are strong here), or "intel" (neutral)\nFocus on run/pass tendencies by down, formation preferences, predictable patterns, and strengths to game-plan around.';
-
-  try {
-    const resp = await fetch(HUDL_API + '/api/claude', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', system: systemPrompt, messages: [{ role: 'user', content: 'Scout this opponent. Data label: ' + summary.label + '\n\n' + JSON.stringify(summary, null, 2) }], max_tokens: 1600 }) });
-    if (!resp.ok) throw new Error('API ' + resp.status);
-    const data = await resp.json();
-    const clean = (data.content && data.content[0] && data.content[0].text || '').replace(/```json|```/g, '').trim();
-    const insights = JSON.parse(clean);
-    if (!Array.isArray(insights) || insights.length === 0) throw new Error('No insights');
-
-    let html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">' +
-      '<div style="background:var(--surface2);border-radius:10px;padding:14px 8px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--text)">' + summary.runPct + '%</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Run rate</div></div>' +
-      '<div style="background:var(--surface2);border-radius:10px;padding:14px 8px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--text)">' + (summary.avgYPP || '?') + '</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Avg YPP</div></div>' +
-      '<div style="background:var(--surface2);border-radius:10px;padding:14px 8px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--accent)">' + summary.thirdConvPct + '%</div><div style="font-size:10px;color:var(--muted);margin-top:4px">3rd conv</div></div></div>';
-    html += '<div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px">' + summary.label + ' \u00b7 ' + summary.totalPlays + ' plays</div>';
-
-    var catLabels = { alert: 'ALERT', tendency: 'TENDENCY', edge: 'EDGE', intel: 'INTEL' };
-    insights.forEach(function(ins) {
-      var cat = ins.category || 'intel';
-      var catColor = cat === 'alert' ? 'var(--red)' : cat === 'tendency' ? 'var(--yellow)' : cat === 'edge' ? 'var(--green)' : 'var(--blue)';
-      html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;border-left:3px solid ' + catColor + ';margin-bottom:8px">' +
-        '<div style="font-size:10px;font-weight:600;color:' + catColor + ';margin-bottom:6px;letter-spacing:0.04em">' + (catLabels[cat] || 'INTEL') + '</div>' +
-        '<div style="font-size:18px;font-weight:700;color:' + catColor + ';margin-bottom:6px;line-height:1.3">' + ins.stat + '</div>' +
-        '<div style="font-size:14px;color:#ddd;margin-bottom:4px;font-weight:500">' + ins.headline + '</div>' +
-        '<div style="font-size:12px;color:var(--muted)">' + ins.why + '</div></div>';
-    });
-
-    if (formStats.length > 0) {
-      html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:6px"><div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.08em;margin-bottom:10px">TOP FORMATIONS</div>';
-      formStats.slice(0,5).forEach(function(f, i) {
-        var pct = off.length ? Math.round(f.plays / off.length * 100) : 0;
-        html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#ccc;width:70px;text-align:right">' + f.formation + '</div><div style="flex:1;height:24px;background:var(--surface2);border-radius:5px;overflow:hidden"><div style="width:' + pct + '%;height:100%;background:var(--accent);border-radius:5px;opacity:' + (1 - i*0.15) + ';display:flex;align-items:center;justify-content:flex-end;padding-right:8px;min-width:30px"><span style="font-size:11px;font-weight:700;color:#fff">' + f.plays + '</span></div></div></div>';
-      });
-      html += '</div>';
-    }
-    html += '<div style="margin-top:14px"><button class="btn btn-primary" onclick="runScoutReport(scoutGameData)" style="width:100%;padding:14px;font-size:14px">Regenerate report</button></div>';
-    panel.innerHTML = html;
-  } catch(e) {
-    panel.innerHTML = '<div style="padding:16px"><div style="font-size:13px;color:var(--muted);margin-bottom:10px">Could not generate scout report: ' + e.message + '</div><button class="btn btn-secondary" onclick="runScoutReport(scoutGameData)" style="font-size:12px">Try again</button></div>';
-  }
-}
-
+// ════════════════════════════════════════
 // HUDL DATA CACHE
 // ════════════════════════════════════════
 const CACHE_KEY_PREFIX = 'hd_cache_';
@@ -5618,9 +5303,10 @@ function goStatsFromTracker() {
   showView('view-stats');
   renderStatsFromData(plays, statsLabel, false);
   updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
-  setStatsTab('stats');
+  setStatsTab('spotlight');
   setStatsSubTab('overview');
 
+  runSpotlightAnalysis(plays);
 }
 
 function goStatsFromArchive(gameId) {
@@ -5638,9 +5324,10 @@ function goStatsFromArchive(gameId) {
   showView('view-stats');
   renderStatsFromData(plays, statsLabel, false);
   updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
-  setStatsTab('stats');
+  setStatsTab('spotlight');
   setStatsSubTab('overview');
 
+  runSpotlightAnalysis(plays);
 }
 
 function openEditGameModal() {
