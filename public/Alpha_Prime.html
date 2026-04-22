@@ -2631,12 +2631,35 @@ function clearRow() {
   });
 }
 
+let clearAllBackup = null;
+
 function clearAll() {
-  showConfirm('Clear All Plays?', 'This will erase all play data. Cannot be undone.', () => {
+  showConfirm('Clear all plays?', 'This will erase all play data for this game.', () => {
+    // Save backup for undo
+    clearAllBackup = { gameId: game.id, plays: JSON.parse(JSON.stringify(game.plays)), playIdx: playIdx };
     game.plays = Array.from({length:200}, () => ({}));
     playIdx = 0;
     persist(); renderTracker();
+    showUndoToast('All plays cleared', undoClearAll);
   });
+}
+
+function undoClearAll() {
+  if (!clearAllBackup || !game || game.id !== clearAllBackup.gameId) return;
+  game.plays = clearAllBackup.plays;
+  playIdx = clearAllBackup.playIdx;
+  clearAllBackup = null;
+  persist(); renderTracker();
+  showToast('Undo successful');
+}
+
+function showUndoToast(msg, undoFn) {
+  const toast = document.getElementById('toast');
+  toast.innerHTML = msg + ' <span onclick="event.stopPropagation()" style="margin-left:10px;color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline" id="undo-link">UNDO</span>';
+  toast.classList.add('show');
+  document.getElementById('undo-link').onclick = () => { toast.classList.remove('show'); undoFn(); };
+  clearTimeout(toast._tid);
+  toast._tid = setTimeout(() => { toast.classList.remove('show'); clearAllBackup = null; }, 8000);
 }
 
 function leaveTracker() {
