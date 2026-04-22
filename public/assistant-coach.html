@@ -898,6 +898,14 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     </div>
     <div class="modal-body">
       <div class="fg"><label class="fl">Template</label><select class="fi" id="ng-tmpl"></select></div>
+      <div class="fg"><label class="fl">Type</label>
+        <div style="display:flex;gap:6px" id="ng-type-row">
+          <div class="sf-btn on" onclick="setNewGameType(this,'Game')" style="flex:1;text-align:center;padding:10px">Game</div>
+          <div class="sf-btn" onclick="setNewGameType(this,'JV')" style="flex:1;text-align:center;padding:10px">JV</div>
+          <div class="sf-btn" onclick="setNewGameType(this,'Scout')" style="flex:1;text-align:center;padding:10px">Scout</div>
+          <div class="sf-btn" onclick="setNewGameType(this,'Other')" style="flex:1;text-align:center;padding:10px">Other</div>
+        </div>
+      </div>
       <div class="fg"><label class="fl">Home Team <span style="color:var(--muted);font-size:9px">(optional — edit anytime)</span></label><input class="fi" id="ng-home" placeholder="Home team" /></div>
       <div class="fg"><label class="fl">Away Team <span style="color:var(--muted);font-size:9px">(optional — edit anytime)</span></label><input class="fi" id="ng-away" placeholder="Away team" /></div>
       <div style="display:flex;gap:10px">
@@ -2266,6 +2274,14 @@ function updateLanding() {
 // ════════════════════════════════════════
 // NEW GAME MODAL
 // ════════════════════════════════════════
+let newGameType = 'Game';
+
+function setNewGameType(btn, type) {
+  newGameType = type;
+  document.querySelectorAll('#ng-type-row .sf-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
 function openNewGameModal() {
   const tmpls = getTmpls();
   const sel = document.getElementById('ng-tmpl');
@@ -2274,6 +2290,10 @@ function openNewGameModal() {
   document.getElementById('ng-home').value = '';
   document.getElementById('ng-away').value = '';
   document.getElementById('ng-week').value = '';
+  // Reset type to Game
+  newGameType = 'Game';
+  document.querySelectorAll('#ng-type-row .sf-btn').forEach(b => b.classList.remove('on'));
+  document.querySelector('#ng-type-row .sf-btn')?.classList.add('on');
   openModal('m-new-game');
 }
 
@@ -2283,10 +2303,11 @@ function startGame() {
   const date = document.getElementById('ng-date').value.trim();
   const week = document.getElementById('ng-week').value.trim();
   const tmplId = document.getElementById('ng-tmpl').value;
+  const gameType = newGameType || 'Game';
   const plays = Array.from({length: 200}, () => ({}));
   const g = {
     id: Date.now().toString(),
-    home, away, date, week, tmplId,
+    home, away, date, week, tmplId, gameType,
     plays,
     createdAt: new Date().toISOString()
   };
@@ -2323,8 +2344,9 @@ function loadTracker(gameId, resumePlay) {
   }
 
   const weekStr = game.week ? ` · WK ${game.week}` : '';
+  const typeStr = game.gameType && game.gameType !== 'Game' ? ` (${game.gameType})` : game.gameType === 'Game' ? ' (Game)' : '';
   document.getElementById('tracker-title').textContent =
-    `${game.home.toUpperCase()} VS ${game.away.toUpperCase()}${weekStr}`;
+    `${game.home.toUpperCase()} VS ${game.away.toUpperCase()}${weekStr}${typeStr}`;
 
   showView('view-tracker');
   renderTracker();
