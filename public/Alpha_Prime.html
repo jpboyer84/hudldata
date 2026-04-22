@@ -204,6 +204,20 @@ body {
 .t-btn.list-open.has-val { color: #fff; font-size: 18px; }
 .t-btn.sm { font-size: 15px; }
 
+/* NUMPAD INPUT */
+.numpad-input {
+  font-family: var(--font-btn); font-weight: 700; font-size: 22px;
+  color: #fff; background: var(--surface2); border: 1px solid var(--col-border);
+  border-radius: 10px; height: 64px; width: 100%;
+  text-align: center; outline: none;
+  -webkit-appearance: none; -moz-appearance: textfield;
+}
+.numpad-input:focus { border-color: var(--accent); background: #1a1a1c; }
+.numpad-input.has-val { background: var(--sel-bg); color: var(--sel-text); border-color: var(--sel-bg); }
+.numpad-input::placeholder { color: #666; font-weight: 500; font-size: 16px; }
+.numpad-input::-webkit-inner-spin-button,
+.numpad-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
 /* ════════════════════════════════════════
    NAV BAR
 ════════════════════════════════════════ */
@@ -1646,7 +1660,7 @@ function defaultColumns() {
       btns:[{l:'L',v:'L'},{l:'M',v:'M'},{l:'R',v:'R'}]
     },
     {
-      id:'yardln', name:'YARD LN', type:'list',
+      id:'yardln', name:'YARD LN', type:'numpad',
       list: yardLineList()
     },
     {
@@ -1654,7 +1668,7 @@ function defaultColumns() {
       btns:[{l:'1-3',v:'1-3'},{l:'4-6',v:'4-6'},{l:'7-9',v:'7-9'},{l:'10+',v:'10+'}]
     },
     {
-      id:'dist2', name:'DIST', type:'list', dataKey:'dist2',
+      id:'dist2', name:'DIST', type:'numpad', dataKey:'dist2',
       list: numList(-99,99)
     },
     {
@@ -1670,7 +1684,7 @@ function defaultColumns() {
       dd:['1st DN','Batted Down','Block','Blocked Def TD','Complete','Complete Fumble','Complete TD','COP','Def TD','Downed','Dropped','Fair Catch','Fumble','Fumble Def TD','Good','Incomplete','Interception','Interception Def TD','Interception Fumble','No Good','No Good Def TD','Offsetting Penalties','Out of Bounds','Penalty','Penalty Safety','Recovered','Return','Rush','Rush Safety','Rush TD','Sack','Sack Fumble','Sack Fumble Def TD','Sack Safety','Safety','Scramble','Scramble TD','TD','Timeout','Tipped','Touchback']
     },
     {
-      id:'gainloss', name:'GAIN/LOSS', type:'list',
+      id:'gainloss', name:'GAIN/LOSS', type:'numpad',
       list: numList(-99,99)
     },
     {
@@ -1697,7 +1711,7 @@ function defaultColumns() {
 function defaultTemplate() {
   return {
     id:'odk-default', name:'ODK',
-    colIds:['odk','qtr','dn','dist','dist2','yardln','hash','playtype','result','gainloss','offform']
+    colIds:['odk','qtr','dn','dist2','yardln','hash','playtype','result','gainloss','offform']
   };
 }
 
@@ -2360,6 +2374,7 @@ function renderColInner(col, val) {
   switch(col.type) {
     case 'buttons':     return renderBtns(col, val);
     case 'list':        return renderListBtn(col, val);
+    case 'numpad':      return renderNumpad(col, val);
     case 'btns_list':   return renderBtnsList(col, val);
     case 'btns_dd':     return renderBtnsDd(col, val);
     case 'btn_dds':     return renderBtnDds(col, val);
@@ -2383,6 +2398,20 @@ function renderListBtn(col, val) {
   return `<div class="btn-grid bg-1">
     <div class="t-btn list-open${hasVal?' has-val sel':''}"
          onclick="openList('${col.id}')">${display}</div>
+  </div>`;
+}
+
+function renderNumpad(col, val) {
+  const hasVal = val !== '' && val !== undefined && val !== null;
+  const display = hasVal ? val : '';
+  const placeholder = col.name;
+  return `<div class="btn-grid bg-1">
+    <input type="number" inputmode="numeric" pattern="[0-9-]*"
+      class="numpad-input${hasVal ? ' has-val' : ''}"
+      value="${display}" placeholder="${placeholder}"
+      onfocus="this.select()"
+      onchange="setVal('${col.id}', this.value)"
+      onblur="setVal('${col.id}', this.value)" />
   </div>`;
 }
 
@@ -5519,10 +5548,10 @@ async function sendHelpChat() {
 // ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
-if (localStorage.getItem('hd_ver') !== '8') {
+if (localStorage.getItem('hd_ver') !== '9') {
   localStorage.removeItem('hd_cols');
   localStorage.removeItem('hd_tmpls');
-  localStorage.setItem('hd_ver', '8');
+  localStorage.setItem('hd_ver', '9');
 }
 if (!localStorage.getItem('hd_cols'))  saveCols(defaultColumns());
 if (!localStorage.getItem('hd_tmpls')) saveTmpls([defaultTemplate()]);
