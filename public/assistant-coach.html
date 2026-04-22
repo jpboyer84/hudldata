@@ -186,6 +186,7 @@ body {
 .bg-2 { grid-template-columns: 1fr 1fr; }
 .bg-3 { grid-template-columns: 1fr 1fr 1fr; }
 .bg-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.bg-5 { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
 .bg-1 { grid-template-columns: 1fr; }
 
 /* TRACKER BUTTON */
@@ -2390,6 +2391,7 @@ function renderCard(col, val) {
 function gridCls(n) {
   if (n <= 2) return 'bg-2';
   if (n === 3) return 'bg-3';
+  if (n === 5) return 'bg-5';
   return 'bg-4';
 }
 
