@@ -237,6 +237,15 @@ body {
 .nav-new { background: var(--accent); color: #ffffff; font-weight: 700; border-left: 1px solid var(--border); }
 .nav-next { background: #111113; color: #999; border-left: 1px solid var(--border); }
 
+/* TRACKER DROPDOWN MENU */
+.tracker-menu-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; font-family: var(--font-btn); font-weight: 600;
+  font-size: 14px; color: var(--text); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tracker-menu-item:active { background: var(--surface2); }
+
 /* ════════════════════════════════════════
    MODALS
 ════════════════════════════════════════ */
@@ -749,18 +758,43 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 <!-- ══════════════════════════════════════
      TRACKER
 ══════════════════════════════════════ -->
-<div class="view" id="view-tracker">
+<div class="view" id="view-tracker" style="position:relative">
   <div class="hdr">
     <button class="hdr-btn" onclick="leaveTracker()">← Back</button>
     <div class="hdr-title" id="tracker-title" onclick="openEditGameModal()" style="cursor:pointer">Game</div>
     <div style="display:flex;gap:5px">
       <button class="hdr-btn" id="layout-btn" onclick="toggleLayout()">▤ 1COL</button>
-      <button class="hdr-btn blue" onclick="goStatsFromTracker()">Stats</button>
-      <button class="hdr-btn white" onclick="openTrackerColPicker()">+ Col</button>
-      <button class="hdr-btn white" onclick="saveAsTemplate()">+ Tmpl</button>
-      <button class="hdr-btn" onclick="openExportXlsxModal()">Export</button>
-      <button class="hdr-btn yellow" onclick="clearRow()">✕ Row</button>
-      <button class="hdr-btn red" onclick="clearAll()">✕ All</button>
+      <button class="hdr-btn" onclick="toggleTrackerMenu()" id="tracker-menu-btn" style="font-size:18px;padding:4px 10px;line-height:1">⋯</button>
+    </div>
+  </div>
+  <!-- Tracker dropdown menu -->
+  <div id="tracker-menu" style="display:none;position:absolute;top:52px;right:12px;z-index:150;
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    min-width:180px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.5)">
+    <div class="tracker-menu-item" onclick="goStatsFromTracker();closeTrackerMenu()" style="color:var(--blue)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M3 13V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M6 13V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 13V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12 13V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Stats
+    </div>
+    <div class="tracker-menu-item" onclick="openTrackerColPicker();closeTrackerMenu()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Add column
+    </div>
+    <div class="tracker-menu-item" onclick="saveAsTemplate();closeTrackerMenu()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><rect x="3" y="3" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 6H13" stroke="currentColor" stroke-width="1.5" opacity="0.5"/></svg>
+      Save as template
+    </div>
+    <div class="tracker-menu-item" onclick="openExportXlsxModal();closeTrackerMenu()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 3V10M5 7L8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Export XLSX
+    </div>
+    <div style="height:1px;background:var(--border);margin:2px 0"></div>
+    <div class="tracker-menu-item" onclick="clearRow();closeTrackerMenu()" style="color:var(--yellow)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Clear row
+    </div>
+    <div class="tracker-menu-item" onclick="clearAll();closeTrackerMenu()" style="color:var(--red)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M3 5H13M5 5V12H11V5M7 7V10M9 7V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Clear all
     </div>
   </div>
   <div class="sheet-bar" id="sheet-bar"></div>
@@ -1958,6 +1992,28 @@ let playIdx = 0;          // current play index
 let activeCols = [];      // resolved columns for current game
 let autoTimer = null;
 let layoutCols = 1;       // 1 or 2 column layout
+
+function toggleTrackerMenu() {
+  const menu = document.getElementById('tracker-menu');
+  if (menu.style.display === 'none') {
+    menu.style.display = 'block';
+    // Close on tap outside
+    setTimeout(() => document.addEventListener('click', closeTrackerMenuOutside, { once: true }), 10);
+  } else {
+    closeTrackerMenu();
+  }
+}
+function closeTrackerMenu() {
+  document.getElementById('tracker-menu').style.display = 'none';
+}
+function closeTrackerMenuOutside(e) {
+  const menu = document.getElementById('tracker-menu');
+  const btn = document.getElementById('tracker-menu-btn');
+  if (menu && !menu.contains(e.target) && e.target !== btn) closeTrackerMenu();
+  else if (menu.style.display === 'block') {
+    setTimeout(() => document.addEventListener('click', closeTrackerMenuOutside, { once: true }), 10);
+  }
+}
 
 function toggleLayout() {
   layoutCols = layoutCols === 2 ? 1 : 2;
