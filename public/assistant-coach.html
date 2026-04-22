@@ -2576,6 +2576,10 @@ function setVal(colId, value) {
   game.plays[playIdx][key] = value;
   persist();
   renderTracker();
+  
+  // If DN or DIST was just set, try to backfill previous play's gain/loss
+  if (key === 'dn' || key === 'dist2') tryBackfillGainLoss();
+  
   checkAutoAdvance();
 }
 
@@ -2614,7 +2618,74 @@ function prevPlay() {
 }
 
 function nextPlay() {
-  if (playIdx < game.plays.length - 1) { playIdx++; renderTracker(); }
+  if (!game || playIdx >= game.plays.length - 1) return;
+  
+  // Auto-fill next play's DN and DIST based on current play
+  const cur = game.plays[playIdx] || {};
+  const next = game.plays[playIdx + 1] || {};
+  
+  if (cur.odk !== 'K' && cur.odk !== 'S') {
+    const curDn = parseInt(cur.dn);
+    const curDist = parseFloat(cur.dist2);
+    const curGL = parseFloat(cur.gainloss);
+    
+    if (!isNaN(curDn) && !isNaN(curDist) && !isNaN(curGL)) {
+      // Only auto-fill if next play's fields are empty
+      if (!next.dn && !next.dist2) {
+        if (curGL >= curDist) {
+          // First down
+          next.dn = '1';
+          next.dist2 = '10';
+        } else if (curDn < 4) {
+          // Next down
+          next.dn = String(curDn + 1);
+          next.dist2 = String(Math.round(curDist - curGL));
+        }
+        // Carry over ODK if not set
+        if (!next.odk && cur.odk) next.odk = cur.odk;
+        if (!game.plays[playIdx + 1]) game.plays[playIdx + 1] = {};
+        Object.assign(game.plays[playIdx + 1], next);
+        persist();
+      }
+    }
+  }
+  
+  playIdx++;
+  renderTracker();
+}
+
+// Backward auto-fill: infer GAIN/LOSS from previous play when DN+DIST are set
+function tryBackfillGainLoss() {
+  if (!game || playIdx === 0) return;
+  const cur = game.plays[playIdx] || {};
+  const prev = game.plays[playIdx - 1] || {};
+  
+  // Skip if previous play is K or S, or already has gainloss
+  if (prev.odk === 'K' || prev.odk === 'S') return;
+  if (prev.gainloss && prev.gainloss !== '') return;
+  
+  const prevDist = parseFloat(prev.dist2);
+  const curDn = parseInt(cur.dn);
+  const curDist = parseFloat(cur.dist2);
+  
+  if (isNaN(prevDist) || isNaN(curDn) || isNaN(curDist)) return;
+  
+  // If current play is 1st & 10, previous play gained enough for a first down
+  if (curDn === 1 && curDist === 10) {
+    // They got the first down — gain was at least prevDist
+    // But we can't know exact gain, so don't guess
+    return;
+  }
+  
+  // If same drive (down incremented by 1), we can calculate gain
+  const prevDn = parseInt(prev.dn);
+  if (!isNaN(prevDn) && curDn === prevDn + 1) {
+    const inferredGain = Math.round(prevDist - curDist);
+    prev.gainloss = String(inferredGain);
+    game.plays[playIdx - 1] = prev;
+    persist();
+    renderTracker(); // Re-render to show the inferred value
+  }
 }
 
 function showConfirm(title, msg, onOk) {
