@@ -4032,7 +4032,7 @@ function getUnifiedItems() {
 }
 
 function parseWeekSort(title) {
-  const m = title.match(/[Ww]k\s*0*(\d+)/);
+  const m = title.match(/[Ww][Kk]\s*0*(\d+)/);
   return m ? parseInt(m[1], 10) : -1;
 }
 
