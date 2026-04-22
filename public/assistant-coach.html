@@ -463,13 +463,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .spotlight-card.low { border-left-color: var(--blue); }
 
 .spotlight-stat { font-family: var(--font-btn); font-weight: 700; font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
-.spotlight-card.cat-alert .spotlight-stat { color: var(--red); }
-.spotlight-card.cat-tendency .spotlight-stat { color: var(--yellow); }
-.spotlight-card.cat-edge .spotlight-stat { color: var(--green); }
-.spotlight-card.cat-intel .spotlight-stat { color: var(--blue); }
-.spotlight-card.high .spotlight-stat { color: var(--red); }
-.spotlight-card.medium .spotlight-stat { color: var(--yellow); }
-.spotlight-card.low .spotlight-stat { color: var(--blue); }
 .spotlight-headline { font-size: 14px; color: #ddd; margin-bottom: 4px; font-weight: 500; }
 
 .spotlight-why { font-size: 12px; color: #bbb; line-height: 1.5; }
@@ -668,7 +661,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <!-- Main cards -->
       <div style="flex:1;padding:32px 20px 20px;display:flex;flex-direction:column;gap:12px">
 
-        <div class="lcard" onclick="goTrackersHub()" style="padding:22px 22px">
+        <div class="lcard" onclick="openNewGameModal()" style="padding:22px 22px">
           <div class="lcard-icon" style="width:48px;height:48px;border-radius:12px"><svg viewBox="0 0 20 20" fill="none" style="width:22px;height:22px"><rect x="3" y="4" width="14" height="12" rx="2" stroke="#e8590c" stroke-width="1.5"/><path d="M3 8H17" stroke="#e8590c" stroke-width="1.5"/><path d="M7 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/><path d="M11 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/></svg></div>
           <div style="flex:1;min-width:0">
             <div class="lcard-title" style="font-size:18px">Tag a game</div>
@@ -828,7 +821,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 ══════════════════════════════════════ -->
 <div class="view" id="view-templates">
   <div class="hdr">
-    <button class="hdr-btn" onclick="goTrackersHub()">← Back</button>
+    <button class="hdr-btn" onclick="goSettings()">← Back</button>
     <div class="hdr-title">Templates</div>
     <div style="display:flex;gap:5px">
       <button class="hdr-btn" onclick="goColumns()">Columns</button>
@@ -911,9 +904,16 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         <div class="fg" style="flex:1"><label class="fl">Date <span style="color:var(--muted);font-size:9px">(optional)</span></label><input class="fi" id="ng-date" placeholder="e.g. 10/4/2025" /></div>
       </div>
     </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('m-new-game')">Cancel</button>
-      <button class="btn btn-primary" onclick="startGame()">START GAME</button>
+    <div class="modal-foot" style="flex-direction:column;gap:10px">
+      <div style="display:flex;gap:10px;width:100%">
+        <button class="btn btn-secondary" onclick="closeModal('m-new-game')" style="flex:1">Cancel</button>
+        <button class="btn btn-primary" onclick="startGame()" style="flex:1">START GAME</button>
+      </div>
+      <div style="display:flex;gap:8px;width:100%">
+        <div onclick="closeModal('m-new-game');goArchive()" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Archive</div>
+        <div onclick="closeModal('m-new-game');goImportGameData()" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Import</div>
+        <div onclick="closeModal('m-new-game');openHudlPicker('tracker')" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Load Hudl</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1126,6 +1126,14 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         <div class="settings-btn" onclick="driveLoadBackup()"><span class="settings-btn-icon">☁️</span>FROM DRIVE<span class="settings-btn-label">Google Drive</span></div>
       </div>
       <input type="file" id="ie-json-input" accept=".json" style="display:none" />
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">Templates & columns</div>
+      <div class="settings-group-sub">Manage your tracker templates and custom columns.</div>
+      <div class="settings-row">
+        <div class="settings-btn" onclick="goTemplates()"><span class="settings-btn-icon">📐</span>Templates</div>
+        <div class="settings-btn" onclick="goColumns()"><span class="settings-btn-icon">📋</span>Columns</div>
+      </div>
     </div>
     <div class="settings-group">
       <div class="settings-group-title">Hudl cache</div>
@@ -1597,25 +1605,18 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
   <!-- ── TAB: SPOTLIGHT (AI auto-analysis) ── -->
   <div id="stats-tab-spotlight" class="tab-panel sbody">
-    <!-- Spotlight legend -->
-    <div class="spotlight-legend" id="spotlight-legend" style="display:none">
-      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--red)"></div> Alert — fix this</div>
-      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--yellow)"></div> Tendency — predictable</div>
-      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--green)"></div> Edge — exploit this</div>
-      <div class="spotlight-legend-item"><div class="spotlight-legend-dot" style="background:var(--blue)"></div> Intel — worth knowing</div>
-    </div>
     <div class="empty-msg" id="spotlight-empty">Load data to get AI-powered insights.</div>
   </div>
 
-  <!-- ── TAB: STATS (sub-tabbed) ── -->
+  <!-- ── TAB: STATS ── -->
   <div id="stats-tab-stats" class="tab-panel" style="display:none;flex-direction:column;overflow:hidden">
-    <!-- Stats sub-tab bar -->
-    <div style="display:flex;background:var(--surface2);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch">
-      <button class="stats-subtab active" id="sstab-overview"  onclick="setStatsSubTab('overview')">Overview</button>
-      <button class="stats-subtab"        id="sstab-offense"   onclick="setStatsSubTab('offense')">Offense</button>
-      <button class="stats-subtab"        id="sstab-defense"   onclick="setStatsSubTab('defense')">Defense</button>
-      <button class="stats-subtab"        id="sstab-field"     onclick="setStatsSubTab('field')">Field</button>
-      <button class="stats-subtab"        id="sstab-quarter"   onclick="setStatsSubTab('quarter')">By Qtr</button>
+    <!-- Stats category buttons -->
+    <div style="display:flex;gap:8px;padding:12px 14px;flex-shrink:0;border-bottom:1px solid var(--border)">
+      <button class="sf-btn on" id="sstab-overview" onclick="setStatsSubTab('overview')" style="flex:1;padding:12px;font-size:13px">Overview</button>
+      <button class="sf-btn" id="sstab-offense" onclick="setStatsSubTab('offense')" style="flex:1;padding:12px;font-size:13px;color:var(--green);border-color:rgba(34,197,94,0.3)">OFF</button>
+      <button class="sf-btn" id="sstab-defense" onclick="setStatsSubTab('defense')" style="flex:1;padding:12px;font-size:13px;color:var(--blue);border-color:rgba(59,130,246,0.3)">DEF</button>
+      <button class="sf-btn" id="sstab-field" onclick="setStatsSubTab('field')" style="flex:1;padding:12px;font-size:13px">Field</button>
+      <button class="sf-btn" id="sstab-quarter" onclick="setStatsSubTab('quarter')" style="flex:1;padding:12px;font-size:13px">By Qtr</button>
     </div>
     <!-- Stats sub-tab panels -->
     <div id="stats-sub-overview"  class="tab-panel sbody"><div class="empty-msg">Tap FILTER to load data.</div></div>
@@ -3813,7 +3814,8 @@ function setStatsTab(tab) {
 
 function setStatsSubTab(sub) {
   ['overview','offense','defense','field','quarter'].forEach(s => {
-    document.getElementById(`sstab-${s}`)?.classList.toggle('active', s === sub);
+    const btn = document.getElementById(`sstab-${s}`);
+    if (btn) { btn.classList.toggle('on', s === sub); }
     const panel = document.getElementById(`stats-sub-${s}`);
     if (panel) panel.style.display = s === sub ? 'flex' : 'none';
   });
@@ -4819,26 +4821,19 @@ async function runSpotlightAnalysis(plays, append = false) {
   const systemPrompt = `You are an elite football analytics assistant for a high school coach. Analyze play data and surface the most important, actionable findings for BOTH offense and defense.
 ${getPlaybookContext()}
 
-Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 offensive insights (tag "O") and 2-5 defensive insights (tag "D"). Only include an insight if it's genuinely useful — do NOT pad with filler. If there are only 2 real findings on one side, return 2. Quality over quantity. Each object must have:
-- "stat": The key data point — BIG bold text. Be specific with numbers. Max 6 words. Examples: "23% on 3rd down", "72% run on 1st", "4.1 YPC from Trips"
-- "headline": Short actionable takeaway. Max 8 words.
-- "why": Brief supporting context. Max 6 words.
-- "tag": one of "O", "D", "K", "G" (G = general)
+Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 OFF insights (tag "O") and 2-5 DEF insights (tag "D"). Only include genuinely useful findings. Quality over quantity. Each object must have:
+- "stat": The key data point. Max 6 words. Use coaching shorthand: Q1/Q2/Q3/Q4, 1st DN/2nd DN/3rd DN, OFF/DEF, conv, avg, YPC, YPP, R Hash/L Hash/M, neg, comp, inc, STK. Examples: "23% 3rd DN conv", "72% run on 1st DN", "4.1 YPC from Trips", "DEF allowing 6.2 avg"
+- "headline": Coaching recommendation. Max 8 words. Same shorthand.
+- "why": Ultra-brief context. Max 6 words.
+- "tag": "O" or "D"
 - "priority": "high" if exploitable/alarming, "medium" if notable, "low" if interesting
-- "category": REQUIRED. One of:
-  - "alert" = something is broken and needs fixing (low conversion rates, giving up big plays, poor efficiency)
-  - "tendency" = a pattern that makes you predictable (heavy run on 1st down, always go left, formation tells)
-  - "edge" = an advantage to lean into (a formation that works well, a down where you dominate, a mismatch)
-  - "intel" = neutral observation worth knowing (balanced splits, average performance, general trends)
 
 CRITICAL RULES:
-- You MUST analyze both the "offense" and "defense" sections of the data. Do not skip defense.
-- For defense: look at yards allowed, opponent run/pass tendencies, 3rd down stop rate, sacks, TFLs, interceptions, and down-by-down breakdowns.
-- Check "playsWithYardage" and "missingYardage" fields. If a category has fewer than 10 plays with yardage data, do NOT make YPP/average claims about it — the sample is too small.
-- Never compare averages between groups where one has significant missing data.
-- Be specific with numbers but honest about limitations.
-- Do NOT repeat insights you have already provided (prior insights will be listed if this is a follow-up request).
-- Each insight MUST have a "category" field. Choose the category based on what the coach should DO with the information.`;
+- Analyze BOTH "offense" and "defense" sections. Do not skip defense.
+- DEF analysis: yards allowed, opp run/pass tendencies, 3rd DN stop rate, sacks, TFLs, INTs, down-by-down.
+- Check "playsWithYardage" and "missingYardage". If fewer than 10 plays with yardage, do NOT make avg claims.
+- Be specific with numbers. Use shorthand everywhere.
+- Do NOT repeat prior insights (listed below if follow-up).`;
 
   // Inject coach feedback into prompt if available
   const fb = getSpotlightFeedback();
@@ -4891,25 +4886,19 @@ CRITICAL RULES:
     const renderCards = (list, side) => list
       .sort((a,b) => (priorityOrder[a.priority]||1) - (priorityOrder[b.priority]||1))
       .map((ins, i) => {
-        // Find this insight's index in the global array for stable reference
         const globalIdx = spotlightInsights.indexOf(ins);
-        const cat = ins.category || (ins.priority === 'high' ? 'alert' : ins.priority === 'low' ? 'intel' : 'tendency');
-        const catLabel = { alert: 'ALERT', tendency: 'TENDENCY', edge: 'EDGE', intel: 'INTEL' };
         const tagLabel2 = tagLabel[ins.tag] || 'GENERAL';
-        // Offense = accent orange, Defense = blue
-        const sideColor = side === 'O' ? 'var(--accent)' : side === 'D' ? 'var(--blue)' : 'var(--muted)';
-        return `<div class="spotlight-card cat-${cat}" style="border-left-color:${sideColor}">
+        // Green = offense, Blue = defense
+        const sideColor = side === 'O' ? 'var(--green)' : side === 'D' ? 'var(--blue)' : 'var(--muted)';
+        return `<div class="spotlight-card" style="border-left:3px solid ${sideColor}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div style="display:flex;gap:6px;align-items:center">
-            <span class="spotlight-tag tag-${cat}">${catLabel[cat] || 'INTEL'}</span>
-            <span style="font-size:11px;color:${sideColor};font-weight:600">${tagLabel2}</span>
-          </div>
+          <span style="font-size:11px;color:${sideColor};font-weight:600">${tagLabel2}</span>
           <div style="display:flex;gap:4px;flex-shrink:0">
             <button onclick="rateSpotlightByIdx(this,${globalIdx},true)" class="spot-rate" data-dir="up" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;opacity:0.35" title="Useful">👍</button>
             <button onclick="rateSpotlightByIdx(this,${globalIdx},false)" class="spot-rate" data-dir="down" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;opacity:0.35" title="Not useful">👎</button>
           </div>
         </div>
-        <div class="spotlight-stat" onclick="showMethodologyByIdx(${globalIdx})" style="cursor:pointer">${ins.stat}</div>
+        <div class="spotlight-stat" onclick="showMethodologyByIdx(${globalIdx})" style="cursor:pointer;color:${sideColor}">${ins.stat}</div>
         <div class="spotlight-headline">${ins.headline}</div>
         <div class="spotlight-why">${ins.why}</div>
       </div>`;
@@ -4920,10 +4909,6 @@ CRITICAL RULES:
         <span style="font-family:var(--font-btn);font-weight:700;font-size:14px">AI Spotlight</span>
         <button class="hdr-btn" onclick="runSpotlightAnalysis(statsGameData)" style="font-size:10px;padding:4px 10px">↺ REFRESH</button>
       </div>`;
-
-    // Show the legend
-    const legend = document.getElementById('spotlight-legend');
-    if (legend) legend.style.display = 'flex';
 
     if (offInsights.length > 0) {
       html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:600;color:var(--accent);margin-bottom:6px;margin-top:4px;letter-spacing:0.06em">OFFENSE</div>`;
