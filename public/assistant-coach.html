@@ -4822,7 +4822,7 @@ async function runSpotlightAnalysis(plays, append = false) {
 ${getPlaybookContext()}
 
 Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 OFF insights (tag "O") and 2-5 DEF insights (tag "D"). Only include genuinely useful findings. Quality over quantity. Each object must have:
-- "stat": The key data point. Max 6 words. Use coaching shorthand: Q1/Q2/Q3/Q4, 1st DN/2nd DN/3rd DN, OFF/DEF, conv, avg, YPC, YPP, R Hash/L Hash/M, neg, comp, inc, STK. Examples: "23% 3rd DN conv", "72% run on 1st DN", "4.1 YPC from Trips", "DEF allowing 6.2 avg"
+- "stat": The key data point. Max 6 words. Use coaching shorthand: Q1/Q2/Q3/Q4 (never spell out quarter), 1st DN/2nd DN/3rd DN/4th DN, OFF/DEF, conv, avg, YPC, YPP, R Hash/L Hash/M, neg, comp, inc, STK, INT. Examples: "23% 3rd DN conv", "72% run on 1st DN", "Q3 OFF avg 7.2 YPP", "DEF Q4 allowing 6.1 avg"
 - "headline": Coaching recommendation. Max 8 words. Same shorthand.
 - "why": Ultra-brief context. Max 6 words.
 - "tag": "O" or "D"
