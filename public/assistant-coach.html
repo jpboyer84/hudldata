@@ -691,9 +691,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
         <!-- Small cards row -->
         <div style="display:flex;gap:10px;margin-top:2px">
-          <div class="lcard-sm" onclick="goImportGameData()">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:8px"><path d="M10 4V16M4 10H16" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
-            <div class="lcard-sm-label">Import</div>
+          <div class="lcard-sm" id="landing-hudl-btn" onclick="openHudlLoginModal()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:8px"><path d="M10 4V8M10 8L14 6M10 8L6 6" stroke="#555" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="12" r="4" stroke="#555" stroke-width="1.5"/><path d="M10 11V13" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div class="lcard-sm-label" id="landing-hudl-label">Hudl</div>
           </div>
           <div class="lcard-sm" onclick="goHelp()">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:8px"><circle cx="10" cy="10" r="7" stroke="#555" stroke-width="1.5"/><circle cx="10" cy="7" r="1" fill="#555"/><path d="M10 10V14" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -747,9 +747,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <div style="flex:1;min-width:0"><div class="lcard-title">Templates</div><div class="lcard-sub" id="tmpl-sub">Create & edit templates</div></div>
       <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
-    <div class="lcard" onclick="goImportGameData()">
-      <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M10 4V13M7 10L10 13L13 10" stroke="#e8590c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15H16" stroke="#e8590c" stroke-width="1.5" stroke-linecap="round"/></svg></div>
-      <div style="flex:1;min-width:0"><div class="lcard-title">Import game data</div><div class="lcard-sub">Upload from file or Google Drive</div></div>
+    <div class="lcard" id="lcard-hudl-conn" onclick="openHudlLoginModal()">
+      <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M7 10H13M13 10L10 7M13 10L10 13" stroke="#e8590c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="7" stroke="#e8590c" stroke-width="1.5"/></svg></div>
+      <div style="flex:1;min-width:0"><div class="lcard-title">Connect to Hudl</div><div class="lcard-sub" id="lcard-hudl-sub">Login with your Hudl account</div></div>
       <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
     <div class="lcard" onclick="openHudlPicker('tracker')">
@@ -4217,24 +4217,39 @@ function updateHudlConnectionUI() {
   var statusEl = document.getElementById('hudl-conn-status');
   var loginRow = document.getElementById('hudl-conn-row-login');
   var logoutRow = document.getElementById('hudl-conn-row-logout');
-  if (!statusEl) return;
+  var landingBtn = document.getElementById('landing-hudl-btn');
+  var landingLabel = document.getElementById('landing-hudl-label');
 
   if (session && session.cookie) {
     var name = session.email || 'Unknown';
     var team = session.teamName || ('Team ' + (session.teamId || ''));
-    statusEl.innerHTML = '✓ Connected as <strong>' + name + '</strong> (' + team + ')';
-    statusEl.style.color = '#27ae60';
+    if (statusEl) {
+      statusEl.innerHTML = '✓ Connected as <strong>' + name + '</strong> (' + team + ')';
+      statusEl.style.color = '#27ae60';
+    }
     if (loginRow) loginRow.style.display = 'none';
     if (logoutRow) logoutRow.style.display = '';
+    if (landingLabel) landingLabel.textContent = '✓ Hudl';
+    if (landingBtn) landingBtn.style.borderColor = '#27ae60';
   } else {
-    statusEl.textContent = 'Not connected — using default server session.';
-    statusEl.style.color = '';
+    if (statusEl) {
+      statusEl.textContent = 'Not connected — using default server session.';
+      statusEl.style.color = '';
+    }
     if (loginRow) loginRow.style.display = '';
     if (logoutRow) logoutRow.style.display = 'none';
+    if (landingLabel) landingLabel.textContent = 'Hudl';
+    if (landingBtn) landingBtn.style.borderColor = '';
   }
 }
 
 function openHudlLoginModal() {
+  var session = getHudlSession();
+  if (session && session.cookie) {
+    // Already connected — go to settings to manage connection
+    goSettings();
+    return;
+  }
   document.getElementById('hudl-login-email').value = '';
   document.getElementById('hudl-login-pass').value = '';
   document.getElementById('hudl-login-error').style.display = 'none';
