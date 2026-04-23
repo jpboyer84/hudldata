@@ -4217,8 +4217,8 @@ function updateHudlConnectionUI() {
   var statusEl = document.getElementById('hudl-conn-status');
   var loginRow = document.getElementById('hudl-conn-row-login');
   var logoutRow = document.getElementById('hudl-conn-row-logout');
-  var landingBtn = document.getElementById('landing-hudl-btn');
-  var landingLabel = document.getElementById('landing-hudl-label');
+  var lcardSub = document.getElementById('lcard-hudl-sub');
+  var lcardConn = document.getElementById('lcard-hudl-conn');
 
   if (session && session.cookie) {
     var name = session.email || 'Unknown';
@@ -4229,8 +4229,8 @@ function updateHudlConnectionUI() {
     }
     if (loginRow) loginRow.style.display = 'none';
     if (logoutRow) logoutRow.style.display = '';
-    if (landingLabel) landingLabel.textContent = '✓ Hudl';
-    if (landingBtn) landingBtn.style.borderColor = '#27ae60';
+    if (lcardSub) lcardSub.innerHTML = '✓ Connected as <strong>' + name + '</strong>';
+    if (lcardConn) lcardConn.style.borderColor = '#27ae60';
   } else {
     if (statusEl) {
       statusEl.textContent = 'Not connected — using default server session.';
@@ -4238,16 +4238,15 @@ function updateHudlConnectionUI() {
     }
     if (loginRow) loginRow.style.display = '';
     if (logoutRow) logoutRow.style.display = 'none';
-    if (landingLabel) landingLabel.textContent = 'Hudl';
-    if (landingBtn) landingBtn.style.borderColor = '';
+    if (lcardSub) lcardSub.textContent = 'Login with your Hudl account';
+    if (lcardConn) lcardConn.style.borderColor = '';
   }
 }
 
 function openHudlLoginModal() {
   var session = getHudlSession();
   if (session && session.cookie) {
-    // Already connected — go to settings to manage connection
-    goSettings();
+    showView('view-settings');
     return;
   }
   document.getElementById('hudl-login-email').value = '';
