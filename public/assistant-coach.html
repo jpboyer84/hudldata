@@ -2564,23 +2564,35 @@ function setNewGameType(btn, type) {
   btn.classList.add('on');
 }
 
-async function openNewGameModal() {
-  await fetchHudlColumnSets();
-  const tmpls = getAllTemplates();
-  const sel = document.getElementById('ng-tmpl');
-  sel.innerHTML = tmpls.map(function(t) {
-    var label = t.isHudl ? '⬡ ' + t.name : t.name;
-    return '<option value="' + t.id + '">' + label + '</option>';
-  }).join('');
+function openNewGameModal() {
+  // Populate dropdown with custom templates immediately
+  var sel = document.getElementById('ng-tmpl');
+  function populateTemplateDropdown() {
+    var tmpls = getAllTemplates();
+    var currentVal = sel.value;
+    sel.innerHTML = tmpls.map(function(t) {
+      var label = t.isHudl ? '⬡ ' + t.name : t.name;
+      return '<option value="' + t.id + '">' + label + '</option>';
+    }).join('');
+    if (currentVal) sel.value = currentVal;
+  }
+  populateTemplateDropdown();
+
   document.getElementById('ng-date').value = '';
   document.getElementById('ng-home').value = '';
   document.getElementById('ng-away').value = '';
   document.getElementById('ng-week').value = '';
-  // Reset type to Game
   newGameType = 'Game';
   document.querySelectorAll('#ng-type-row .sf-btn').forEach(b => b.classList.remove('on'));
   document.querySelector('#ng-type-row .sf-btn')?.classList.add('on');
   openModal('m-new-game');
+
+  // Fetch Hudl column sets in background, then update dropdown
+  if (!hudlTemplatesLoaded) {
+    fetchHudlColumnSets().then(function() {
+      populateTemplateDropdown();
+    });
+  }
 }
 
 function startGame() {
