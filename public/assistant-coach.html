@@ -749,11 +749,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <div style="flex:1;min-width:0"><div class="lcard-title">Templates</div><div class="lcard-sub" id="tmpl-sub">Create & edit templates</div></div>
       <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
-    <div class="lcard" onclick="openHudlPicker('tracker')">
-      <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="10" rx="2" stroke="#e8590c" stroke-width="1.5"/><path d="M8 8.5V11.5L11 10L8 8.5Z" fill="#e8590c"/></svg></div>
-      <div style="flex:1;min-width:0"><div class="lcard-title">Load from Hudl</div><div class="lcard-sub">Import a Hudl cutup into the tracker</div></div>
-      <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
-    </div>
   </div>
 </div>
 
@@ -2241,12 +2236,23 @@ let autoTimer = null;
 let layoutCols = 1;       // 1 or 2 column layout
 
 function openTrackerTemplateSwitcher() {
-  const tmpls = getTmpls();
+  const tmpls = getAllTemplates();
   const currentTmplId = game ? game.tmplId : '';
-  const html = tmpls.map(t => {
-    const sel = t.id === currentTmplId ? ' sel' : '';
-    return '<div class="dd-item' + sel + '" onclick="switchTrackerTemplate(\'' + t.id + '\')">' + t.name + '</div>';
-  }).join('');
+  let html = '';
+  const customTmpls = getTmpls();
+  const hudlTmpls = hudlTemplates;
+
+  customTmpls.forEach(function(t) {
+    var sel = t.id === currentTmplId ? ' sel' : '';
+    html += '<div class="dd-item' + sel + '" onclick="switchTrackerTemplate(\'' + t.id + '\')">' + t.name + '</div>';
+  });
+  if (hudlTmpls.length > 0) {
+    html += '<div style="font-size:10px;color:var(--muted);padding:8px 12px;border-top:1px solid var(--border)">HUDL COLUMN SETS</div>';
+    hudlTmpls.forEach(function(t) {
+      var sel = t.id === currentTmplId ? ' sel' : '';
+      html += '<div class="dd-item' + sel + '" onclick="switchTrackerTemplate(\'' + t.id + '\')">⬡ ' + t.name + '</div>';
+    });
+  }
   document.getElementById('switch-tmpl-list').innerHTML = html;
   openModal('m-switch-tmpl');
 }
@@ -2254,8 +2260,8 @@ function openTrackerTemplateSwitcher() {
 function switchTrackerTemplate(tmplId) {
   if (!game) return;
   game.tmplId = tmplId;
-  const tmpls = getTmpls();
-  const tmpl = tmpls.find(t => t.id === tmplId) || tmpls[0];
+  const tmpls = getAllTemplates();
+  const tmpl = tmpls.find(t => t.id === tmplId) || getTmpls()[0];
   const allCols = getCols();
   activeCols = tmpl.colIds.map(id => allCols.find(c => c.id === id)).filter(Boolean);
   persist();
@@ -2313,12 +2319,14 @@ function goTemplates() {
   showView('view-templates');
 }
 
-function renderTemplateList() {
+async function renderTemplateList() {
+  await fetchHudlColumnSets();
   const tmpls = getTmpls();
   const body = document.getElementById('tmpl-list-body');
   const sub = document.getElementById('tmpl-sub');
-  sub.textContent = `${tmpls.length} template${tmpls.length!==1?'s':''}`;
-  if (tmpls.length === 0) {
+  const totalCount = tmpls.length + hudlTemplates.length;
+  sub.textContent = `${totalCount} template${totalCount!==1?'s':''}`;
+  if (totalCount === 0) {
     body.innerHTML = '<div class="empty-msg">No templates yet.<br>Tap + NEW to create one.</div>';
     return;
   }
@@ -2338,6 +2346,21 @@ function renderTemplateList() {
       <div class="arch-meta">${colNames}</div>
     </div>`;
   });
+  // Add Hudl column sets
+  if (hudlTemplates.length > 0) {
+    h += '<div style="font-size:11px;font-weight:600;color:var(--muted);padding:14px 0 6px;border-top:1px solid var(--border);margin-top:6px">HUDL COLUMN SETS</div>';
+    hudlTemplates.forEach(t => {
+      const allCols = getCols();
+      const colNames = t.colIds.map(id => allCols.find(c=>c.id===id)?.name||id).join(', ');
+      h += `<div class="arch-card" style="flex-direction:column;align-items:flex-start;gap:10px;opacity:0.85">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+          <div class="arch-title" style="flex:1">⬡ ${t.name}</div>
+          <div style="font-size:10px;color:var(--accent);background:var(--surface2);padding:3px 8px;border-radius:4px">HUDL</div>
+        </div>
+        <div class="arch-meta">${colNames}</div>
+      </div>`;
+    });
+  }
   body.innerHTML = h;
   initTmplDragDrop(body);
 }
@@ -2541,10 +2564,14 @@ function setNewGameType(btn, type) {
   btn.classList.add('on');
 }
 
-function openNewGameModal() {
-  const tmpls = getTmpls();
+async function openNewGameModal() {
+  await fetchHudlColumnSets();
+  const tmpls = getAllTemplates();
   const sel = document.getElementById('ng-tmpl');
-  sel.innerHTML = tmpls.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  sel.innerHTML = tmpls.map(function(t) {
+    var label = t.isHudl ? '⬡ ' + t.name : t.name;
+    return '<option value="' + t.id + '">' + label + '</option>';
+  }).join('');
   document.getElementById('ng-date').value = '';
   document.getElementById('ng-home').value = '';
   document.getElementById('ng-away').value = '';
@@ -2586,8 +2613,8 @@ function loadTracker(gameId, resumePlay) {
   if (!game) return;
   if (!game.plays || game.plays.length === 0) game.plays = [{}];
 
-  const tmpls = getTmpls();
-  const tmpl = tmpls.find(t => t.id === game.tmplId) || tmpls[0];
+  const tmpls = getAllTemplates();
+  const tmpl = tmpls.find(t => t.id === game.tmplId) || getTmpls()[0];
   const allCols = getCols();
   activeCols = tmpl.colIds.map(id => allCols.find(c => c.id === id)).filter(Boolean);
 
@@ -4571,6 +4598,60 @@ async function executeHudlPush() {
 // ════════════════════════════════════════
 const HUDL_API = 'https://hudl-mcp-production.up.railway.app';
 
+// ── HUDL COLUMN SETS AS TEMPLATES ──
+
+let hudlTemplates = []; // fetched from server, not stored in localStorage
+let hudlTemplatesLoaded = false;
+
+// Reverse map: Hudl column ID → app column dataKey
+const HUDL_ID_TO_APPKEY = {
+  2626907:'dn', 2626908:'dist2', 2626909:'playtype', 2626910:'result',
+  2626911:'gainloss', 2626912:'odk', 2626913:'yardln', 2626914:'hash',
+  2626915:'series', 2626917:'offform', 2626918:'offplay', 2626932:'qtr',
+};
+
+async function fetchHudlColumnSets() {
+  var session = getHudlSession();
+  if (!session || !session.teamId) return;
+  if (hudlTemplatesLoaded) return;
+  try {
+    var resp = await hudlFetch(HUDL_API + '/api/hudl/column-sets');
+    if (!resp.ok) return;
+    var data = await resp.json();
+    var sets = data.columnSets || [];
+
+    // For each column set, load its columns
+    var templates = [];
+    for (var i = 0; i < sets.length; i++) {
+      try {
+        var cResp = await hudlFetch(HUDL_API + '/api/hudl/column-sets/' + sets[i].id);
+        if (!cResp.ok) continue;
+        var cData = await cResp.json();
+        var colIds = (cData.columns || [])
+          .map(function(c) { return HUDL_ID_TO_APPKEY[c.hudlId]; })
+          .filter(function(k) { return !!k; });
+        if (colIds.length > 0) {
+          templates.push({
+            id: 'hudl_cs_' + sets[i].id,
+            name: sets[i].name,
+            colIds: colIds,
+            isHudl: true
+          });
+        }
+      } catch(e) { console.warn('Failed to load column set', sets[i].id, e.message); }
+    }
+    hudlTemplates = templates;
+    hudlTemplatesLoaded = true;
+    console.log('Loaded ' + templates.length + ' Hudl column sets as templates');
+  } catch(e) { console.warn('Failed to fetch Hudl column sets:', e.message); }
+}
+
+// Get all templates — custom + Hudl
+function getAllTemplates() {
+  var custom = getTmpls();
+  return custom.concat(hudlTemplates);
+}
+
 
 function setStatsTab(tab) {
   ['spotlight','stats','ai','insights'].forEach(t => {
@@ -6435,6 +6516,7 @@ updateLanding();
 renderInsightsBadge();
 updateHudlConnectionUI();
 syncPlaybookFromServer();
+fetchHudlColumnSets();
 
 // File input listeners — addEventListener prevents accidental cross-trigger
 document.getElementById('ie-xlsx-input').addEventListener('change', function() { handleXlsxImport(this); });
