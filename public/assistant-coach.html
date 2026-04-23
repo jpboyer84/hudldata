@@ -3119,7 +3119,6 @@ function leaveTracker() {
     } catch(e) {}
   }
   goTrackersHub();
-  updateLanding();
 }
 
 // ── PLAY NAV ──
@@ -6179,7 +6178,7 @@ function renderInsights() {
 let archiveSelectMode = false;
 let archiveSelected = new Set();
 
-function goTrackersHub() { updateHubSubs(); showView('view-trackers-hub'); }
+function goTrackersHub() { updateLanding(); showView('view-landing'); }
 function goImportGameData() { showView('view-import-game'); }
 function goSettings() { showView('view-settings'); }
 function goPlaybook() { showView('view-settings'); }
