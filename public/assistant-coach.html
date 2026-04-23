@@ -5149,7 +5149,7 @@ async function runSpotlightAnalysis(plays, append = false) {
 ${getPlaybookContext()}
 
 Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 OFF insights (tag "O") and 2-5 DEF insights (tag "D"). Only include genuinely useful findings. Quality over quantity. Each object must have:
-- "stat": The key data point. Max 6 words. Use coaching shorthand: Q1/Q2/Q3/Q4 (never spell out quarter), 1st DN/2nd DN/3rd DN/4th DN, OFF/DEF, conv, avg, YPC, YPP, R Hash/L Hash/M, neg, comp, inc, STK, INT. Examples: "23% 3rd DN conv", "72% run on 1st DN", "Q3 OFF avg 7.2 YPP", "DEF Q4 allowing 6.1 avg"
+- "stat": The key data point. Max 6 words. Use coaching shorthand: Q1/Q2/Q3/Q4 (never spell out quarter), 1st DN/2nd DN/3rd DN/4th DN, OFF/DEF, conv, avg, R Hash/L Hash/M, neg, comp, inc, STK, INT. Examples: "23% 3rd DN conv", "72% run on 1st DN", "81% of runs gain 3+", "DEF 40% of passes gain 5+"
 - "headline": Coaching recommendation. Max 8 words. Same shorthand.
 - "why": Ultra-brief context. Max 6 words.
 - "tag": "O" or "D"
@@ -5160,7 +5160,8 @@ CRITICAL RULES:
 - DEF analysis: yards allowed, opp run/pass tendencies, 3rd DN stop rate, sacks, TFLs, INTs, down-by-down.
 - Check "playsWithYardage" and "missingYardage". If fewer than 10 plays with yardage, do NOT make avg claims.
 - Be specific with numbers. Use shorthand everywhere.
-- Do NOT repeat prior insights (listed below if follow-up).`;
+- Do NOT repeat prior insights (listed below if follow-up).
+- STAT PRIORITY: Prefer EFFICIENCY RATES over averages. Averages (YPC, YPP) are easily skewed by one big play. Instead use "% of runs gaining 3+ yds", "% of passes gaining 5+ yds", "% of plays gaining 10+ yds" (explosive rate), "% of plays going negative". These are more honest and actionable. Only use YPC/YPP if there's no better way to express the finding.`;
 
   // Inject coach feedback into prompt if available
   const fb = getSpotlightFeedback();
