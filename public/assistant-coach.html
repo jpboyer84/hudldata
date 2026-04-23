@@ -1174,6 +1174,16 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       </div>
     </div>
     <div class="settings-group">
+      <div class="settings-group-title">Hudl connection</div>
+      <div class="settings-group-sub" id="hudl-conn-status">Not connected — using default server session.</div>
+      <div class="settings-row" id="hudl-conn-row-login">
+        <div class="settings-btn" onclick="openHudlLoginModal()"><span class="settings-btn-icon">🔗</span>Connect to Hudl<span class="settings-btn-label">Login with your account</span></div>
+      </div>
+      <div class="settings-row" id="hudl-conn-row-logout" style="display:none">
+        <div class="settings-btn" onclick="disconnectHudl()" style="border-color:#e74c3c"><span class="settings-btn-icon">✕</span>Disconnect<span class="settings-btn-label">Remove saved session</span></div>
+      </div>
+    </div>
+    <div class="settings-group">
       <div class="settings-group-title">Hudl cache</div>
       <div class="settings-group-sub">Cutup lists are cached for 24 hours. Clear if new cutups aren't showing up.</div>
       <div class="settings-row">
@@ -1583,6 +1593,38 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div id="hudl-push-footer" style="padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px">
       <div id="hudl-push-status" style="font-size:11px;color:var(--muted);flex:1"></div>
       <button class="btn btn-primary" id="hudl-push-btn" onclick="executeHudlPush()" style="padding:9px 20px;font-size:12px;white-space:nowrap">PUSH →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: HUDL LOGIN
+══════════════════════════════════════ -->
+<div class="overlay" id="m-hudl-login" onclick="if(event.target===this)closeModal('m-hudl-login')">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hdr">
+      <div class="modal-title">CONNECT TO HUDL</div>
+      <div class="modal-x" onclick="closeModal('m-hudl-login')">✕</div>
+    </div>
+    <div class="modal-body" style="padding:18px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5">
+        Enter your Hudl credentials to connect your account. Your login is used to create a session — credentials are never stored.
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:11px;font-weight:600;color:var(--text);display:block;margin-bottom:4px">EMAIL</label>
+        <input type="email" id="hudl-login-email" placeholder="coach@school.edu"
+          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--card);color:var(--text);box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:600;color:var(--text);display:block;margin-bottom:4px">PASSWORD</label>
+        <input type="password" id="hudl-login-pass" placeholder="••••••••"
+          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--card);color:var(--text);box-sizing:border-box">
+      </div>
+      <div id="hudl-login-error" style="font-size:11px;color:#e74c3c;margin-bottom:10px;display:none"></div>
+      <button class="btn btn-primary" id="hudl-login-btn" onclick="submitHudlLogin()" style="width:100%;padding:12px;font-size:13px">CONNECT</button>
+      <div style="font-size:10px;color:var(--muted);margin-top:10px;text-align:center;line-height:1.4">
+        Your credentials are sent securely to create a session cookie. They are not saved or stored anywhere.
+      </div>
     </div>
   </div>
 </div>
@@ -4139,6 +4181,134 @@ function pickerCallback(data) {
 }
 
 // ════════════════════════════════════════
+// HUDL CONNECTION (per-coach auth)
+// ════════════════════════════════════════
+
+function getHudlSession() {
+  try {
+    return JSON.parse(localStorage.getItem('hd_hudl_session') || 'null');
+  } catch { return null; }
+}
+
+function saveHudlSession(session) {
+  localStorage.setItem('hd_hudl_session', JSON.stringify(session));
+}
+
+function clearHudlSession() {
+  localStorage.removeItem('hd_hudl_session');
+}
+
+// Wrapper for all Hudl API fetch calls — injects per-coach cookie if connected
+function hudlFetch(url, options) {
+  options = options || {};
+  options.headers = options.headers || {};
+  const session = getHudlSession();
+  if (session && session.cookie) {
+    options.headers['X-Hudl-Cookie'] = session.cookie;
+  }
+  if (session && session.teamId) {
+    options.headers['X-Hudl-Team'] = session.teamId;
+  }
+  return fetch(url, options);
+}
+
+function updateHudlConnectionUI() {
+  var session = getHudlSession();
+  var statusEl = document.getElementById('hudl-conn-status');
+  var loginRow = document.getElementById('hudl-conn-row-login');
+  var logoutRow = document.getElementById('hudl-conn-row-logout');
+  if (!statusEl) return;
+
+  if (session && session.cookie) {
+    var name = session.email || 'Unknown';
+    var team = session.teamName || ('Team ' + (session.teamId || ''));
+    statusEl.innerHTML = '✓ Connected as <strong>' + name + '</strong> (' + team + ')';
+    statusEl.style.color = '#27ae60';
+    if (loginRow) loginRow.style.display = 'none';
+    if (logoutRow) logoutRow.style.display = '';
+  } else {
+    statusEl.textContent = 'Not connected — using default server session.';
+    statusEl.style.color = '';
+    if (loginRow) loginRow.style.display = '';
+    if (logoutRow) logoutRow.style.display = 'none';
+  }
+}
+
+function openHudlLoginModal() {
+  document.getElementById('hudl-login-email').value = '';
+  document.getElementById('hudl-login-pass').value = '';
+  document.getElementById('hudl-login-error').style.display = 'none';
+  document.getElementById('hudl-login-btn').disabled = false;
+  document.getElementById('hudl-login-btn').textContent = 'CONNECT';
+  openModal('m-hudl-login');
+}
+
+async function submitHudlLogin() {
+  var email = document.getElementById('hudl-login-email').value.trim();
+  var pass = document.getElementById('hudl-login-pass').value;
+  var errEl = document.getElementById('hudl-login-error');
+  var btn = document.getElementById('hudl-login-btn');
+
+  if (!email || !pass) {
+    errEl.textContent = 'Enter both email and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'CONNECTING…';
+  errEl.style.display = 'none';
+
+  try {
+    var resp = await fetch(HUDL_API + '/api/hudl/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pass })
+    });
+
+    if (!resp.ok) {
+      var err = await resp.json().catch(function() { return { error: 'Login failed' }; });
+      throw new Error(err.error || 'Login failed (' + resp.status + ')');
+    }
+
+    var data = await resp.json();
+
+    if (!data.cookie) {
+      throw new Error('No session returned — check your credentials');
+    }
+
+    saveHudlSession({
+      cookie: data.cookie,
+      email: email,
+      teamId: data.teamId || null,
+      teamName: data.teamName || null,
+      teams: data.teams || [],
+      connectedAt: new Date().toISOString()
+    });
+
+    // Clear Hudl cache so library reloads with new account's data
+    clearHudlCache();
+
+    closeModal('m-hudl-login');
+    updateHudlConnectionUI();
+    showToast('Connected to Hudl as ' + email);
+
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'CONNECT';
+  }
+}
+
+function disconnectHudl() {
+  clearHudlSession();
+  clearHudlCache();
+  updateHudlConnectionUI();
+  showToast('Disconnected from Hudl');
+}
+
+// ════════════════════════════════════════
 // PUSH TO HUDL
 // ════════════════════════════════════════
 
@@ -4274,7 +4444,7 @@ async function executeHudlPush() {
   status.textContent = 'Pushing ' + totalUpdates + ' updates…';
 
   try {
-    const resp = await fetch(HUDL_API + '/api/hudl/write-bulk', {
+    const resp = await hudlFetch(HUDL_API + '/api/hudl/write-bulk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -4542,7 +4712,7 @@ async function confirmPickerStats() {
     if (cached) { cacheHits++; return { label, clips: cached, error: null }; }
     cacheMisses++;
     try {
-      const resp = await fetch(`${HUDL_API}/api/clips/${encodeURIComponent(id)}?count=1000`);
+      const resp = await hudlFetch(`${HUDL_API}/api/clips/${encodeURIComponent(id)}?count=1000`);
       if (!resp.ok) throw new Error(resp.status);
       const data = await resp.json();
       const normalized = data.clips.map(normalize);
@@ -4597,7 +4767,7 @@ async function confirmPickerTracker() {
     if (cached) {
       clips = cached;
     } else {
-      const resp = await fetch(`${HUDL_API}/api/clips/${encodeURIComponent(id)}?count=1000`);
+      const resp = await hudlFetch(`${HUDL_API}/api/clips/${encodeURIComponent(id)}?count=1000`);
       if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
       const data = await resp.json();
       clips = data.clips.map(normalize);
@@ -4869,7 +5039,7 @@ async function loadHudlLibrary() {
   document.getElementById('picker-list').innerHTML =
     '<div style="padding:16px;font-size:12px;color:var(--muted);text-align:center">Loading…</div>';
   try {
-    const resp = await fetch(`${HUDL_API}/api/library?count=500`);
+    const resp = await hudlFetch(`${HUDL_API}/api/library?count=500`);
     if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
     const data = await resp.json();
     hudlLibrary = data.items;
@@ -6184,6 +6354,7 @@ if (!localStorage.getItem('hd_cols'))  saveCols(defaultColumns());
 if (!localStorage.getItem('hd_tmpls')) saveTmpls([defaultTemplate()]);
 updateLanding();
 renderInsightsBadge();
+updateHudlConnectionUI();
 
 // File input listeners — addEventListener prevents accidental cross-trigger
 document.getElementById('ie-xlsx-input').addEventListener('change', function() { handleXlsxImport(this); });
