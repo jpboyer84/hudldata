@@ -692,8 +692,10 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         <!-- Small cards row -->
         <div style="display:flex;gap:10px;margin-top:2px">
           <div class="lcard-sm" id="landing-hudl-btn" onclick="openHudlLoginModal()">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:8px"><path d="M10 4V8M10 8L14 6M10 8L6 6" stroke="#555" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="12" r="4" stroke="#555" stroke-width="1.5"/><path d="M10 11V13" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
-            <div class="lcard-sm-label" id="landing-hudl-label">Hudl</div>
+            <div id="landing-hudl-icon" style="margin-bottom:8px">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 10H13M13 10L10 7M13 10L10 13" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="7" stroke="#555" stroke-width="1.5"/></svg>
+            </div>
+            <div class="lcard-sm-label" id="landing-hudl-label">Connect to Hudl</div>
           </div>
           <div class="lcard-sm" onclick="goHelp()">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:8px"><circle cx="10" cy="10" r="7" stroke="#555" stroke-width="1.5"/><circle cx="10" cy="7" r="1" fill="#555"/><path d="M10 10V14" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -4295,6 +4297,13 @@ function updateHudlConnectionUI() {
     if (lcardSub) lcardSub.innerHTML = '<strong>' + name + '</strong>';
     if (lcardConn) lcardConn.style.borderColor = '#27ae60';
     if (lcardIcon) lcardIcon.innerHTML = '<svg viewBox="0 0 20 20" fill="none"><path d="M6 10L9 13L14 7" stroke="#27ae60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="7" stroke="#27ae60" stroke-width="1.5"/></svg>';
+    // Bottom small button
+    var smLabel = document.getElementById('landing-hudl-label');
+    var smIcon = document.getElementById('landing-hudl-icon');
+    var smBtn = document.getElementById('landing-hudl-btn');
+    if (smLabel) smLabel.textContent = '✓ Hudl';
+    if (smBtn) smBtn.style.borderColor = '#27ae60';
+    if (smIcon) smIcon.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M6 10L9 13L14 7" stroke="#27ae60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="7" stroke="#27ae60" stroke-width="1.5"/></svg>';
   } else {
     if (statusEl) {
       statusEl.textContent = 'Not connected — using default server session.';
@@ -4306,6 +4315,13 @@ function updateHudlConnectionUI() {
     if (lcardSub) lcardSub.textContent = 'Login with your Hudl account';
     if (lcardConn) lcardConn.style.borderColor = '';
     if (lcardIcon) lcardIcon.innerHTML = '<svg viewBox="0 0 20 20" fill="none"><path d="M7 10H13M13 10L10 7M13 10L10 13" stroke="#e8590c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="7" stroke="#e8590c" stroke-width="1.5"/></svg>';
+    // Bottom small button
+    var smLabel2 = document.getElementById('landing-hudl-label');
+    var smIcon2 = document.getElementById('landing-hudl-icon');
+    var smBtn2 = document.getElementById('landing-hudl-btn');
+    if (smLabel2) smLabel2.textContent = 'Connect to Hudl';
+    if (smBtn2) smBtn2.style.borderColor = '';
+    if (smIcon2) smIcon2.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 10H13M13 10L10 7M13 10L10 13" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="7" stroke="#555" stroke-width="1.5"/></svg>';
   }
 }
 
