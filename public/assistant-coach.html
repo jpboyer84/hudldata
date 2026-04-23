@@ -797,6 +797,10 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 3V10M5 7L8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       Export XLSX
     </div>
+    <div class="tracker-menu-item" id="menu-hudl-push" onclick="openHudlPushModal();closeTrackerMenu()" style="display:none">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 13V6M5 9L8 6L11 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 4H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Push to Hudl
+    </div>
     <div style="height:1px;background:var(--border);margin:2px 0"></div>
     <div class="tracker-menu-item" onclick="clearRow();closeTrackerMenu()" style="color:var(--yellow)">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -1560,6 +1564,25 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <div style="font-size:11px;color:var(--muted);flex:1" id="picker-status"></div>
       <button class="btn btn-primary" id="picker-load-btn" onclick="confirmPicker()"
         style="padding:9px 20px;font-size:12px;white-space:nowrap">LOAD →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: PUSH TO HUDL
+══════════════════════════════════════ -->
+<div class="overlay" id="m-hudl-push" onclick="if(event.target===this)closeModal('m-hudl-push')">
+  <div class="modal" style="max-width:480px;max-height:88vh;display:flex;flex-direction:column">
+    <div class="modal-hdr" style="flex-shrink:0">
+      <div class="modal-title">PUSH TO HUDL</div>
+      <div class="modal-x" onclick="closeModal('m-hudl-push')">✕</div>
+    </div>
+    <div id="hudl-push-body" style="flex:1;overflow-y:auto;padding:14px 18px">
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:20px 0">Loading…</div>
+    </div>
+    <div id="hudl-push-footer" style="padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px">
+      <div id="hudl-push-status" style="font-size:11px;color:var(--muted);flex:1"></div>
+      <button class="btn btn-primary" id="hudl-push-btn" onclick="executeHudlPush()" style="padding:9px 20px;font-size:12px;white-space:nowrap">PUSH →</button>
     </div>
   </div>
 </div>
@@ -2486,6 +2509,9 @@ function loadTracker(gameId, resumePlay) {
     `${game.home.toUpperCase()} VS ${game.away.toUpperCase()}${weekStr}${typeStr}`;
 
   showView('view-tracker');
+  // Show "Push to Hudl" menu item only for games loaded from Hudl
+  const pushMenuItem = document.getElementById('menu-hudl-push');
+  if (pushMenuItem) pushMenuItem.style.display = game.hudlCutupId ? '' : 'none';
   renderTracker();
 }
 
@@ -4113,6 +4139,183 @@ function pickerCallback(data) {
 }
 
 // ════════════════════════════════════════
+// PUSH TO HUDL
+// ════════════════════════════════════════
+
+// Column name → Hudl columnId mapping (derived from HAR + known values analysis)
+const HUDL_COL_MAP = {
+  'odk':      { hudlName: 'ODK',       hudlId: 2626912 },
+  'qtr':      { hudlName: 'QTR',       hudlId: 2626932 },
+  'dn':       { hudlName: 'DN',        hudlId: 2626907 },
+  'yardln':   { hudlName: 'YARD LN',   hudlId: 2626913 },
+  'hash':     { hudlName: 'HASH',      hudlId: 2626914 },
+  'playtype': { hudlName: 'PLAY TYPE', hudlId: 2626909 },
+  'result':   { hudlName: 'RESULT',    hudlId: 2626910 },
+  'gainloss': { hudlName: 'GN/LS',     hudlId: 2626911 },
+  'series':   { hudlName: 'SERIES',    hudlId: 2626915 },
+  'offform':  { hudlName: 'OFF FORM',  hudlId: 2626917 },
+  'offplay':  { hudlName: 'OFF PLAY',  hudlId: 2626918 },
+};
+
+let hudlPushState = null;
+
+function openHudlPushModal() {
+  if (!game || !game.hudlCutupId) {
+    showToast('This game was not loaded from Hudl');
+    return;
+  }
+
+  const body = document.getElementById('hudl-push-body');
+  const footer = document.getElementById('hudl-push-footer');
+
+  // Find plays with clipIds and data
+  const playsWithData = game.plays.filter(p => p._clipId && Object.keys(p).some(k => k !== '_clipId' && p[k]));
+
+  if (playsWithData.length === 0) {
+    body.innerHTML = '<div style="padding:20px;text-align:center;font-size:13px;color:var(--muted)">No plays with Hudl clip IDs found.<br><br>This game needs to be re-loaded from Hudl to enable push.</div>';
+    footer.style.display = 'none';
+    openModal('m-hudl-push');
+    return;
+  }
+
+  // Determine which columns have data and are mappable
+  const activeCounts = {};
+  const sampleValues = {};
+  for (const p of playsWithData) {
+    for (const [key, mapping] of Object.entries(HUDL_COL_MAP)) {
+      const val = p[key];
+      if (val && String(val).trim()) {
+        activeCounts[key] = (activeCounts[key] || 0) + 1;
+        if (!sampleValues[key]) sampleValues[key] = String(val);
+      }
+    }
+  }
+
+  // Build preview
+  let html = '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Push your tagged data back into Hudl cutup <strong>' + game.hudlCutupId + '</strong>.</div>';
+  html += '<div style="font-size:11px;color:var(--accent);margin-bottom:10px">' + playsWithData.length + ' plays with clip IDs found</div>';
+
+  html += '<div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px">COLUMNS TO PUSH:</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">';
+
+  const mappableEntries = Object.entries(activeCounts).sort((a,b) => b[1] - a[1]);
+  if (mappableEntries.length === 0) {
+    html += '<div style="font-size:12px;color:var(--muted);padding:8px 0">No data to push — all columns are empty.</div>';
+  }
+  for (const [key, count] of mappableEntries) {
+    const m = HUDL_COL_MAP[key];
+    html += '<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:6px 8px;background:var(--card);border:1px solid var(--border);border-radius:6px;cursor:pointer">'
+      + '<input type="checkbox" data-hudl-key="' + key + '" checked style="margin:0">'
+      + '<span style="flex:1;font-weight:600">' + m.hudlName + '</span>'
+      + '<span style="color:var(--muted);font-size:10px">' + count + ' plays · e.g. "' + (sampleValues[key]||'').substring(0,20) + '"</span>'
+      + '</label>';
+  }
+  html += '</div>';
+
+  html += '<div style="font-size:11px;color:#e67e22;background:#fdf3e7;border:1px solid #f0d0a0;border-radius:6px;padding:8px 10px;margin-top:8px;line-height:1.5">'
+    + '⚠️ This will <strong>overwrite</strong> the selected columns in Hudl for all ' + playsWithData.length + ' plays. Existing values will be replaced.'
+    + '</div>';
+
+  body.innerHTML = html;
+
+  hudlPushState = { playsWithData, mappableEntries };
+
+  footer.style.display = 'flex';
+  document.getElementById('hudl-push-status').textContent = '';
+  document.getElementById('hudl-push-status').style.color = 'var(--muted)';
+  const btn = document.getElementById('hudl-push-btn');
+  btn.disabled = false;
+  btn.textContent = 'PUSH →';
+
+  openModal('m-hudl-push');
+}
+
+async function executeHudlPush() {
+  if (!game || !game.hudlCutupId || !hudlPushState) return;
+
+  const btn = document.getElementById('hudl-push-btn');
+  const status = document.getElementById('hudl-push-status');
+  btn.disabled = true;
+  btn.textContent = 'PUSHING…';
+  status.textContent = 'Preparing…';
+  status.style.color = 'var(--muted)';
+
+  // Get selected columns
+  const checkedBoxes = document.querySelectorAll('#hudl-push-body input[data-hudl-key]:checked');
+  const selectedKeys = Array.from(checkedBoxes).map(cb => cb.dataset.hudlKey);
+
+  if (selectedKeys.length === 0) {
+    showToast('Select at least one column to push');
+    btn.disabled = false;
+    btn.textContent = 'PUSH →';
+    return;
+  }
+
+  // Build columnMap and plays array for the bulk endpoint
+  const columnMap = {};
+  for (const key of selectedKeys) {
+    const m = HUDL_COL_MAP[key];
+    if (m) columnMap[m.hudlName] = m.hudlId;
+  }
+
+  const plays = hudlPushState.playsWithData.map(p => {
+    const row = { clipId: p._clipId };
+    for (const key of selectedKeys) {
+      const m = HUDL_COL_MAP[key];
+      if (m) {
+        const val = p[key];
+        row[m.hudlName] = (val && String(val).trim()) ? String(val) : null;
+      }
+    }
+    return row;
+  });
+
+  const totalUpdates = plays.length * selectedKeys.length;
+  status.textContent = 'Pushing ' + totalUpdates + ' updates…';
+
+  try {
+    const resp = await fetch(HUDL_API + '/api/hudl/write-bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cutupId: game.hudlCutupId,
+        columnMap: columnMap,
+        plays: plays
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(function() { return { error: resp.statusText }; });
+      throw new Error(err.error || 'Server error ' + resp.status);
+    }
+
+    const result = await resp.json();
+
+    if (result.errors > 0) {
+      status.textContent = 'Done: ' + result.success + ' ok, ' + result.errors + ' errors';
+      status.style.color = '#e67e22';
+      btn.textContent = 'DONE (WITH ERRORS)';
+      showToast('Pushed with ' + result.errors + ' errors');
+    } else {
+      status.textContent = '✓ ' + result.success + ' updates pushed successfully';
+      status.style.color = '#27ae60';
+      btn.textContent = '✓ DONE';
+      showToast('Pushed ' + result.success + ' updates to Hudl!');
+    }
+
+    console.log('Hudl push results:', result);
+
+  } catch (e) {
+    console.error('Hudl push error:', e);
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = '#e74c3c';
+    btn.textContent = 'RETRY →';
+    btn.disabled = false;
+    showToast('Push failed: ' + e.message);
+  }
+}
+
+// ════════════════════════════════════════
 // STATS & ANALYSIS
 // ════════════════════════════════════════
 const HUDL_API = 'https://hudl-mcp-production.up.railway.app';
@@ -4381,6 +4584,7 @@ async function confirmPickerTracker() {
   status.textContent = 'Loading plays…';
 
   const normalize = c => ({
+    _clipId: String(c.id||''),
     odk: String(c.odk||''), qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
     yardln: String(c.yard_line||''), hash: String(c.hash||''), playtype: String(c.play_type||''),
     result: String(c.result||''), gainloss: String(c.gain_loss||''), offform: String(c.off_form||''),
@@ -4413,12 +4617,16 @@ async function confirmPickerTracker() {
     const weekMatch = label.match(/[Ww]k\s*0*(\d+)/);
     const week = weekMatch ? weekMatch[1] : '';
 
+    // Resolve numeric cutup ID for write-back
+    const numericCutupId = id.match(/\d+$/) ? id.match(/\d+$/)[0] : id;
+
     const tmplId = getTmpls()[0]?.id || '';
     const g = {
       id: Date.now().toString(),
       home, away, week, date: '',
       tmplId, plays,
       hudlSource: label,
+      hudlCutupId: numericCutupId,
       createdAt: new Date().toISOString()
     };
     const games = getGames();
