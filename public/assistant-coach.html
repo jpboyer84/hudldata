@@ -5161,7 +5161,7 @@ CRITICAL RULES:
 - Check "playsWithYardage" and "missingYardage". If fewer than 10 plays with yardage, do NOT make avg claims.
 - Be specific with numbers. Use shorthand everywhere.
 - Do NOT repeat prior insights (listed below if follow-up).
-- STAT PRIORITY: Prefer EFFICIENCY RATES over averages. Averages (YPC, YPP) are easily skewed by one big play. Instead use "% of runs gaining 3+ yds", "% of passes gaining 5+ yds", "% of plays gaining 10+ yds" (explosive rate), "% of plays going negative". These are more honest and actionable. Only use YPC/YPP if there's no better way to express the finding.`;
+- STAT PRIORITY: Prefer EFFICIENCY RATES over averages. Averages (YPC, YPP) are easily skewed by one big play. Instead use "% of runs gaining 3+ yds", "% of runs gaining <3 yds" (stuff rate — how often the run game gets stopped), "% of passes gaining 5+ yds", "% of pass plays gaining 0 yds" (combines incompletions, sacks, and throwaways into one stat — better than completion % alone), "% of plays gaining 10+ yds" (explosive rate), "% of plays going negative". These are more honest and actionable. Only use YPC/YPP if there's no better way to express the finding.`;
 
   // Inject coach feedback into prompt if available
   const fb = getSpotlightFeedback();
