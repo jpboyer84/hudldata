@@ -4623,13 +4623,16 @@ const HUDL_ID_TO_APPKEY = {
 
 async function fetchHudlColumnSets() {
   var session = getHudlSession();
-  if (!session || !session.teamId) return;
-  if (hudlTemplatesLoaded) return;
+  if (!session || !session.cookie) { console.log('fetchHudlColumnSets: no session'); return; }
+  if (hudlTemplatesLoaded) { console.log('fetchHudlColumnSets: already loaded'); return; }
+  console.log('fetchHudlColumnSets: fetching... teamId=' + session.teamId);
   try {
     var resp = await hudlFetch(HUDL_API + '/api/hudl/column-sets');
+    console.log('fetchHudlColumnSets: response status=' + resp.status);
     if (!resp.ok) return;
     var data = await resp.json();
     var sets = data.columnSets || [];
+    console.log('fetchHudlColumnSets: got ' + sets.length + ' sets');
 
     var templates = [];
     for (var i = 0; i < sets.length; i++) {
@@ -4647,8 +4650,8 @@ async function fetchHudlColumnSets() {
     }
     hudlTemplates = templates;
     hudlTemplatesLoaded = true;
-    console.log('Loaded ' + templates.length + ' Hudl column sets as templates');
-  } catch(e) { console.warn('Failed to fetch Hudl column sets:', e.message); }
+    console.log('fetchHudlColumnSets: loaded ' + templates.length + ' templates');
+  } catch(e) { console.warn('fetchHudlColumnSets error:', e.message); }
 }
 
 // Get all templates — custom + Hudl
