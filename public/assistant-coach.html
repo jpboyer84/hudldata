@@ -779,6 +779,10 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><rect x="3" y="3" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 6H13" stroke="currentColor" stroke-width="1.5" opacity="0.5"/></svg>
       Save as template
     </div>
+    <div class="tracker-menu-item" onclick="openTrackerTemplateSwitcher();closeTrackerMenu()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><rect x="3" y="3" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 6H13M8 6V13" stroke="currentColor" stroke-width="1.5" opacity="0.5"/></svg>
+      Switch template
+    </div>
     <div class="tracker-menu-item" onclick="openExportXlsxModal();closeTrackerMenu()">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 3V10M5 7L8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       Export XLSX
@@ -1046,6 +1050,17 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <button class="btn btn-secondary" onclick="closeModal('m-confirm')">Cancel</button>
       <button class="btn btn-primary" id="m-confirm-ok">Confirm</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL: SWITCH TEMPLATE -->
+<div class="overlay" id="m-switch-tmpl" onclick="if(event.target===this)closeModal('m-switch-tmpl')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hdr">
+      <div class="modal-title">Switch template</div>
+      <div class="modal-x" onclick="closeModal('m-switch-tmpl')">✕</div>
+    </div>
+    <div class="modal-body" style="padding:0" id="switch-tmpl-list"></div>
   </div>
 </div>
 
@@ -1723,7 +1738,7 @@ function defaultColumns() {
       list: numList(-99,99)
     },
     {
-      id:'series', name:'SERIES', type:'list',
+      id:'series', name:'SERIES', type:'numpad',
       list: numList(1,20)
     },
     {
@@ -1744,7 +1759,7 @@ function defaultColumns() {
       id:'backfield', name:'BACKFIELD', type:'btns_dd',
       btns:[{l:'GUN',v:'Gun'},{l:'I-FORM',v:'I-Form'},{l:'PRO',v:'Pro'},{l:'PISTOL',v:'Pistol'}],
       ddLbl:'MORE',
-      dd:['Ace','Empty','Full House','Gun','Gun Left','Gun Right','Gun Strong','Gun Weak','I-Form','I-Near','I-Strong','I-Weak','Pro','Pro Ace','Pro Strong','Pro Weak','Pistol','Pistol Left','Pistol Right','Wing-T','Single Wing','Flexbone','Split Back','Wildcat']
+      dd:['Ace','Empty','Full House','Gun','Gun Left','Gun Right','Gun Strong','Gun Weak','I-Form','I-Near','I-Strong','I-Weak','Pro','Pro Ace','Pro Strong','Pro Weak','Pistol','Pistol Left','Pistol Right','Strong','Weak','Wing-T','Single Wing','Flexbone','Split Back','Wildcat']
     },
     {
       id:'blitz', name:'BLITZ', type:'btns_dd',
@@ -1784,7 +1799,7 @@ function defaultColumns() {
       id:'retspot', name:'RET SPOT', type:'numpad'
     },
     {
-      id:'retyds', name:'RET YDS', type:'calc', calcFn:'calcRetYds'
+      id:'retyds', name:'RET YARDS', type:'calc', calcFn:'calcRetYds'
     }
   ];
 }
@@ -1990,6 +2005,30 @@ let playIdx = 0;          // current play index
 let activeCols = [];      // resolved columns for current game
 let autoTimer = null;
 let layoutCols = 1;       // 1 or 2 column layout
+
+function openTrackerTemplateSwitcher() {
+  const tmpls = getTmpls();
+  const currentTmplId = game ? game.tmplId : '';
+  const html = tmpls.map(t => {
+    const sel = t.id === currentTmplId ? ' sel' : '';
+    return '<div class="dd-item' + sel + '" onclick="switchTrackerTemplate(\'' + t.id + '\')">' + t.name + '</div>';
+  }).join('');
+  document.getElementById('switch-tmpl-list').innerHTML = html;
+  openModal('m-switch-tmpl');
+}
+
+function switchTrackerTemplate(tmplId) {
+  if (!game) return;
+  game.tmplId = tmplId;
+  const tmpls = getTmpls();
+  const tmpl = tmpls.find(t => t.id === tmplId) || tmpls[0];
+  const allCols = getCols();
+  activeCols = tmpl.colIds.map(id => allCols.find(c => c.id === id)).filter(Boolean);
+  persist();
+  closeModal('m-switch-tmpl');
+  renderTracker();
+  showToast('Switched to ' + tmpl.name);
+}
 
 function toggleTrackerMenu() {
   const menu = document.getElementById('tracker-menu');
@@ -5808,10 +5847,10 @@ async function sendHelpChat() {
 // ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
-if (localStorage.getItem('hd_ver') !== '14') {
+if (localStorage.getItem('hd_ver') !== '15') {
   localStorage.removeItem('hd_cols');
   localStorage.removeItem('hd_tmpls');
-  localStorage.setItem('hd_ver', '14');
+  localStorage.setItem('hd_ver', '15');
 }
 if (!localStorage.getItem('hd_cols'))  saveCols(defaultColumns());
 if (!localStorage.getItem('hd_tmpls')) saveTmpls([defaultTemplate()]);
