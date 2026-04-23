@@ -748,8 +748,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
     <div class="lcard" id="lcard-hudl-conn" onclick="openHudlLoginModal()">
-      <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M7 10H13M13 10L10 7M13 10L10 13" stroke="#e8590c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="7" stroke="#e8590c" stroke-width="1.5"/></svg></div>
-      <div style="flex:1;min-width:0"><div class="lcard-title">Connect to Hudl</div><div class="lcard-sub" id="lcard-hudl-sub">Login with your Hudl account</div></div>
+      <div class="lcard-icon" id="lcard-hudl-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M7 10H13M13 10L10 7M13 10L10 13" stroke="#e8590c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="7" stroke="#e8590c" stroke-width="1.5"/></svg></div>
+      <div style="flex:1;min-width:0"><div class="lcard-title" id="lcard-hudl-title">Connect to Hudl</div><div class="lcard-sub" id="lcard-hudl-sub">Login with your Hudl account</div></div>
       <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
     <div class="lcard" onclick="openHudlPicker('tracker')">
@@ -4277,8 +4277,10 @@ function updateHudlConnectionUI() {
   var statusEl = document.getElementById('hudl-conn-status');
   var loginRow = document.getElementById('hudl-conn-row-login');
   var logoutRow = document.getElementById('hudl-conn-row-logout');
+  var lcardTitle = document.getElementById('lcard-hudl-title');
   var lcardSub = document.getElementById('lcard-hudl-sub');
   var lcardConn = document.getElementById('lcard-hudl-conn');
+  var lcardIcon = document.getElementById('lcard-hudl-icon');
 
   if (session && session.cookie) {
     var name = session.email || 'Unknown';
@@ -4289,8 +4291,10 @@ function updateHudlConnectionUI() {
     }
     if (loginRow) loginRow.style.display = 'none';
     if (logoutRow) logoutRow.style.display = '';
-    if (lcardSub) lcardSub.innerHTML = '✓ Connected as <strong>' + name + '</strong>';
+    if (lcardTitle) lcardTitle.textContent = '✓ Hudl Connected';
+    if (lcardSub) lcardSub.innerHTML = '<strong>' + name + '</strong>';
     if (lcardConn) lcardConn.style.borderColor = '#27ae60';
+    if (lcardIcon) lcardIcon.innerHTML = '<svg viewBox="0 0 20 20" fill="none"><path d="M6 10L9 13L14 7" stroke="#27ae60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="7" stroke="#27ae60" stroke-width="1.5"/></svg>';
   } else {
     if (statusEl) {
       statusEl.textContent = 'Not connected — using default server session.';
@@ -4298,8 +4302,10 @@ function updateHudlConnectionUI() {
     }
     if (loginRow) loginRow.style.display = '';
     if (logoutRow) logoutRow.style.display = 'none';
+    if (lcardTitle) lcardTitle.textContent = 'Connect to Hudl';
     if (lcardSub) lcardSub.textContent = 'Login with your Hudl account';
     if (lcardConn) lcardConn.style.borderColor = '';
+    if (lcardIcon) lcardIcon.innerHTML = '<svg viewBox="0 0 20 20" fill="none"><path d="M7 10H13M13 10L10 7M13 10L10 13" stroke="#e8590c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="7" stroke="#e8590c" stroke-width="1.5"/></svg>';
   }
 }
 
