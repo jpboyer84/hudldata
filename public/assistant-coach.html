@@ -4864,11 +4864,15 @@ async function confirmPickerStats() {
   const hudlResults = await Promise.all(hudlChecked.map(async chk => {
     const id = chk.value.replace('local_', '');
     const label = chk.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || id;
+    // Use cache for stats (10 min TTL) — analysis doesn't need real-time freshness
+    const cached = getCachedClips(id);
+    if (cached) return { label, clips: cached, error: null };
     try {
       const resp = await hudlFetch(`${HUDL_API}/api/clips/${encodeURIComponent(id)}?count=1000`);
       if (!resp.ok) throw new Error(resp.status);
       const data = await resp.json();
       const normalized = data.clips.map(normalize);
+      setCachedClips(id, normalized, label);
       return { label, clips: normalized, error: null };
     } catch(e) { return { label, clips: [], error: e.message }; }
   }));
@@ -5076,7 +5080,7 @@ function goStats() {
 // ════════════════════════════════════════
 const CACHE_KEY_PREFIX = 'hd_cache_';
 const CACHE_META_KEY = 'hd_cache_meta';
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 function getCacheMeta() {
   try { return JSON.parse(localStorage.getItem(CACHE_META_KEY) || '{}'); } catch { return {}; }
