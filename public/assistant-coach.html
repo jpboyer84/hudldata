@@ -2059,7 +2059,65 @@ function getPlaybook() {
   try { return { ...PLAYBOOK_DEFAULTS, ...JSON.parse(localStorage.getItem('hd_playbook') || 'null') }; }
   catch { return { ...PLAYBOOK_DEFAULTS }; }
 }
-function savePlaybookData(d) { localStorage.setItem('hd_playbook', JSON.stringify(d)); }
+function savePlaybookData(d) {
+  localStorage.setItem('hd_playbook', JSON.stringify(d));
+  localStorage.setItem('hd_playbook_updated', new Date().toISOString());
+  // Push to shared server if connected to Hudl
+  pushPlaybookToServer(d);
+}
+
+function pushPlaybookToServer(pb) {
+  var session = getHudlSession();
+  if (!session || !session.teamId) return;
+  hudlFetch(HUDL_API + '/api/playbook/' + session.teamId, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playbook: pb, updatedBy: session.email || 'unknown' })
+  }).then(function(resp) {
+    if (resp.ok) console.log('Playbook synced to server');
+    else console.warn('Playbook sync failed:', resp.status);
+  }).catch(function(e) { console.warn('Playbook sync error:', e.message); });
+}
+
+async function syncPlaybookFromServer() {
+  var session = getHudlSession();
+  if (!session || !session.teamId) return;
+  try {
+    var resp = await hudlFetch(HUDL_API + '/api/playbook/' + session.teamId);
+    if (!resp.ok) return;
+    var data = await resp.json();
+    if (!data.playbook) return;
+
+    // Compare timestamps — server wins if newer
+    var local = getPlaybook();
+    var localUpdated = localStorage.getItem('hd_playbook_updated') || '0';
+    var serverUpdated = data.playbook._updatedAt || '0';
+
+    if (serverUpdated > localUpdated) {
+      // Server has newer data — merge it in (server overwrites local for each non-empty section)
+      var merged = { ...local };
+      var serverPb = data.playbook;
+      var sections = ['team','terms','runplays','passplays','formations','tags','statrules','general'];
+      var changes = 0;
+      for (var i = 0; i < sections.length; i++) {
+        var key = sections[i];
+        if (serverPb[key] && serverPb[key] !== local[key]) {
+          merged[key] = serverPb[key];
+          changes++;
+        }
+      }
+      if (changes > 0) {
+        localStorage.setItem('hd_playbook', JSON.stringify(merged));
+        localStorage.setItem('hd_playbook_updated', serverUpdated);
+        console.log('Playbook synced from server (' + changes + ' sections updated)');
+        showToast('Playbook synced from team (' + changes + ' updates)');
+      }
+    } else {
+      // Local is same or newer — push local to server
+      pushPlaybookToServer(local);
+    }
+  } catch(e) { console.warn('Playbook sync error:', e.message); }
+}
 
 function getPlaybookContext() {
   const pb = getPlaybook();
@@ -4308,6 +4366,7 @@ async function submitHudlLogin() {
     closeModal('m-hudl-login');
     updateHudlConnectionUI();
     showToast('Connected to Hudl as ' + email);
+    syncPlaybookFromServer();
 
   } catch (e) {
     errEl.textContent = e.message;
@@ -6369,6 +6428,7 @@ if (!localStorage.getItem('hd_tmpls')) saveTmpls([defaultTemplate()]);
 updateLanding();
 renderInsightsBadge();
 updateHudlConnectionUI();
+syncPlaybookFromServer();
 
 // File input listeners — addEventListener prevents accidental cross-trigger
 document.getElementById('ie-xlsx-input').addEventListener('change', function() { handleXlsxImport(this); });
