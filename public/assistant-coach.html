@@ -4718,19 +4718,14 @@ async function confirmPickerStats() {
     offplay: String(c.off_play||''),
   });
 
-  let cacheHits = 0, cacheMisses = 0;
   const hudlResults = await Promise.all(hudlChecked.map(async chk => {
     const id = chk.value.replace('local_', '');
     const label = chk.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || id;
-    const cached = getCachedClips(id);
-    if (cached) { cacheHits++; return { label, clips: cached, error: null }; }
-    cacheMisses++;
     try {
       const resp = await hudlFetch(`${HUDL_API}/api/clips/${encodeURIComponent(id)}?count=1000`);
       if (!resp.ok) throw new Error(resp.status);
       const data = await resp.json();
       const normalized = data.clips.map(normalize);
-      setCachedClips(id, normalized, label);
       return { label, clips: normalized, error: null };
     } catch(e) { return { label, clips: [], error: e.message }; }
   }));
@@ -4776,17 +4771,10 @@ async function confirmPickerTracker() {
   });
 
   try {
-    let clips;
-    const cached = getCachedClips(id);
-    if (cached) {
-      clips = cached;
-    } else {
-      const resp = await hudlFetch(`${HUDL_API}/api/clips/${encodeURIComponent(id)}?count=1000`);
-      if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
-      const data = await resp.json();
-      clips = data.clips.map(normalize);
-      setCachedClips(id, clips, label);
-    }
+    const resp = await hudlFetch(`${HUDL_API}/api/clips/${encodeURIComponent(id)}?count=1000`);
+    if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
+    const data = await resp.json();
+    const clips = data.clips.map(normalize);
 
     if (clips.length === 0) { showToast('No plays found in this cutup'); return; }
 
