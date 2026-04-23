@@ -4886,8 +4886,7 @@ async function confirmPickerStats() {
   const allLabels   = [...localLabels, ...hudlLabels];
   statsLabel = allLabels.length === 1 ? allLabels[0] : `${allLabels.length} sources combined`;
 
-  const cacheInfo = cacheHits > 0 ? ` (${cacheHits} cached)` : '';
-  showToast(`Loaded ${allPlays.length} plays${cacheInfo}`);
+  showToast(`Loaded ${allPlays.length} plays`);
   closeModal('m-cutup-picker');
 
   try { renderStatsFromData(allPlays, statsLabel, false); } catch(e) {
@@ -4897,7 +4896,8 @@ async function confirmPickerStats() {
   setStatsTab('spotlight');
   setStatsSubTab('overview');
   updateActiveLabel(`${statsLabel} · ${allPlays.length} plays`);
-  runSpotlightAnalysis(allPlays);
+  // Fire spotlight in background — don't block the UI
+  setTimeout(function() { runSpotlightAnalysis(allPlays); }, 100);
 }
 
 async function confirmPickerTracker() {
