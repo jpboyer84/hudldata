@@ -201,7 +201,7 @@ body {
 }
 .t-btn:active { transform: scale(0.94); }
 .t-btn.sel { background: var(--sel-bg) !important; color: var(--sel-text) !important; border-color: var(--sel-bg) !important; font-weight: 700; }
-.t-btn.list-open { font-size: 18px; color: #aaa; }
+.t-btn.list-open { font-size: 18px; color: #fff; }
 .t-btn.list-open.has-val { color: #fff; font-size: 18px; }
 .t-btn.sm { font-size: 15px; }
 
@@ -680,6 +680,15 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
           <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
         </div>
 
+        <div class="lcard" onclick="goPlaybook()" style="padding:22px 22px">
+          <div class="lcard-icon" style="width:48px;height:48px;border-radius:12px"><svg viewBox="0 0 20 20" fill="none" style="width:22px;height:22px"><path d="M5 3H15V17H5V3Z" stroke="#e8590c" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 7H12M8 10H12M8 13H10" stroke="#e8590c" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/></svg></div>
+          <div style="flex:1;min-width:0">
+            <div class="lcard-title" style="font-size:18px">Playbook</div>
+            <div class="lcard-sub">Teach the AI your system</div>
+          </div>
+          <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+
         <!-- Small cards row -->
         <div style="display:flex;gap:10px;margin-top:2px">
           <div class="lcard-sm" onclick="goImportGameData()">
@@ -760,6 +769,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div class="hdr-title" id="tracker-title" onclick="openEditGameModal()" style="cursor:pointer">Game</div>
     <div style="display:flex;gap:5px">
       <button class="hdr-btn" id="layout-btn" onclick="toggleLayout()">▤ 1COL</button>
+      <button class="hdr-btn white" onclick="openTrackerColPicker()">+ Add</button>
       <button class="hdr-btn" onclick="toggleTrackerMenu()" id="tracker-menu-btn" style="font-size:18px;padding:4px 10px;line-height:1">⋯</button>
     </div>
   </div>
@@ -1800,6 +1810,90 @@ function defaultColumns() {
     },
     {
       id:'retyds', name:'RET YARDS', type:'calc', calcFn:'calcRetYds'
+    },
+    {
+      id:'tackler1', name:'TACKLER 1', type:'numpad'
+    },
+    {
+      id:'tackler2', name:'TACKLER 2', type:'numpad'
+    },
+    {
+      id:'rusher', name:'RUSHER', type:'numpad'
+    },
+    {
+      id:'slant', name:'SLANT', type:'buttons',
+      btns:[{l:'L',v:'Left'},{l:'R',v:'Right'},{l:'TWIST',v:'Twist'}]
+    },
+    {
+      id:'covshell', name:'COV SHELL', type:'buttons',
+      btns:[{l:'0',v:'0'},{l:'1',v:'1'},{l:'2',v:'2'}]
+    },
+    {
+      id:'covtype', name:'COV TYPE', type:'buttons',
+      btns:[{l:'MAN',v:'Man'},{l:'ZONE',v:'Zone'},{l:'MIX',v:'Mix'}]
+    },
+    {
+      id:'returner', name:'RETURNER', type:'numpad'
+    },
+    {
+      id:'recoveredby', name:'RECOVERED BY', type:'numpad'
+    },
+    {
+      id:'receiver', name:'RECEIVER', type:'numpad'
+    },
+    {
+      id:'playdir', name:'PLAY DIR', type:'buttons',
+      btns:[{l:'L',v:'L'},{l:'R',v:'R'}]
+    },
+    {
+      id:'personnel', name:'PERSONNEL', type:'buttons',
+      btns:[{l:'00',v:'00'},{l:'10',v:'10'},{l:'11',v:'11'},{l:'12',v:'12'},{l:'13',v:'13'},{l:'20',v:'20'},{l:'21',v:'21'},{l:'22',v:'22'},{l:'EMPTY',v:'EMPTY'},{l:'3 TE',v:'3 TE'}]
+    },
+    {
+      id:'penalty', name:'PENALTY', type:'buttons',
+      btns:[{l:'DEF',v:'Def'},{l:'OFF',v:'Off'},{l:'BOTH',v:'Both'}]
+    },
+    {
+      id:'penyds', name:'PEN YARDS', type:'numpad'
+    },
+    {
+      id:'passer', name:'PASSER', type:'numpad'
+    },
+    {
+      id:'passzone', name:'PASS ZONE', type:'buttons',
+      btns:[{l:'1',v:'1'},{l:'2',v:'2'},{l:'3',v:'3'},{l:'4',v:'4'},{l:'5',v:'5'},{l:'6',v:'6'},{l:'7',v:'7'},{l:'8',v:'8'},{l:'9',v:'9'}]
+    },
+    {
+      id:'offstr', name:'OFF STR', type:'buttons',
+      btns:[{l:'L',v:'L'},{l:'BAL',v:'Bal'},{l:'R',v:'R'}]
+    },
+    {
+      id:'offplay', name:'OFF PLAY', type:'btns_dd',
+      btns:[],
+      ddLbl:'SELECT',
+      dd:[]
+    },
+    {
+      id:'motiondir', name:'MOTION DIR', type:'buttons',
+      btns:[{l:'L',v:'L'},{l:'R',v:'R'}]
+    },
+    {
+      id:'motion', name:'MOTION', type:'btns_dd',
+      btns:[],
+      ddLbl:'SELECT',
+      dd:[]
+    },
+    {
+      id:'kicker', name:'KICKER', type:'numpad'
+    },
+    {
+      id:'keyplayer', name:'KEY PLAYER', type:'numpad'
+    },
+    {
+      id:'blocking', name:'BLOCKING', type:'btns_dd',
+      btns:[],
+      ddLbl:'SELECT',
+      dd:[]
     }
   ];
 }
@@ -1831,7 +1925,25 @@ const PLAYBOOK_DEFAULTS = {
 School = Full School Name, City, State
 Rivalry Games = Opponent 1, Opponent 2, Opponent 3`,
 
-  terms: ``,
+  terms: `LOS = Line of scrimmage
+Pass pro = Pass protection
+Cov Shell = Number of safeties (0, 1, or 2)
+Cov Type = Coverage type (Man, Zone, or Mix)
+Off Str = Offensive strength direction (L, Bal, R)
+Play Dir = Direction the play is designed to go
+Pen Yards = Penalty yards
+STK = Special teams / kicking
+DN = Down
+YPC = Yards per carry
+YPP = Yards per play
+conv = conversion
+avg = average
+comp = completion
+inc = incomplete
+neg = negative
+INT = interception
+TFL = tackle for loss
+RZ = red zone`,
 
   runplays: `Play Name = Concept (e.g. Power Right)
 Play Name = Concept (e.g. Counter Left)
@@ -2452,12 +2564,16 @@ function esc(s) { return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 const PLAYBOOK_COL_MAP = {
   // By column ID
   offform: 'formations',
+  offplay: 'runplays',
+  motion: 'tags',
+  blocking: 'runplays',
   // By column name (lowercase) — catches custom columns
   'formation': 'formations', 'formations': 'formations', 'off form': 'formations',
   'run play': 'runplays', 'run plays': 'runplays',
   'pass play': 'passplays', 'pass plays': 'passplays',
   'motion': 'tags', 'tag': 'tags', 'tags': 'tags', 'tags & motion': 'tags',
   'off play': 'runplays', 'play': 'runplays', 'play name': 'runplays', 'play call': 'runplays',
+  'blocking': 'runplays',
 };
 
 // Some columns should pull from multiple playbook sections
@@ -2466,6 +2582,8 @@ const PLAYBOOK_COL_MULTI = {
   'play': ['runplays', 'passplays'],
   'play name': ['runplays', 'passplays'],
   'play call': ['runplays', 'passplays'],
+  'offplay': ['runplays', 'passplays'],
+  'blocking': ['runplays', 'passplays'],
 };
 
 function getPlaybookNames(sectionKey) {
@@ -5530,6 +5648,7 @@ let archiveSelected = new Set();
 function goTrackersHub() { updateHubSubs(); showView('view-trackers-hub'); }
 function goImportGameData() { showView('view-import-game'); }
 function goSettings() { showView('view-settings'); }
+function goPlaybook() { showView('view-settings'); }
 function goHelp() { setHelpTab('faq'); showView('view-help'); }
 function leaveStats() { showView(statsReturnView); }
 
@@ -5847,10 +5966,10 @@ async function sendHelpChat() {
 // ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
-if (localStorage.getItem('hd_ver') !== '15') {
+if (localStorage.getItem('hd_ver') !== '16') {
   localStorage.removeItem('hd_cols');
   localStorage.removeItem('hd_tmpls');
-  localStorage.setItem('hd_ver', '15');
+  localStorage.setItem('hd_ver', '16');
 }
 if (!localStorage.getItem('hd_cols'))  saveCols(defaultColumns());
 if (!localStorage.getItem('hd_tmpls')) saveTmpls([defaultTemplate()]);
