@@ -907,6 +907,11 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <div class="modal-x" onclick="closeModal('m-new-game')">✕</div>
     </div>
     <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <div onclick="closeModal('m-new-game');goArchive()" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Archive</div>
+        <div onclick="closeModal('m-new-game');goImportGameData()" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Import</div>
+        <div onclick="closeModal('m-new-game');openHudlPicker('tracker')" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Load Hudl</div>
+      </div>
       <div class="fg"><label class="fl">Template</label><select class="fi" id="ng-tmpl"></select></div>
       <div class="fg"><label class="fl">Type</label>
         <div style="display:flex;gap:6px" id="ng-type-row">
@@ -923,16 +928,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         <div class="fg" style="flex:1"><label class="fl">Date <span style="color:var(--muted);font-size:9px">(optional)</span></label><input class="fi" id="ng-date" placeholder="e.g. 10/4/2025" /></div>
       </div>
     </div>
-    <div class="modal-foot" style="flex-direction:column;gap:10px">
-      <div style="display:flex;gap:10px;width:100%">
-        <button class="btn btn-secondary" onclick="closeModal('m-new-game')" style="flex:1">Cancel</button>
-        <button class="btn btn-primary" onclick="startGame()" style="flex:1">START GAME</button>
-      </div>
-      <div style="display:flex;gap:8px;width:100%">
-        <div onclick="closeModal('m-new-game');goArchive()" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Archive</div>
-        <div onclick="closeModal('m-new-game');goImportGameData()" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Import</div>
-        <div onclick="closeModal('m-new-game');openHudlPicker('tracker')" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Load Hudl</div>
-      </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('m-new-game')" style="flex:1">Cancel</button>
+      <button class="btn btn-primary" onclick="startGame()" style="flex:1">START GAME</button>
     </div>
   </div>
 </div>
@@ -1552,9 +1550,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
         <button class="sf-btn" id="pk-l-home" onclick="togglePickerFilter('location','home')">HOME</button>
         <button class="sf-btn" id="pk-l-away" onclick="togglePickerFilter('location','away')">AWAY</button>
-        <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
-        <button class="sf-btn" id="pk-g-conference" onclick="togglePickerFilter('group','conference')">CONF</button>
-        <button class="sf-btn" id="pk-g-big3"      onclick="togglePickerFilter('group','big3')">BIG 3</button>
       </div>
     </div>
     <!-- Checklist -->
