@@ -661,7 +661,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       </div>
 
       <!-- Main cards -->
-      <div style="flex:1;padding:32px 20px 20px;display:flex;flex-direction:column;gap:12px">
+      <div style="flex:1;padding:32px 20px 20px;display:flex;flex-direction:column;gap:12px;max-width:500px;margin:0 auto;width:100%">
 
         <div class="lcard" onclick="openNewGameModal()" style="padding:22px 22px">
           <div class="lcard-icon" style="width:48px;height:48px;border-radius:12px"><svg viewBox="0 0 20 20" fill="none" style="width:22px;height:22px"><rect x="3" y="4" width="14" height="12" rx="2" stroke="#e8590c" stroke-width="1.5"/><path d="M3 8H17" stroke="#e8590c" stroke-width="1.5"/><path d="M7 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/><path d="M11 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/></svg></div>
@@ -712,7 +712,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     </div>
 
     <!-- Status bar - last game tracked -->
-    <div style="padding:16px 20px 24px;border-top:1px solid #1a1a1c;flex-shrink:0">
+    <div style="padding:16px 20px 24px;border-top:1px solid #1a1a1c;flex-shrink:0;max-width:500px;margin:0 auto;width:100%">
       <div id="landing-last-game" onclick="loadLastGame()" style="background:#161618;border:1px solid #222224;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent">
         <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0"></div>
         <div style="flex:1;min-width:0">
