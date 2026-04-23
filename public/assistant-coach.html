@@ -4619,25 +4619,19 @@ async function fetchHudlColumnSets() {
     var data = await resp.json();
     var sets = data.columnSets || [];
 
-    // For each column set, load its columns
     var templates = [];
     for (var i = 0; i < sets.length; i++) {
-      try {
-        var cResp = await hudlFetch(HUDL_API + '/api/hudl/column-sets/' + sets[i].id);
-        if (!cResp.ok) continue;
-        var cData = await cResp.json();
-        var colIds = (cData.columns || [])
-          .map(function(c) { return HUDL_ID_TO_APPKEY[c.hudlId]; })
-          .filter(function(k) { return !!k; });
-        if (colIds.length > 0) {
-          templates.push({
-            id: 'hudl_cs_' + sets[i].id,
-            name: sets[i].name,
-            colIds: colIds,
-            isHudl: true
-          });
-        }
-      } catch(e) { console.warn('Failed to load column set', sets[i].id, e.message); }
+      var colIds = (sets[i].columns || [])
+        .map(function(c) { return c.appKey; })
+        .filter(function(k) { return !!k; });
+      if (colIds.length > 0) {
+        templates.push({
+          id: 'hudl_cs_' + sets[i].id,
+          name: sets[i].name,
+          colIds: colIds,
+          isHudl: true
+        });
+      }
     }
     hudlTemplates = templates;
     hudlTemplatesLoaded = true;
