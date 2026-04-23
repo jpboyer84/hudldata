@@ -3,31 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Assistant Coach</title>
+<title>Hudl Data</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Nunito:wght@800;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0c0c0e;
-  --surface: #161618;
-  --surface2: #1e1e20;
-  --border: #222224;
-  --col-border: #2a2a2c;
+  --bg: #111111;
+  --surface: #1e1e1e;
+  --surface2: #2a2a2a;
+  --border: #3a3a3a;
+  --col-border: #555555;
   --text: #ffffff;
-  --muted: #aaa;
-  --muted2: #ccc;
+  --muted: #777777;
   --sel-bg: #ffffff;
   --sel-text: #000000;
-  --accent: #e8590c;
-  --red: #ef4444;
-  --yellow: #f59e0b;
-  --blue: #3b82f6;
-  --green: #22c55e;
-  --radius: 12px;
-  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
-  --font-btn: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  --red: #ff4444;
+  --yellow: #ffb400;
+  --blue: #4a9eff;
+  --green: #44cc66;
+  --radius: 8px;
+  --font-ui: 'IBM Plex Mono', monospace;
+  --font-btn: 'Nunito', sans-serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -47,116 +45,81 @@ body {
 /* ── HEADER ── */
 .hdr {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 12px; height: 52px;
-  background: #111113; border-bottom: 1px solid var(--border);
-  flex-shrink: 0; gap: 6px;
+  padding: 0 12px; height: 50px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; gap: 8px;
 }
 .hdr-title {
-  font-family: var(--font-btn); font-weight: 600; font-size: 15px;
-  color: var(--text); letter-spacing: 0.02em; text-align: center; flex: 1;
+  font-family: var(--font-btn); font-weight: 900; font-size: 15px;
+  color: var(--text); letter-spacing: 0.06em; text-align: center; flex: 1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.hdr-sub {
-  font-size: 10px; color: var(--muted); margin-top: 1px; font-weight: 400;
-}
 .hdr-btn {
-  font-family: var(--font-ui); font-size: 11px; font-weight: 600;
-  padding: 7px 12px; border-radius: 7px; border: 1px solid var(--border);
-  background: var(--surface2); color: var(--muted2); cursor: pointer;
-  white-space: nowrap; letter-spacing: 0.02em; flex-shrink: 0;
+  font-family: var(--font-ui); font-size: 10px; font-weight: 600;
+  padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text); cursor: pointer;
+  white-space: nowrap; letter-spacing: 0.04em; flex-shrink: 0;
 }
 .hdr-btn:active { opacity: 0.7; }
-.hdr-btn.red { color: var(--red); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); }
-.hdr-btn.yellow { color: var(--yellow); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
-.hdr-btn.white { background: var(--accent); color: #fff; border-color: var(--accent); }
-.hdr-btn.blue { color: var(--blue); border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.08); }
+.hdr-btn.red { color: var(--red); border-color: rgba(255,68,68,0.4); background: rgba(255,68,68,0.08); }
+.hdr-btn.yellow { color: var(--yellow); border-color: rgba(255,180,0,0.4); background: rgba(255,180,0,0.08); }
+.hdr-btn.white { background: #fff; color: #000; border-color: #fff; }
+.hdr-btn.blue { color: var(--blue); border-color: rgba(74,158,255,0.4); background: rgba(74,158,255,0.08); }
 
 /* ════════════════════════════════════════
    LANDING PAGE
 ════════════════════════════════════════ */
 #view-landing .lbody {
   flex: 1; overflow-y: auto; padding: 20px 16px 30px;
-  display: flex; flex-direction: column; gap: 10px;
+  display: flex; flex-direction: column; gap: 12px;
   -webkit-overflow-scrolling: touch;
 }
 
 .landing-logo {
-  text-align: center; padding: 16px 0 8px;
-}
-.landing-logo-icon {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 56px; height: 56px; border-radius: 14px;
-  background: linear-gradient(135deg, #e8590c, #d9480f); margin-bottom: 12px;
-}
-.landing-logo-icon svg { width: 28px; height: 28px; }
-.landing-logo-title {
-  font-family: var(--font-btn); font-weight: 700; font-size: 22px;
-  letter-spacing: 0.04em; color: var(--text);
-}
-.landing-logo-sub {
-  font-size: 11px; color: var(--muted); letter-spacing: 0.08em; font-weight: 500; margin-top: 4px;
+  font-family: var(--font-btn); font-weight: 900; font-size: 32px;
+  letter-spacing: 0.12em; text-align: center; padding: 16px 0 24px;
 }
 
 .lcard {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 14px; padding: 18px 20px; cursor: pointer;
+  background: var(--surface); border: 1.5px solid var(--col-border);
+  border-radius: 12px; padding: 20px; cursor: pointer;
   display: flex; align-items: center; gap: 16px;
   user-select: none; transition: background 0.1s;
 }
 .lcard:active { background: var(--surface2); }
-.lcard-icon {
-  width: 42px; height: 42px; border-radius: 10px;
-  background: rgba(232,89,12,0.12);
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.lcard-icon svg { width: 20px; height: 20px; }
-.lcard-icon.neutral { background: rgba(255,255,255,0.06); }
-.lcard-icon.neutral svg path, .lcard-icon.neutral svg circle, .lcard-icon.neutral svg rect { stroke: #555; }
+.lcard-icon { font-size: 26px; width: 40px; text-align: center; flex-shrink: 0; }
 .lcard-title {
-  font-family: var(--font-btn); font-weight: 600; font-size: 16px;
-  letter-spacing: 0.02em; margin-bottom: 3px; color: var(--text);
+  font-family: var(--font-btn); font-weight: 900; font-size: 17px;
+  letter-spacing: 0.06em; margin-bottom: 3px;
 }
-.lcard-sub { font-size: 13px; color: var(--muted); }
-.lcard-arrow { color: var(--muted); flex-shrink: 0; }
-
-/* Small cards row */
-.lcard-row { display: flex; gap: 10px; }
-.lcard-sm {
-  flex: 1; background: var(--surface); border: 1px solid var(--border);
-  border-radius: 14px; padding: 18px 16px; text-align: center;
-  cursor: pointer; user-select: none;
-}
-.lcard-sm:active { background: var(--surface2); }
-.lcard-sm svg { margin-bottom: 8px; }
-.lcard-sm-label { font-size: 12px; font-weight: 600; color: var(--muted2); }
+.lcard-sub { font-size: 11px; color: var(--muted); }
 
 /* ════════════════════════════════════════
    SPREADSHEET BAR
 ════════════════════════════════════════ */
 .sheet-bar {
   display: flex; overflow-x: auto;
-  background: #111113; border-bottom: 1px solid var(--border);
+  background: var(--surface); border-bottom: 1px solid var(--border);
   flex-shrink: 0; -webkit-overflow-scrolling: touch;
 }
 .sheet-bar::-webkit-scrollbar { display: none; }
 
 .s-cell {
-  display: flex; flex-direction: column; padding: 7px 13px;
-  border-right: 1px solid #1a1a1c; min-width: 56px; flex-shrink: 0;
+  display: flex; flex-direction: column; padding: 5px 10px;
+  border-right: 1px solid var(--border); min-width: 56px; flex-shrink: 0;
   cursor: pointer; user-select: none; align-items: center; text-align: center;
 }
 .s-cell:active { background: var(--surface2); }
-.s-cell.play-cell { min-width: 52px; background: var(--accent); cursor: pointer; }
-.s-cell-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; line-height: 1; margin-bottom: 2px; font-weight: 500; }
-.s-cell-val { font-family: var(--font-btn); font-weight: 700; font-size: 16px; color: var(--muted2); line-height: 1; min-height: 16px; }
-.s-cell.play-cell .s-cell-lbl { color: rgba(255,255,255,0.6); }
-.s-cell.play-cell .s-cell-val { font-size: 18px; color: #fff; }
+.s-cell.play-cell { min-width: 42px; background: var(--surface2); cursor: pointer; }
+.s-cell-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; line-height: 1; margin-bottom: 2px; }
+.s-cell-val { font-family: var(--font-btn); font-weight: 900; font-size: 15px; color: var(--text); line-height: 1; min-height: 15px; }
+.s-cell.play-cell .s-cell-val { font-size: 15px; }
 
 /* ════════════════════════════════════════
    TRACKER BODY
 ════════════════════════════════════════ */
 .tracker-body {
-  flex: 1; overflow-y: auto; padding: 12px;
+  flex: 1; overflow-y: auto; padding: 10px;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -166,58 +129,43 @@ body {
 
 /* COLUMN CARD */
 .col-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; overflow: hidden;
+  background: var(--surface); border: 1.5px solid var(--col-border);
+  border-radius: 10px; overflow: hidden;
 }
 .col-card-hdr {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 5px 10px; background: #1a1a1c;
+  padding: 7px 12px; background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
 .col-card-name {
-  font-family: var(--font-btn); font-weight: 600; font-size: 10px;
-  color: var(--muted2); letter-spacing: 0.08em; text-transform: uppercase;
+  font-family: var(--font-btn); font-weight: 900; font-size: 12px;
+  color: var(--text); letter-spacing: 0.08em;
 }
 .col-card-arrow { color: var(--muted); font-size: 9px; }
-.col-card-body { padding: 8px; background: var(--bg); }
+.col-card-body { padding: 7px; background: var(--bg); }
 
 /* BUTTON GRID INSIDE COLUMN */
 .btn-grid { display: grid; gap: 6px; }
 .bg-2 { grid-template-columns: 1fr 1fr; }
 .bg-3 { grid-template-columns: 1fr 1fr 1fr; }
 .bg-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-.bg-5 { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
 .bg-1 { grid-template-columns: 1fr; }
 
 /* TRACKER BUTTON */
 .t-btn {
-  font-family: var(--font-btn); font-weight: 600; font-size: 18px;
-  color: #fff; background: var(--surface2); border: 1px solid var(--col-border);
-  border-radius: 10px; height: 64px; cursor: pointer;
+  font-family: var(--font-btn); font-weight: 900; font-size: 18px;
+  color: var(--text); background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 7px; height: 72px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   text-align: center; user-select: none; transition: transform 0.1s;
   letter-spacing: 0.02em; padding: 4px;
   -webkit-tap-highlight-color: transparent;
 }
 .t-btn:active { transform: scale(0.94); }
-.t-btn.sel { background: var(--sel-bg) !important; color: var(--sel-text) !important; border-color: var(--sel-bg) !important; font-weight: 700; }
-.t-btn.list-open { font-size: 18px; color: #aaa; }
-.t-btn.list-open.has-val { color: #fff; font-size: 18px; }
-.t-btn.sm { font-size: 15px; }
-
-/* NUMPAD INPUT */
-.numpad-input {
-  font-family: var(--font-btn); font-weight: 700; font-size: 22px;
-  color: #fff; background: var(--surface2); border: 1px solid var(--col-border);
-  border-radius: 10px; height: 64px; width: 100%;
-  text-align: center; outline: none;
-  -webkit-appearance: none; -moz-appearance: textfield;
-}
-.numpad-input:focus { border-color: var(--accent); background: #1a1a1c; }
-.numpad-input.has-val { background: var(--sel-bg); color: var(--sel-text); border-color: var(--sel-bg); }
-.numpad-input::placeholder { color: #666; font-weight: 500; font-size: 16px; }
-.numpad-input::-webkit-inner-spin-button,
-.numpad-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.t-btn.sel { background: var(--sel-bg) !important; color: var(--sel-text) !important; border-color: var(--sel-bg) !important; font-weight: 900; }
+.t-btn.list-open { font-size: 18px; color: var(--text); }
+.t-btn.list-open.has-val { color: var(--text); font-size: 18px; }
+.t-btn.sm { font-size: 16px; }
 
 /* ════════════════════════════════════════
    NAV BAR
@@ -227,25 +175,15 @@ body {
   height: 60px; flex-shrink: 0; border-top: 1px solid var(--border);
 }
 .nav-btn {
-  font-family: var(--font-btn); font-weight: 600; font-size: 14px;
-  letter-spacing: 0.02em; cursor: pointer; border: none;
+  font-family: var(--font-btn); font-weight: 900; font-size: 14px;
+  letter-spacing: 0.05em; cursor: pointer; border: none;
   display: flex; align-items: center; justify-content: center;
   user-select: none;
 }
 .nav-btn:active { opacity: 0.8; }
-.nav-prev { background: #111113; color: #999; border-right: 1px solid var(--border); }
-.nav-mid { background: #111113; color: #999; }
-.nav-new { background: var(--accent); color: #ffffff; font-weight: 700; border-left: 1px solid var(--border); }
-.nav-next { background: #111113; color: #999; border-left: 1px solid var(--border); }
-
-/* TRACKER DROPDOWN MENU */
-.tracker-menu-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 18px; font-family: var(--font-btn); font-weight: 600;
-  font-size: 14px; color: var(--text); cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.tracker-menu-item:active { background: var(--surface2); }
+.nav-prev { background: #222; color: #ccc; border-right: 1px solid var(--border); }
+.nav-new { background: #ffffff; color: #000000; }
+.nav-next { background: #222; color: #ccc; border-left: 1px solid var(--border); }
 
 /* ════════════════════════════════════════
    MODALS
@@ -259,44 +197,43 @@ body {
 
 .modal {
   background: var(--surface); border: 1px solid var(--col-border);
-  border-radius: 16px; width: 100%; max-width: 420px;
+  border-radius: 14px; width: 100%; max-width: 420px;
   max-height: 82dvh; display: flex; flex-direction: column; overflow: hidden;
 }
 
 .modal-hdr {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  padding: 14px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
-.modal-title { font-family: var(--font-btn); font-weight: 600; font-size: 15px; letter-spacing: 0.02em; }
+.modal-title { font-family: var(--font-btn); font-weight: 900; font-size: 16px; letter-spacing: 0.06em; }
 .modal-x { font-size: 18px; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 6px; }
 .modal-x:active { background: var(--border); }
 
-.modal-body { flex: 1; overflow-y: auto; padding: 16px 20px; -webkit-overflow-scrolling: touch; }
-.modal-foot { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0; }
+.modal-body { flex: 1; overflow-y: auto; padding: 16px 18px; -webkit-overflow-scrolling: touch; }
+.modal-foot { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0; }
 
 /* FORM */
 .fg { margin-bottom: 14px; }
-.fl { display: block; font-size: 10px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 5px; font-weight: 500; }
+.fl { display: block; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
 .fi {
-  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
-  padding: 11px 14px; color: var(--text); font-family: var(--font-ui); font-size: 14px; outline: none;
-  transition: border-color 0.15s;
+  width: 100%; background: #111; border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 13px; color: var(--text); font-family: var(--font-ui); font-size: 14px; outline: none;
 }
-.fi:focus { border-color: var(--accent); }
+.fi:focus { border-color: var(--col-border); }
 select.fi { cursor: pointer; -webkit-appearance: none; }
 
 /* BUTTONS */
-.btn { font-family: var(--font-btn); font-weight: 600; font-size: 14px; padding: 11px 20px; border-radius: 10px; border: none; cursor: pointer; letter-spacing: 0.02em; }
+.btn { font-family: var(--font-btn); font-weight: 900; font-size: 13px; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; letter-spacing: 0.04em; }
 .btn:active { opacity: 0.8; }
-.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary { background: #fff; color: #000; }
 .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-.btn-full { width: 100%; padding: 15px; margin-top: 16px; background: var(--accent); color: #fff; border: none; border-radius: 12px; font-family: var(--font-btn); font-weight: 600; font-size: 14px; letter-spacing: 0.02em; cursor: pointer; }
+.btn-full { width: 100%; padding: 15px; margin-top: 16px; background: #fff; color: #000; border: none; border-radius: 10px; font-family: var(--font-btn); font-weight: 900; font-size: 15px; letter-spacing: 0.06em; cursor: pointer; }
 .btn-full:active { opacity: 0.85; }
 
 /* LIST PICKER */
 .list-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .list-item {
-  padding: 13px 20px; font-family: var(--font-btn); font-weight: 600; font-size: 16px;
+  padding: 13px 20px; font-family: var(--font-btn); font-weight: 900; font-size: 18px;
   color: var(--text); text-align: center; cursor: pointer; border-bottom: 1px solid var(--border);
 }
 .list-item:active { background: var(--surface2); }
@@ -304,7 +241,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
 /* DROPDOWN ITEMS */
 .dd-item {
-  padding: 13px 18px; font-family: var(--font-btn); font-weight: 600; font-size: 14px;
+  padding: 13px 18px; font-family: var(--font-btn); font-weight: 900; font-size: 15px;
   color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border);
 }
 .dd-item:active { background: var(--surface2); }
@@ -316,15 +253,15 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .abody { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch; }
 
 .arch-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 16px; display: flex;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 16px; display: flex;
   align-items: center; justify-content: space-between; cursor: pointer;
 }
 .arch-card:active { background: var(--surface2); }
-.arch-title { font-family: var(--font-btn); font-weight: 600; font-size: 16px; margin-bottom: 3px; }
-.arch-meta { font-size: 12px; color: var(--muted); }
+.arch-title { font-family: var(--font-btn); font-weight: 900; font-size: 16px; margin-bottom: 3px; }
+.arch-meta { font-size: 11px; color: var(--muted); }
 .arch-arrow { font-size: 20px; color: var(--muted); }
-.arch-tmpl { font-size: 10px; color: var(--accent); letter-spacing: 0.02em; margin-top: 2px; }
+.arch-tmpl { font-size: 10px; color: var(--blue); letter-spacing: 0.04em; margin-top: 2px; }
 
 .empty-msg { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 12px; line-height: 2.2; }
 
@@ -334,18 +271,18 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 #view-template-builder .tbody { flex: 1; overflow-y: auto; padding: 16px; -webkit-overflow-scrolling: touch; }
 
 .col-pick {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 13px 14px; margin-bottom: 8px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 13px 14px; margin-bottom: 8px;
   display: flex; align-items: center; gap: 13px; cursor: pointer; user-select: none;
 }
-.col-pick.sel { border-color: var(--accent); background: rgba(232,89,12,0.06); }
+.col-pick.sel { border-color: var(--col-border); background: #252525; }
 .col-pick:active { opacity: 0.8; }
 .col-pick-check {
-  width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 6px;
+  width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 5px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px;
 }
-.col-pick.sel .col-pick-check { background: var(--accent); border-color: var(--accent); color: #fff; }
-.col-pick-name { font-family: var(--font-btn); font-weight: 600; font-size: 14px; letter-spacing: 0.02em; }
+.col-pick.sel .col-pick-check { background: var(--text); border-color: var(--text); color: #000; }
+.col-pick-name { font-family: var(--font-btn); font-weight: 900; font-size: 15px; letter-spacing: 0.04em; }
 .col-pick-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
 /* DRAG HANDLE */
@@ -357,11 +294,11 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 }
 .drag-handle:active { cursor: grabbing; }
 .col-pick.dragging { opacity: 0.4; }
-.col-pick.drag-over { border-color: var(--accent); background: rgba(232,89,12,0.06); }
+.col-pick.drag-over { border-color: #fff; background: #2e2e2e; }
 .arch-card.dragging { opacity: 0.4; }
-.arch-card.drag-over { border-color: var(--accent); background: rgba(232,89,12,0.06); }
+.arch-card.drag-over { border-color: #fff; background: #2e2e2e; }
 
-.sec-label { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; padding: 6px 2px 10px; font-weight: 500; }
+.sec-label { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 2px 10px; }
 
 /* ════════════════════════════════════════
    COLUMN BUILDER
@@ -370,18 +307,18 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
 .btn-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .btn-input {
-  flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  flex: 1; background: #111; border: 1px solid var(--border); border-radius: 8px;
   padding: 10px 13px; color: var(--text); font-family: var(--font-ui); font-size: 14px; outline: none;
 }
-.btn-input:focus { border-color: var(--accent); }
+.btn-input:focus { border-color: var(--col-border); }
 .btn-rm {
-  width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3);
-  background: rgba(239,68,68,0.08); color: var(--red); font-size: 16px;
+  width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,68,68,0.3);
+  background: rgba(255,68,68,0.08); color: var(--red); font-size: 16px;
   cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .btn-rm:active { opacity: 0.7; }
 .add-btn-row {
-  width: 100%; padding: 10px; border: 1.5px dashed var(--border); border-radius: 10px;
+  width: 100%; padding: 10px; border: 1.5px dashed var(--border); border-radius: 8px;
   background: transparent; color: var(--muted); font-family: var(--font-ui); font-size: 12px;
   cursor: pointer; text-align: center; margin-top: 4px;
 }
@@ -390,12 +327,12 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 /* PLAY NAV GRID */
 .play-nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .pn-item {
-  background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
-  padding: 13px 4px; text-align: center; font-family: var(--font-btn); font-weight: 600;
-  font-size: 15px; cursor: pointer;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 13px 4px; text-align: center; font-family: var(--font-btn); font-weight: 900;
+  font-size: 16px; cursor: pointer;
 }
 .pn-item:active { opacity: 0.7; }
-.pn-item.cur { background: var(--accent); color: #fff; border-color: var(--accent); }
+.pn-item.cur { background: var(--text); color: var(--bg); border-color: var(--text); }
 .pn-item.filled { color: var(--text); }
 .pn-item.empty { color: var(--muted); }
 
@@ -403,105 +340,77 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .toast {
   position: fixed; bottom: 76px; left: 50%;
   transform: translateX(-50%) translateY(10px);
-  background: var(--surface2); color: var(--text); font-family: var(--font-ui); font-size: 12px;
-  padding: 10px 20px; border-radius: 20px; opacity: 0;
+  background: #333; color: var(--text); font-family: var(--font-ui); font-size: 12px;
+  padding: 8px 18px; border-radius: 20px; opacity: 0;
   transition: all 0.2s; pointer-events: none; z-index: 999; white-space: nowrap;
-  border: 1px solid var(--border);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* SETTINGS */
 .settings-body { flex: 1; overflow-y: auto; padding: 16px; -webkit-overflow-scrolling: touch; }
-.settings-group { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
-.settings-group-title { font-family: var(--font-btn); font-weight: 600; font-size: 14px; letter-spacing: 0.02em; margin-bottom: 4px; }
+.settings-group { background: var(--surface); border: 1.5px solid var(--col-border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+.settings-group-title { font-family: var(--font-btn); font-weight: 900; font-size: 15px; letter-spacing: 0.06em; margin-bottom: 4px; }
 .settings-group-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
 .settings-row { display: flex; gap: 10px; margin-bottom: 10px; }
 .settings-row:last-child { margin-bottom: 0; }
-.settings-btn { flex: 1; padding: 14px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; text-align: center; font-family: var(--font-btn); font-weight: 600; font-size: 12px; color: var(--muted2); letter-spacing: 0.02em; }
+.settings-btn { flex: 1; padding: 14px 10px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface2); cursor: pointer; text-align: center; font-family: var(--font-btn); font-weight: 900; font-size: 13px; color: var(--text); letter-spacing: 0.04em; }
 .settings-btn:active { opacity: 0.8; }
 .settings-btn-icon { font-size: 20px; display: block; margin-bottom: 4px; }
-.settings-btn-label { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; }
+.settings-btn-label { font-size: 11px; color: var(--muted); display: block; margin-top: 2px; }
 .export-choice { display: flex; gap: 10px; margin-top: 10px; }
-.export-choice-btn { flex: 1; padding: 16px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; text-align: center; font-family: var(--font-btn); font-weight: 600; font-size: 14px; color: var(--text); }
+.export-choice-btn { flex: 1; padding: 16px 10px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface2); cursor: pointer; text-align: center; font-family: var(--font-btn); font-weight: 900; font-size: 14px; color: var(--text); }
 .export-choice-btn:active { opacity: 0.8; }
 .export-choice-icon { font-size: 24px; display: block; margin-bottom: 6px; }
 
 .stats-subtab {
-  flex: 1; min-width: 70px; padding: 9px 6px; font-size: 11px;
-  font-family: var(--font-btn); font-weight: 600; letter-spacing: 0.03em;
+  flex: 1; min-width: 70px; padding: 8px 6px; font-size: 10px;
+  font-family: var(--font-btn); font-weight: 900; letter-spacing: 0.03em;
   background: none; border: none; border-bottom: 2px solid transparent;
   color: var(--muted); cursor: pointer; white-space: nowrap;
   transition: color .15s, border-color .15s;
 }
-.stats-subtab.active { color: var(--text); border-bottom-color: var(--accent); }
+.stats-subtab.active { color: var(--text); border-bottom-color: var(--yellow); }
 
-/* Spotlight legend */
-.spotlight-legend {
-  display: flex; gap: 4px; flex-wrap: wrap; padding: 10px 0 6px;
-}
-.spotlight-legend-item {
-  display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted);
-  padding: 5px 10px; background: var(--surface); border-radius: 6px; border: 1px solid var(--border);
-  font-family: var(--font-ui); font-weight: 500;
-}
-.spotlight-legend-dot {
-  width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
-}
-
-/* Spotlight cards — category-based colors */
+/* Spotlight cards */
 .spotlight-card {
-  background: var(--surface); border-radius: 12px; padding: 18px; margin-bottom: 10px;
-  border: 1px solid var(--border); border-left: 3px solid var(--border);
+  background: var(--surface); border-radius: 10px; padding: 16px; margin-bottom: 10px;
+  border: 1px solid var(--border);
 }
-.spotlight-card.cat-alert { border-left-color: var(--red); }
-.spotlight-card.cat-tendency { border-left-color: var(--yellow); }
-.spotlight-card.cat-edge { border-left-color: var(--green); }
-.spotlight-card.cat-intel { border-left-color: var(--blue); }
-
-/* Backward compat: map old priority classes to categories */
-.spotlight-card.high { border-left-color: var(--red); }
-.spotlight-card.medium { border-left-color: var(--yellow); }
-.spotlight-card.low { border-left-color: var(--blue); }
-
-.spotlight-stat { font-family: var(--font-btn); font-weight: 700; font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
-.spotlight-headline { font-size: 14px; color: #ddd; margin-bottom: 4px; font-weight: 500; }
-
-.spotlight-why { font-size: 12px; color: #bbb; line-height: 1.5; }
-.spotlight-tag { display: inline-block; font-size: 10px; font-family: var(--font-btn); font-weight: 600;
-  padding: 3px 8px; border-radius: 4px; margin-bottom: 10px; letter-spacing: 0.04em; }
-.spotlight-tag.tag-alert { color: var(--red); background: rgba(239,68,68,0.1); }
-.spotlight-tag.tag-tendency { color: var(--yellow); background: rgba(245,158,11,0.1); }
-.spotlight-tag.tag-edge { color: var(--green); background: rgba(34,197,94,0.1); }
-.spotlight-tag.tag-intel { color: var(--blue); background: rgba(59,130,246,0.1); }
-/* Backward compat for old tags */
-.spotlight-tag:not(.tag-alert):not(.tag-tendency):not(.tag-edge):not(.tag-intel) {
-  color: var(--muted); background: var(--surface2);
-}
-
+.spotlight-card.high { border-color: var(--red); }
+.spotlight-card.medium { border-color: var(--yellow); }
+.spotlight-card.low { border-color: var(--border); }
+.spotlight-stat { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.spotlight-headline { font-family: var(--font-btn); font-weight: 900; font-size: 18px; line-height: 1.3; margin-bottom: 8px; }
+.spotlight-card.high .spotlight-headline { color: var(--red); }
+.spotlight-card.medium .spotlight-headline { color: var(--yellow); }
+.spotlight-card.low .spotlight-headline { color: var(--blue); }
+.spotlight-why { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.spotlight-tag { display: inline-block; font-size: 9px; font-family: var(--font-btn); font-weight: 900;
+  padding: 2px 6px; border-radius: 4px; margin-bottom: 10px; letter-spacing: 0.05em; color: var(--muted); background: var(--surface2); }
 .spotlight-loading { display: flex; align-items: center; gap: 10px; padding: 16px; color: var(--muted); font-size: 12px; }
-.spotlight-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite; }
+.spotlight-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); animation: pulse 1s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
 .stats-tab {
-  flex: 1; font-family: var(--font-btn); font-weight: 600; font-size: 13px;
-  letter-spacing: 0.02em; padding: 13px 4px; text-align: center;
+  flex: 1; font-family: var(--font-btn); font-weight: 900; font-size: 11px;
+  letter-spacing: 0.08em; padding: 11px 4px; text-align: center;
   color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent;
   cursor: pointer;
 }
-.stats-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.stats-tab.active { color: var(--text); border-bottom-color: var(--text); }
 .tab-panel { display: flex; flex: 1; overflow: hidden; }
 .tab-panel.abody { overflow-y: auto; flex-direction: column; padding: 16px; gap: 0; }
 .tab-panel.sbody { overflow-y: auto; flex-direction: column; padding: 14px; gap: 14px; }
 
 .sf-btn {
-  font-family: var(--font-btn); font-weight: 600; font-size: 11px;
-  padding: 7px 12px; border-radius: 7px; border: 1px solid var(--border);
+  font-family: var(--font-btn); font-weight: 900; font-size: 10px;
+  padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
   background: var(--surface2); color: var(--muted); cursor: pointer;
-  white-space: nowrap; letter-spacing: 0.02em; flex-shrink: 0;
+  white-space: nowrap; letter-spacing: 0.04em; flex-shrink: 0;
 }
-.sf-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.sf-btn.on { background: #fff; color: #000; border-color: #fff; }
 .sf-row { display: flex; gap: 5px; align-items: center; overflow-x: auto; }
-.sf-label { font-size: 9px; color: var(--muted); letter-spacing: 0.06em;
+.sf-label { font-size: 9px; color: var(--muted); letter-spacing: 0.08em;
   font-family: var(--font-ui); white-space: nowrap; flex-shrink: 0; }
 
 /* SCROLLBAR */
@@ -517,7 +426,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   -webkit-overflow-scrolling: touch;
 }
 .stat-card {
-  background: var(--surface); border: 1px solid var(--border);
+  background: var(--surface); border: 1.5px solid var(--col-border);
   border-radius: 12px; padding: 16px;
 }
 .stat-section-toggle {
@@ -531,30 +440,30 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 .stat-section-body.collapsed { display: none; }
 
 /* Defense color accent */
-.stat-card.defense { border-color: rgba(232,89,12,0.3); }
-.stat-card.defense .stat-card-title { color: var(--accent); }
-.stat-card.defense .bar-fill { background: var(--accent); }
-.stat-card.defense .bar-fill span { color: #fff; }
+.stat-card.defense { border-color: rgba(255,120,70,0.4); }
+.stat-card.defense .stat-card-title { color: #ff8855; }
+.stat-card.defense .bar-fill { background: #ff8855; }
+.stat-card.defense .bar-fill span { color: #000; }
 
 .stat-card-title {
-  font-family: var(--font-btn); font-weight: 600; font-size: 12px;
-  letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; text-transform: uppercase;
+  font-family: var(--font-btn); font-weight: 900; font-size: 11px;
+  letter-spacing: 0.1em; color: var(--muted); margin-bottom: 12px; text-transform: uppercase;
 }
 .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
 .bar-label {
-  font-family: var(--font-btn); font-weight: 600; font-size: 13px;
-  min-width: 70px; text-align: right; flex-shrink: 0; color: var(--muted2);
+  font-family: var(--font-btn); font-weight: 900; font-size: 13px;
+  min-width: 90px; text-align: right; flex-shrink: 0; color: var(--text);
 }
-.bar-track { flex: 1; height: 28px; background: var(--surface2); border-radius: 6px; overflow: hidden; }
-.bar-fill { height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.4s; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; }
-.bar-fill span { font-family: var(--font-btn); font-weight: 700; font-size: 12px; color: #fff; white-space: nowrap; }
+.bar-track { flex: 1; height: 26px; background: var(--surface2); border-radius: 5px; overflow: hidden; }
+.bar-fill { height: 100%; background: #fff; border-radius: 5px; transition: width 0.4s; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; }
+.bar-fill span { font-family: var(--font-btn); font-weight: 900; font-size: 12px; color: #000; white-space: nowrap; }
 .stat-big-row { display: flex; gap: 10px; }
 .stat-big {
-  flex: 1; background: var(--surface2); border-radius: 10px; padding: 16px 10px;
+  flex: 1; background: var(--surface2); border-radius: 10px; padding: 14px 10px;
   text-align: center;
 }
-.stat-big-val { font-family: var(--font-btn); font-weight: 700; font-size: 28px; color: var(--text); }
-.stat-big-lbl { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; margin-top: 3px; }
+.stat-big-val { font-family: var(--font-btn); font-weight: 900; font-size: 28px; color: var(--text); }
+.stat-big-lbl { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; margin-top: 3px; }
 
 /* CHAT */
 .chat-messages {
@@ -562,10 +471,10 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   padding: 10px 14px; -webkit-overflow-scrolling: touch; min-height: 0;
 }
 .chat-msg {
-  max-width: 88%; padding: 12px 16px; border-radius: 12px;
-  font-size: 14px; line-height: 1.6;
+  max-width: 88%; padding: 10px 14px; border-radius: 10px;
+  font-size: 13px; line-height: 1.6;
 }
-.chat-msg.user { background: var(--accent); color: #fff; align-self: flex-end; font-family: var(--font-btn); font-weight: 600; }
+.chat-msg.user { background: #fff; color: #000; align-self: flex-end; font-family: var(--font-btn); font-weight: 900; }
 .chat-msg.assistant { background: var(--surface2); color: var(--text); align-self: flex-start; font-family: var(--font-ui); }
 .chat-msg.thinking { color: var(--muted); font-style: italic; }
 .chat-input-row {
@@ -573,27 +482,27 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   border-top: 1px solid var(--border); flex-shrink: 0;
 }
 .chat-input {
-  flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+  flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
   padding: 10px 13px; color: var(--text); font-family: var(--font-ui); font-size: 13px; outline: none;
 }
-.chat-input:focus { border-color: var(--accent); }
+.chat-input:focus { border-color: var(--col-border); }
 .chat-send {
-  background: var(--accent); color: #fff; border: none; border-radius: 10px;
-  font-family: var(--font-btn); font-weight: 600; font-size: 13px;
+  background: #fff; color: #000; border: none; border-radius: 8px;
+  font-family: var(--font-btn); font-weight: 900; font-size: 13px;
   padding: 10px 16px; cursor: pointer; flex-shrink: 0;
 }
 .chat-send:active { opacity: 0.8; }
 .chat-voice {
-  background: var(--surface2); color: var(--muted); border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface2); color: var(--muted); border: 1px solid var(--border); border-radius: 8px;
   font-size: 18px; padding: 8px 12px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
 }
 .chat-voice:active { opacity: 0.7; }
-.chat-voice.recording { background: rgba(239,68,68,0.15); border-color: var(--red); color: var(--red); animation: pulse-rec 1s infinite; }
+.chat-voice.recording { background: rgba(255,68,68,0.15); border-color: var(--red); color: var(--red); animation: pulse-rec 1s infinite; }
 
 /* Help page */
 .help-section-title {
-  font-family: var(--font-btn); font-weight: 600; font-size: 14px;
-  letter-spacing: 0.02em; color: var(--text); padding: 12px 14px;
+  font-family: var(--font-btn); font-weight: 900; font-size: 14px;
+  letter-spacing: 0.06em; color: var(--text); padding: 12px 14px;
   display: flex; justify-content: space-between; align-items: center;
   cursor: pointer; user-select: none; -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent; border-radius: 10px;
@@ -608,8 +517,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 }
 .faq-q {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 14px; font-family: var(--font-btn); font-weight: 600;
-  font-size: 14px; cursor: pointer; gap: 10px; line-height: 1.35;
+  padding: 14px 14px; font-family: var(--font-btn); font-weight: 900;
+  font-size: 15px; cursor: pointer; gap: 10px; line-height: 1.35;
   -webkit-tap-highlight-color: transparent; width: 100%; box-sizing: border-box;
   user-select: none; -webkit-user-select: none; color: var(--text);
 }
@@ -620,7 +529,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   display: none; padding: 4px 14px 18px; font-size: 14px;
   color: #ccc; line-height: 1.7;
 }
-.faq-a strong { color: var(--accent); }
+.faq-a strong { color: var(--yellow); }
 .faq-a em { color: var(--text); font-style: italic; }
 .faq-item.open .faq-a { display: block; }
 .faq-divider { height: 1px; background: var(--border); margin: 2px 0; }
@@ -634,10 +543,10 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 }
 .cutup-item:last-child { border-bottom: none; }
 .cutup-item:active { background: var(--surface2); }
-.cutup-item input[type=checkbox] { width:22px; height:22px; flex-shrink:0; accent-color: var(--accent); cursor:pointer; appearance:auto; -webkit-appearance:checkbox; }
-.cutup-item-label { font-family:var(--font-btn); font-weight:600; font-size:13px; flex:1; }
+.cutup-item input[type=checkbox] { width:22px; height:22px; flex-shrink:0; accent-color:#fff; cursor:pointer; appearance:auto; -webkit-appearance:checkbox; }
+.cutup-item-label { font-family:var(--font-btn); font-weight:900; font-size:13px; flex:1; }
 .cutup-item-count { font-size:10px; color:var(--muted); flex-shrink:0; }
-.pk-single.selected { background: var(--surface2); border-left: 3px solid var(--accent); }
+.pk-single.selected { background: var(--surface2); border-left: 3px solid #fff; }
 .pk-single.selected .cutup-item-label { color: #fff; }
 </style>
 </head>
@@ -647,106 +556,66 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
      LANDING
 ══════════════════════════════════════ -->
 <div class="view active" id="view-landing">
-  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
-
-      <!-- Logo -->
-      <div style="padding:60px 24px 0;text-align:center">
-        <div class="landing-logo-icon">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M4 8L14 3L24 8V20L14 25L4 20V8Z" stroke="#fff" stroke-width="2" fill="none"/><path d="M14 3V25" stroke="#fff" stroke-width="1.5" opacity="0.5"/><path d="M4 8L14 13L24 8" stroke="#fff" stroke-width="1.5" opacity="0.5"/><path d="M14 13V25" stroke="#fff" stroke-width="2"/></svg>
-        </div>
-        <div class="landing-logo-title">ASSISTANT COACH</div>
-        <div class="landing-logo-sub">HANOVER CENTRAL WILDCATS</div>
-      </div>
-
-      <!-- Main cards -->
-      <div style="flex:1;padding:32px 20px 20px;display:flex;flex-direction:column;gap:12px">
-
-        <div class="lcard" onclick="openNewGameModal()" style="padding:22px 22px">
-          <div class="lcard-icon" style="width:48px;height:48px;border-radius:12px"><svg viewBox="0 0 20 20" fill="none" style="width:22px;height:22px"><rect x="3" y="4" width="14" height="12" rx="2" stroke="#e8590c" stroke-width="1.5"/><path d="M3 8H17" stroke="#e8590c" stroke-width="1.5"/><path d="M7 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/><path d="M11 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/></svg></div>
-          <div style="flex:1;min-width:0">
-            <div class="lcard-title" style="font-size:18px">Tag a game</div>
-            <div class="lcard-sub" id="trackers-sub">Tag, archive & manage</div>
-          </div>
-          <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </div>
-
-        <div class="lcard" onclick="goStats()" style="padding:22px 22px">
-          <div class="lcard-icon" style="width:48px;height:48px;border-radius:12px"><svg viewBox="0 0 20 20" fill="none" style="width:22px;height:22px"><path d="M4 16V7" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M8 16V4" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M12 16V10" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/><path d="M16 16V6" stroke="#e8590c" stroke-width="2" stroke-linecap="round"/></svg></div>
-          <div style="flex:1;min-width:0">
-            <div class="lcard-title" style="font-size:18px">Stats & analysis</div>
-            <div class="lcard-sub" id="stats-sub">AI-powered breakdowns</div>
-          </div>
-          <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </div>
-
-        <!-- Small cards row -->
-        <div style="display:flex;gap:10px;margin-top:2px">
-          <div class="lcard-sm" onclick="goImportGameData()">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:8px"><path d="M10 4V16M4 10H16" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
-            <div class="lcard-sm-label">Import</div>
-          </div>
-          <div class="lcard-sm" onclick="goHelp()">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:8px"><circle cx="10" cy="10" r="7" stroke="#555" stroke-width="1.5"/><circle cx="10" cy="7" r="1" fill="#555"/><path d="M10 10V14" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
-            <div class="lcard-sm-label">Help</div>
-          </div>
-          <div class="lcard-sm" onclick="goSettings()">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:8px"><circle cx="10" cy="10" r="3" stroke="#555" stroke-width="1.5"/><path d="M10 3V5M10 15V17M17 10H15M5 10H3" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
-            <div class="lcard-sm-label">Settings</div>
-          </div>
-        </div>
-
+  <div class="lbody">
+    <div class="landing-logo">HUDL TAGGER</div>
+    <div class="lcard" onclick="goTrackersHub()">
+      <div class="lcard-icon">🏈</div>
+      <div>
+        <div class="lcard-title">GAME TRACKERS</div>
+        <div class="lcard-sub" id="trackers-sub">Track, archive & manage games</div>
       </div>
     </div>
-
-    <!-- Status bar - last game tracked -->
-    <div style="padding:16px 20px 24px;border-top:1px solid #1a1a1c;flex-shrink:0">
-      <div id="landing-last-game" onclick="loadLastGame()" style="background:#161618;border:1px solid #222224;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent">
-        <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0"></div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:2px">Last game tracked</div>
-          <div style="font-size:14px;font-weight:600;color:#ccc" id="landing-last-game-name">No games yet</div>
-        </div>
-        <div style="font-size:11px;color:var(--muted)" id="landing-last-game-time"></div>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M6 4L10 8L6 12" stroke="#666" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <div class="lcard" onclick="goStats()">
+      <div class="lcard-icon">📊</div>
+      <div>
+        <div class="lcard-title">STATS & ANALYSIS</div>
+        <div class="lcard-sub" id="stats-sub">Analyze play data with AI</div>
       </div>
     </div>
-
+    <div class="lcard" onclick="goSettings()">
+      <div class="lcard-icon">⚙️</div>
+      <div>
+        <div class="lcard-title">SETTINGS</div>
+        <div class="lcard-sub">Backup & restore your data</div>
+      </div>
+    </div>
+    <div class="lcard" onclick="goHelp()">
+      <div class="lcard-icon">❓</div>
+      <div>
+        <div class="lcard-title">HELP</div>
+        <div class="lcard-sub">FAQ &amp; ask the AI anything</div>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- GAME TRACKERS HUB -->
 <div class="view" id="view-trackers-hub">
   <div class="hdr">
-    <button class="hdr-btn" onclick="showView('view-landing')">← Back</button>
-    <div class="hdr-title">Tag a game</div>
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
+    <div class="hdr-title">GAME TRACKERS</div>
     <div style="width:60px"></div>
   </div>
   <div class="lbody">
     <div class="lcard" onclick="openNewGameModal()">
-      <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M10 4V16M4 10H16" stroke="#e8590c" stroke-width="1.5" stroke-linecap="round"/></svg></div>
-      <div style="flex:1;min-width:0"><div class="lcard-title">New game tracker</div><div class="lcard-sub">Start tracking a new game</div></div>
-      <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="lcard-icon">➕</div>
+      <div><div class="lcard-title">NEW GAME TRACKER</div><div class="lcard-sub">Start tracking a new game</div></div>
     </div>
     <div class="lcard" onclick="goArchive()">
-      <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="4" y="3" width="12" height="4" rx="1" stroke="#e8590c" stroke-width="1.5"/><path d="M5 7V16H15V7" stroke="#e8590c" stroke-width="1.5"/><path d="M8 11H12" stroke="#e8590c" stroke-width="1.5" stroke-linecap="round"/></svg></div>
-      <div style="flex:1;min-width:0"><div class="lcard-title">Archive</div><div class="lcard-sub" id="arch-sub">View previous games</div></div>
-      <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="lcard-icon">📋</div>
+      <div><div class="lcard-title">ARCHIVE</div><div class="lcard-sub" id="arch-sub">View previous games</div></div>
     </div>
     <div class="lcard" onclick="goTemplates()">
-      <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="4" y="4" width="12" height="12" rx="2" stroke="#e8590c" stroke-width="1.5"/><path d="M4 8H16M10 8V16" stroke="#e8590c" stroke-width="1.5" opacity="0.5"/></svg></div>
-      <div style="flex:1;min-width:0"><div class="lcard-title">Templates</div><div class="lcard-sub" id="tmpl-sub">Create & edit templates</div></div>
-      <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="lcard-icon">📐</div>
+      <div><div class="lcard-title">TEMPLATES</div><div class="lcard-sub" id="tmpl-sub">Create & edit templates</div></div>
     </div>
     <div class="lcard" onclick="goImportGameData()">
-      <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M10 4V13M7 10L10 13L13 10" stroke="#e8590c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15H16" stroke="#e8590c" stroke-width="1.5" stroke-linecap="round"/></svg></div>
-      <div style="flex:1;min-width:0"><div class="lcard-title">Import game data</div><div class="lcard-sub">Upload from file or Google Drive</div></div>
-      <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="lcard-icon">📥</div>
+      <div><div class="lcard-title">IMPORT GAME DATA</div><div class="lcard-sub">Upload from file or Google Drive</div></div>
     </div>
     <div class="lcard" onclick="openHudlPicker('tracker')">
-      <div class="lcard-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="10" rx="2" stroke="#e8590c" stroke-width="1.5"/><path d="M8 8.5V11.5L11 10L8 8.5Z" fill="#e8590c"/></svg></div>
-      <div style="flex:1;min-width:0"><div class="lcard-title">Load from Hudl</div><div class="lcard-sub">Import a Hudl cutup into the tracker</div></div>
-      <svg class="lcard-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="lcard-icon">📺</div>
+      <div><div class="lcard-title">LOAD FROM HUDL</div><div class="lcard-sub">Import a Hudl cutup into the tracker</div></div>
     </div>
   </div>
 </div>
@@ -754,51 +623,26 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 <!-- ══════════════════════════════════════
      TRACKER
 ══════════════════════════════════════ -->
-<div class="view" id="view-tracker" style="position:relative">
+<div class="view" id="view-tracker">
   <div class="hdr">
-    <button class="hdr-btn" onclick="leaveTracker()">← Back</button>
-    <div class="hdr-title" id="tracker-title" onclick="openEditGameModal()" style="cursor:pointer">Game</div>
+    <button class="hdr-btn" onclick="leaveTracker()">← BACK</button>
+    <div class="hdr-title" id="tracker-title" onclick="openEditGameModal()" style="cursor:pointer">GAME</div>
     <div style="display:flex;gap:5px">
       <button class="hdr-btn" id="layout-btn" onclick="toggleLayout()">▤ 1COL</button>
-      <button class="hdr-btn" onclick="toggleTrackerMenu()" id="tracker-menu-btn" style="font-size:18px;padding:4px 10px;line-height:1">⋯</button>
-    </div>
-  </div>
-  <!-- Tracker dropdown menu -->
-  <div id="tracker-menu" style="display:none;position:absolute;top:52px;right:12px;z-index:150;
-    background:var(--surface);border:1px solid var(--border);border-radius:12px;
-    min-width:180px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.5)">
-    <div class="tracker-menu-item" onclick="goStatsFromTracker();closeTrackerMenu()" style="color:var(--blue)">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M3 13V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M6 13V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 13V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12 13V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      Stats
-    </div>
-    <div class="tracker-menu-item" onclick="openTrackerColPicker();closeTrackerMenu()">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      Add column
-    </div>
-    <div class="tracker-menu-item" onclick="saveAsTemplate();closeTrackerMenu()">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><rect x="3" y="3" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 6H13" stroke="currentColor" stroke-width="1.5" opacity="0.5"/></svg>
-      Save as template
-    </div>
-    <div class="tracker-menu-item" onclick="openExportXlsxModal();closeTrackerMenu()">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 3V10M5 7L8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      Export XLSX
-    </div>
-    <div style="height:1px;background:var(--border);margin:2px 0"></div>
-    <div class="tracker-menu-item" onclick="clearRow();closeTrackerMenu()" style="color:var(--yellow)">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      Clear row
-    </div>
-    <div class="tracker-menu-item" onclick="clearAll();closeTrackerMenu()" style="color:var(--red)">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M3 5H13M5 5V12H11V5M7 7V10M9 7V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Clear all
+      <button class="hdr-btn blue" onclick="goStatsFromTracker()">📊</button>
+      <button class="hdr-btn white" onclick="openTrackerColPicker()">+ COL</button>
+      <button class="hdr-btn white" onclick="saveAsTemplate()">+ TMPL</button>
+      <button class="hdr-btn" onclick="openExportXlsxModal()">⬇ XLSX</button>
+      <button class="hdr-btn yellow" onclick="clearRow()">✕ ROW</button>
+      <button class="hdr-btn red" onclick="clearAll()">✕ ALL</button>
     </div>
   </div>
   <div class="sheet-bar" id="sheet-bar"></div>
   <div class="tracker-body" id="tracker-body"></div>
   <div class="nav-bar">
-    <button class="nav-btn nav-prev" onclick="prevPlay()">← Prev</button>
-    <button class="nav-btn nav-mid" onclick="addRows()">+ Rows</button>
-    <button class="nav-btn nav-new" onclick="nextPlay()">Next play →</button>
+    <button class="nav-btn nav-prev" onclick="prevPlay()">← PREV</button>
+    <button class="nav-btn nav-new" onclick="addRows()">+ ADD ROWS</button>
+    <button class="nav-btn nav-next" onclick="nextPlay()">NEXT →</button>
   </div>
 </div>
 
@@ -807,10 +651,10 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 ══════════════════════════════════════ -->
 <div class="view" id="view-archive">
   <div class="hdr">
-    <button class="hdr-btn" onclick="goTrackersHub()">← Back</button>
-    <div class="hdr-title">Archive</div>
+    <button class="hdr-btn" onclick="goTrackersHub()">← BACK</button>
+    <div class="hdr-title">ARCHIVE</div>
     <div style="display:flex;gap:5px">
-      <button class="hdr-btn" id="arch-select-btn" onclick="toggleArchiveSelect()">Select</button>
+      <button class="hdr-btn" id="arch-select-btn" onclick="toggleArchiveSelect()">SELECT</button>
       <button class="hdr-btn white" id="arch-export-btn" style="display:none" onclick="exportSelectedGamesXlsx()">⬇ EXPORT</button>
     </div>
   </div>
@@ -822,11 +666,11 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 ══════════════════════════════════════ -->
 <div class="view" id="view-templates">
   <div class="hdr">
-    <button class="hdr-btn" onclick="goSettings()">← Back</button>
-    <div class="hdr-title">Templates</div>
+    <button class="hdr-btn" onclick="goTrackersHub()">← BACK</button>
+    <div class="hdr-title">TEMPLATES</div>
     <div style="display:flex;gap:5px">
-      <button class="hdr-btn" onclick="goColumns()">Columns</button>
-      <button class="hdr-btn white" onclick="goTemplateBuilder()">+ New</button>
+      <button class="hdr-btn" onclick="goColumns()">COLUMNS</button>
+      <button class="hdr-btn white" onclick="goTemplateBuilder()">+ NEW</button>
     </div>
   </div>
   <div class="abody" id="tmpl-list-body"></div>
@@ -837,9 +681,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 ══════════════════════════════════════ -->
 <div class="view" id="view-template-builder">
   <div class="hdr">
-    <button class="hdr-btn" onclick="showView('view-templates')">← Back</button>
-    <div class="hdr-title" id="tmpl-builder-title">New template</div>
-    <button class="hdr-btn white" onclick="saveTemplate()">Save</button>
+    <button class="hdr-btn" onclick="showView('view-templates')">← BACK</button>
+    <div class="hdr-title" id="tmpl-builder-title">NEW TEMPLATE</div>
+    <button class="hdr-btn white" onclick="saveTemplate()">SAVE</button>
   </div>
   <div class="tbody">
     <div class="fg" style="padding-bottom:4px">
@@ -859,9 +703,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 ══════════════════════════════════════ -->
 <div class="view" id="view-columns">
   <div class="hdr">
-    <button class="hdr-btn" onclick="showView('view-templates')">← Back</button>
-    <div class="hdr-title">Columns</div>
-    <button class="hdr-btn white" onclick="goColumnBuilder()">+ New</button>
+    <button class="hdr-btn" onclick="showView('view-templates')">← BACK</button>
+    <div class="hdr-title">COLUMNS</div>
+    <button class="hdr-btn white" onclick="goColumnBuilder()">+ NEW</button>
   </div>
   <div class="abody" id="col-list-body"></div>
 </div>
@@ -871,9 +715,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 ══════════════════════════════════════ -->
 <div class="view" id="view-column-builder">
   <div class="hdr">
-    <button class="hdr-btn" onclick="showView('view-columns')">← Back</button>
-    <div class="hdr-title" id="col-builder-title">New column</div>
-    <button class="hdr-btn white" onclick="saveColumn()">Save</button>
+    <button class="hdr-btn" onclick="showView('view-columns')">← BACK</button>
+    <div class="hdr-title" id="col-builder-title">NEW COLUMN</div>
+    <button class="hdr-btn white" onclick="saveColumn()">SAVE</button>
   </div>
   <div class="cbbody">
     <div class="fg">
@@ -898,14 +742,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     </div>
     <div class="modal-body">
       <div class="fg"><label class="fl">Template</label><select class="fi" id="ng-tmpl"></select></div>
-      <div class="fg"><label class="fl">Type</label>
-        <div style="display:flex;gap:6px" id="ng-type-row">
-          <div class="sf-btn on" onclick="setNewGameType(this,'Game')" style="flex:1;text-align:center;padding:10px">Game</div>
-          <div class="sf-btn" onclick="setNewGameType(this,'JV')" style="flex:1;text-align:center;padding:10px">JV</div>
-          <div class="sf-btn" onclick="setNewGameType(this,'Scout')" style="flex:1;text-align:center;padding:10px">Scout</div>
-          <div class="sf-btn" onclick="setNewGameType(this,'Other')" style="flex:1;text-align:center;padding:10px">Other</div>
-        </div>
-      </div>
       <div class="fg"><label class="fl">Home Team <span style="color:var(--muted);font-size:9px">(optional — edit anytime)</span></label><input class="fi" id="ng-home" placeholder="Home team" /></div>
       <div class="fg"><label class="fl">Away Team <span style="color:var(--muted);font-size:9px">(optional — edit anytime)</span></label><input class="fi" id="ng-away" placeholder="Away team" /></div>
       <div style="display:flex;gap:10px">
@@ -913,16 +749,9 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         <div class="fg" style="flex:1"><label class="fl">Date <span style="color:var(--muted);font-size:9px">(optional)</span></label><input class="fi" id="ng-date" placeholder="e.g. 10/4/2025" /></div>
       </div>
     </div>
-    <div class="modal-foot" style="flex-direction:column;gap:10px">
-      <div style="display:flex;gap:10px;width:100%">
-        <button class="btn btn-secondary" onclick="closeModal('m-new-game')" style="flex:1">Cancel</button>
-        <button class="btn btn-primary" onclick="startGame()" style="flex:1">START GAME</button>
-      </div>
-      <div style="display:flex;gap:8px;width:100%">
-        <div onclick="closeModal('m-new-game');goArchive()" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Archive</div>
-        <div onclick="closeModal('m-new-game');goImportGameData()" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Import</div>
-        <div onclick="closeModal('m-new-game');openHudlPicker('tracker')" style="flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">Load Hudl</div>
-      </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('m-new-game')">Cancel</button>
+      <button class="btn btn-primary" onclick="startGame()">START GAME</button>
     </div>
   </div>
 </div>
@@ -939,7 +768,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         <div class="fg" style="flex:1"><label class="fl">Date</label><input class="fi" id="eg-date" placeholder="e.g. 10/4/2025" /></div>
       </div>
     </div>
-    <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('m-edit-game')">Cancel</button><button class="btn btn-primary" onclick="saveEditedGameInfo()">Save</button></div>
+    <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('m-edit-game')">Cancel</button><button class="btn btn-primary" onclick="saveEditedGameInfo()">SAVE</button></div>
   </div>
 </div>
 
@@ -947,7 +776,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 <div class="overlay" id="m-tracker-cols" onclick="if(event.target===this)closeModal('m-tracker-cols')">
   <div class="modal" style="max-width:420px;max-height:85vh;display:flex;flex-direction:column">
     <div class="modal-hdr" style="flex-shrink:0">
-      <div class="modal-title">Columns</div>
+      <div class="modal-title">COLUMNS</div>
       <div class="modal-x" onclick="closeModal('m-tracker-cols')">✕</div>
     </div>
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0" id="tracker-col-picker-body">
@@ -993,7 +822,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 <div class="overlay" id="m-list">
   <div class="modal">
     <div class="modal-hdr">
-      <div class="modal-title" id="m-list-title">Select</div>
+      <div class="modal-title" id="m-list-title">SELECT</div>
       <div class="modal-x" onclick="closeModal('m-list')">✕</div>
     </div>
     <div class="list-scroll" id="m-list-scroll"></div>
@@ -1006,7 +835,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 <div class="overlay" id="m-dd">
   <div class="modal">
     <div class="modal-hdr">
-      <div class="modal-title" id="m-dd-title">Select</div>
+      <div class="modal-title" id="m-dd-title">SELECT</div>
       <div class="modal-x" onclick="closeModal('m-dd')">✕</div>
     </div>
     <div class="list-scroll" id="m-dd-list"></div>
@@ -1066,7 +895,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('m-save-tmpl')">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmSaveAsTemplate()">Save</button>
+      <button class="btn btn-primary" onclick="confirmSaveAsTemplate()">SAVE</button>
     </div>
   </div>
 </div>
@@ -1074,8 +903,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 <!-- IMPORT GAME DATA -->
 <div class="view" id="view-import-game">
   <div class="hdr">
-    <button class="hdr-btn" onclick="goTrackersHub()">← Back</button>
-    <div class="hdr-title">Import game data</div>
+    <button class="hdr-btn" onclick="goTrackersHub()">← BACK</button>
+    <div class="hdr-title">IMPORT GAME DATA</div>
     <div style="width:60px"></div>
   </div>
   <div class="abody" style="gap:16px">
@@ -1094,8 +923,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 <!-- SETTINGS -->
 <div class="view" id="view-settings">
   <div class="hdr">
-    <button class="hdr-btn" onclick="showView('view-landing')">← Back</button>
-    <div class="hdr-title">Settings</div>
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
+    <div class="hdr-title">SETTINGS</div>
     <div style="width:60px"></div>
   </div>
   <div class="settings-body">
@@ -1136,21 +965,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       </div>
       <input type="file" id="ie-json-input" accept=".json" style="display:none" />
     </div>
-    <div class="settings-group">
-      <div class="settings-group-title">Templates & columns</div>
-      <div class="settings-group-sub">Manage your tracker templates and custom columns.</div>
-      <div class="settings-row">
-        <div class="settings-btn" onclick="goTemplates()"><span class="settings-btn-icon">📐</span>Templates</div>
-        <div class="settings-btn" onclick="goColumns()"><span class="settings-btn-icon">📋</span>Columns</div>
-      </div>
-    </div>
-    <div class="settings-group">
-      <div class="settings-group-title">Hudl cache</div>
-      <div class="settings-group-sub">Cutup lists are cached for 24 hours. Clear if new cutups aren't showing up.</div>
-      <div class="settings-row">
-        <div class="settings-btn" onclick="clearHudlCache()"><span class="settings-btn-icon">↺</span>Clear cache</div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1159,15 +973,15 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 ══════════════════════════════════════ -->
 <div class="view" id="view-help">
   <div class="hdr">
-    <button class="hdr-btn" onclick="showView('view-landing')">← Back</button>
-    <div class="hdr-title">Help</div>
+    <button class="hdr-btn" onclick="showView('view-landing')">← BACK</button>
+    <div class="hdr-title">HELP</div>
     <div style="width:60px"></div>
   </div>
 
   <!-- Tab bar -->
-  <div style="display:flex;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0">
+  <div style="display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0">
     <button class="stats-tab active" id="help-tab-faq" onclick="setHelpTab('faq')">FAQ</button>
-    <button class="stats-tab"        id="help-tab-ai"  onclick="setHelpTab('ai')">Ask a question</button>
+    <button class="stats-tab"        id="help-tab-ai"  onclick="setHelpTab('ai')">💬 ASK A QUESTION</button>
   </div>
 
   <!-- ── FAQ TAB ── -->
@@ -1175,12 +989,12 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
     <!-- ── GETTING STARTED ── -->
     <div class="help-section" id="hs-overview">
-      <div class="help-section-title" onclick="toggleHelpSection('hs-overview')">Getting started <span class="help-section-icon">▼</span></div>
+      <div class="help-section-title" onclick="toggleHelpSection('hs-overview')">📱 GETTING STARTED <span class="help-section-icon">▼</span></div>
       <div class="help-section-body">
 
         <div class="faq-item">
-          <div class="faq-q" onclick="toggleFaq(this)">What is Assistant Coach? <span class="faq-arrow">▼</span></div>
-          <div class="faq-a">Assistant Coach is a football play-tracking and analytics tool designed for coaching staffs, built to work on phones and tablets. It does three things:<br><br>
+          <div class="faq-q" onclick="toggleFaq(this)">What is Hudl Tagger? <span class="faq-arrow">▼</span></div>
+          <div class="faq-a">Hudl Tagger is a football play-tracking and analytics tool designed for coaching staffs, built to work on phones and tablets. It does three things:<br><br>
             <strong>1. Tag game film</strong> — Pull in Hudl cutups and break down plays with your own terminology.<br><br>
             <strong>2. Track plays live</strong> — Use it on the sideline during games to record every snap in real time, tap by tap.<br><br>
             <strong>3. Analyze everything</strong> — Visualize your data with charts, stat breakdowns, and an AI assistant that answers questions about your plays in plain English.</div>
@@ -1232,14 +1046,14 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
         <div class="faq-item">
           <div class="faq-q" onclick="toggleFaq(this)">How do I record a play? <span class="faq-arrow">▼</span></div>
-          <div class="faq-a">Each row is one play. Tap the buttons in each column to record what happened — the down, formation, play type, result, whatever your template tracks. When the play is over, tap <strong>+ Rows</strong> to advance to the next row.</div>
+          <div class="faq-a">Each row is one play. Tap the buttons in each column to record what happened — the down, formation, play type, result, whatever your template tracks. When the play is over, tap <strong>NEXT →</strong> to advance to the next row.</div>
         </div>
 
         <div class="faq-divider"></div>
 
         <div class="faq-item">
           <div class="faq-q" onclick="toggleFaq(this)">I made a mistake — how do I fix it? <span class="faq-arrow">▼</span></div>
-          <div class="faq-a">Tap <strong>← Prev</strong> to go back to the play you need to correct. Tap the right buttons — they'll overwrite the old values. Then hit <strong>+ Rows</strong> to return to where you were. If you want to completely wipe a play, tap <strong>✕ ROW</strong> in the header bar.</div>
+          <div class="faq-a">Tap <strong>← PREV</strong> to go back to the play you need to correct. Tap the right buttons — they'll overwrite the old values. Then hit <strong>NEXT →</strong> to return to where you were. If you want to completely wipe a play, tap <strong>✕ ROW</strong> in the header bar.</div>
         </div>
 
         <div class="faq-divider"></div>
@@ -1253,7 +1067,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
         <div class="faq-item">
           <div class="faq-q" onclick="toggleFaq(this)">Do I need to save my game? <span class="faq-arrow">▼</span></div>
-          <div class="faq-a">Nope — every tap auto-saves instantly. When you're done, just tap <strong>← Back</strong> and your game will be in the <strong>Archive</strong> whenever you need it.</div>
+          <div class="faq-a">Nope — every tap auto-saves instantly. When you're done, just tap <strong>← BACK</strong> and your game will be in the <strong>Archive</strong> whenever you need it.</div>
         </div>
 
         <div class="faq-divider"></div>
@@ -1268,7 +1082,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
     <!-- ── TEMPLATES & COLUMNS ── -->
     <div class="help-section" id="hs-templates">
-      <div class="help-section-title" onclick="toggleHelpSection('hs-templates')">Templates &amp; COLUMNS <span class="help-section-icon">▼</span></div>
+      <div class="help-section-title" onclick="toggleHelpSection('hs-templates')">📐 TEMPLATES &amp; COLUMNS <span class="help-section-icon">▼</span></div>
       <div class="help-section-body">
 
         <div class="faq-item">
@@ -1309,7 +1123,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
     <!-- ── STATS & ANALYSIS ── -->
     <div class="help-section" id="hs-stats">
-      <div class="help-section-title" onclick="toggleHelpSection('hs-stats')">Stats &amp; analysis <span class="help-section-icon">▼</span></div>
+      <div class="help-section-title" onclick="toggleHelpSection('hs-stats')">📊 STATS &amp; ANALYSIS <span class="help-section-icon">▼</span></div>
       <div class="help-section-body">
 
         <div class="faq-item">
@@ -1401,13 +1215,13 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   <!-- ── ASK AI TAB ── -->
   <div id="help-panel-ai" style="flex:1;overflow:hidden;flex-direction:column;display:none">
     <div class="chat-messages" id="help-chat-messages">
-      <div class="chat-msg assistant">Hi Coach! I know everything about how Assistant Coach works. Ask me anything — <em>"How do I export to Excel?"</em>, <em>"What does the Spotlight tab do?"</em>, or <em>"How do I create a custom column?"</em></div>
+      <div class="chat-msg assistant">Hi Coach! I know everything about how Hudl Tagger works. Ask me anything — <em>"How do I export to Excel?"</em>, <em>"What does the Spotlight tab do?"</em>, or <em>"How do I create a custom column?"</em></div>
     </div>
     <div class="chat-input-row">
       <input class="chat-input" id="help-chat-input"
         placeholder="Ask anything about the app…"
         onkeydown="if(event.key==='Enter')sendHelpChat()" />
-      <button class="chat-send" onclick="sendHelpChat()">Ask →</button>
+      <button class="chat-send" onclick="sendHelpChat()">ASK →</button>
     </div>
   </div>
 </div>
@@ -1505,26 +1319,23 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         style="width:100%;background:#111;border:1px solid var(--border);border-radius:8px;
                padding:9px 12px;color:var(--text);font-family:var(--font-ui);font-size:13px;outline:none;box-sizing:border-box" />
     </div>
-    <!-- Filter chips - wrapped rows for phone visibility -->
-    <div style="padding:0 14px 8px;flex-shrink:0;display:flex;flex-direction:column;gap:6px">
-      <div style="display:flex;gap:5px;flex-wrap:wrap">
-        <button class="sf-btn on" id="pk-cat-all"     onclick="setPickerCat('all')">ALL</button>
-        <button class="sf-btn"    id="pk-cat-game"    onclick="setPickerCat('game')">Game</button>
-        <button class="sf-btn"    id="pk-cat-scout"   onclick="setPickerCat('scout')">SCOUT</button>
-        <button class="sf-btn"    id="pk-cat-jv"      onclick="setPickerCat('jv')">JV</button>
-        <button class="sf-btn"    id="pk-cat-other"   onclick="setPickerCat('other')">OTHER</button>
-        <button class="sf-btn"    id="pk-cat-tracker" onclick="setPickerCat('tracker')">TRACKED</button>
-      </div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap">
-        <button class="sf-btn" id="pk-s-2024" onclick="togglePickerFilter('season','2024')">2024</button>
-        <button class="sf-btn" id="pk-s-2025" onclick="togglePickerFilter('season','2025')">2025</button>
-        <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
-        <button class="sf-btn" id="pk-l-home" onclick="togglePickerFilter('location','home')">HOME</button>
-        <button class="sf-btn" id="pk-l-away" onclick="togglePickerFilter('location','away')">AWAY</button>
-        <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
-        <button class="sf-btn" id="pk-g-conference" onclick="togglePickerFilter('group','conference')">CONF</button>
-        <button class="sf-btn" id="pk-g-big3"      onclick="togglePickerFilter('group','big3')">BIG 3</button>
-      </div>
+    <!-- Filter chips - single scrollable row -->
+    <div style="display:flex;gap:5px;padding:0 14px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0">
+      <button class="sf-btn on" id="pk-cat-all"     onclick="setPickerCat('all')">ALL</button>
+      <button class="sf-btn"    id="pk-cat-game"    onclick="setPickerCat('game')">GAME</button>
+      <button class="sf-btn"    id="pk-cat-scout"   onclick="setPickerCat('scout')">SCOUT</button>
+      <button class="sf-btn"    id="pk-cat-jv"      onclick="setPickerCat('jv')">JV</button>
+      <button class="sf-btn"    id="pk-cat-other"   onclick="setPickerCat('other')">OTHER</button>
+      <button class="sf-btn"    id="pk-cat-tracker" onclick="setPickerCat('tracker')">TRACKED</button>
+      <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
+      <button class="sf-btn" id="pk-s-2024" onclick="togglePickerFilter('season','2024')">2024</button>
+      <button class="sf-btn" id="pk-s-2025" onclick="togglePickerFilter('season','2025')">2025</button>
+      <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
+      <button class="sf-btn" id="pk-l-home" onclick="togglePickerFilter('location','home')">HOME</button>
+      <button class="sf-btn" id="pk-l-away" onclick="togglePickerFilter('location','away')">AWAY</button>
+      <span style="width:1px;background:var(--border);flex-shrink:0;margin:2px 3px"></span>
+      <button class="sf-btn" id="pk-g-conference" onclick="togglePickerFilter('group','conference')">CONF</button>
+      <button class="sf-btn" id="pk-g-big3"      onclick="togglePickerFilter('group','big3')">BIG 3</button>
     </div>
     <!-- Checklist -->
     <div id="picker-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;border-top:1px solid var(--border)">
@@ -1560,23 +1371,23 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
       <button class="btn btn-secondary" id="pb-editor-reset" style="font-size:11px">↺ RESET DEFAULT</button>
       <div style="display:flex;gap:8px">
         <button class="btn btn-secondary" onclick="closePbEditor()">CANCEL</button>
-        <button class="btn btn-primary" onclick="savePbSection()">Save</button>
+        <button class="btn btn-primary" onclick="savePbSection()">SAVE</button>
       </div>
     </div>
   </div>
 </div>
 
-<div class="overlay" id="m-methodology" onclick="if(event.target===this)closeModal('m-methodology')">
+<div class="overlay" id="m-methodology" style="display:none" onclick="if(event.target===this)closeModal('m-methodology')">
   <div class="modal" style="max-width:420px">
-    <div class="modal-hdr">
-      <div class="modal-title">How this was calculated</div>
+    <div class="modal-head">
+      <div class="modal-title">HOW THIS WAS CALCULATED</div>
       <div class="modal-x" onclick="closeModal('m-methodology')">✕</div>
     </div>
-    <div class="modal-body" id="methodology-body" style="font-size:13px;line-height:1.6;color:var(--text)">
+    <div class="modal-body" id="methodology-body" style="font-size:12px;line-height:1.6;color:var(--text)">
       Loading…
     </div>
     <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('m-methodology')">Close</button>
+      <button class="btn btn-secondary" onclick="closeModal('m-methodology')">CLOSE</button>
     </div>
   </div>
 </div>
@@ -1590,8 +1401,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
 
   <!-- Header -->
   <div class="hdr">
-    <button class="hdr-btn" onclick="leaveStats()">← Back</button>
-    <div class="hdr-title">Stats & analysis</div>
+    <button class="hdr-btn" onclick="leaveStats()">← BACK</button>
+    <div class="hdr-title">STATS & ANALYSIS</div>
     <div style="display:flex;gap:5px">
       <button class="hdr-btn white" id="stats-filter-btn" onclick="openHudlPicker('stats')">FILTER ▼</button>
       <button class="hdr-btn" onclick="refreshStats()">↺</button>
@@ -1605,11 +1416,11 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   </div>
 
   <!-- Top tab bar -->
-  <div style="display:flex;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch">
-    <button class="stats-tab active" id="stab-spotlight" onclick="setStatsTab('spotlight')">Spotlight</button>
-    <button class="stats-tab"        id="stab-stats"     onclick="setStatsTab('stats')">Stats</button>
-    <button class="stats-tab"        id="stab-ai"        onclick="setStatsTab('ai')">Ask</button>
-    <button class="stats-tab"        id="stab-insights"  onclick="setStatsTab('insights')">Saved</button>
+  <div style="display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <button class="stats-tab active" id="stab-spotlight" onclick="setStatsTab('spotlight')">⚡ SPOTLIGHT</button>
+    <button class="stats-tab"        id="stab-stats"     onclick="setStatsTab('stats')">STATS</button>
+    <button class="stats-tab"        id="stab-ai"        onclick="setStatsTab('ai')">💬 ASK A QUESTION</button>
+    <button class="stats-tab"        id="stab-insights"  onclick="setStatsTab('insights')">📌 SAVED</button>
   </div>
 
   <!-- ── TAB: SPOTLIGHT (AI auto-analysis) ── -->
@@ -1617,15 +1428,15 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div class="empty-msg" id="spotlight-empty">Load data to get AI-powered insights.</div>
   </div>
 
-  <!-- ── TAB: STATS ── -->
+  <!-- ── TAB: STATS (sub-tabbed) ── -->
   <div id="stats-tab-stats" class="tab-panel" style="display:none;flex-direction:column;overflow:hidden">
-    <!-- Stats category buttons -->
-    <div style="display:flex;gap:8px;padding:12px 14px;flex-shrink:0;border-bottom:1px solid var(--border)">
-      <button class="sf-btn on" id="sstab-overview" onclick="setStatsSubTab('overview')" style="flex:1;padding:12px;font-size:13px">Overview</button>
-      <button class="sf-btn" id="sstab-offense" onclick="setStatsSubTab('offense')" style="flex:1;padding:12px;font-size:13px;color:var(--green);border-color:rgba(34,197,94,0.3)">OFF</button>
-      <button class="sf-btn" id="sstab-defense" onclick="setStatsSubTab('defense')" style="flex:1;padding:12px;font-size:13px;color:var(--blue);border-color:rgba(59,130,246,0.3)">DEF</button>
-      <button class="sf-btn" id="sstab-field" onclick="setStatsSubTab('field')" style="flex:1;padding:12px;font-size:13px">Field</button>
-      <button class="sf-btn" id="sstab-quarter" onclick="setStatsSubTab('quarter')" style="flex:1;padding:12px;font-size:13px">By Qtr</button>
+    <!-- Stats sub-tab bar -->
+    <div style="display:flex;background:var(--surface2);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <button class="stats-subtab active" id="sstab-overview"  onclick="setStatsSubTab('overview')">OVERVIEW</button>
+      <button class="stats-subtab"        id="sstab-offense"   onclick="setStatsSubTab('offense')">OFFENSE</button>
+      <button class="stats-subtab"        id="sstab-defense"   onclick="setStatsSubTab('defense')">DEFENSE</button>
+      <button class="stats-subtab"        id="sstab-field"     onclick="setStatsSubTab('field')">FIELD</button>
+      <button class="stats-subtab"        id="sstab-quarter"   onclick="setStatsSubTab('quarter')">BY QTR</button>
     </div>
     <!-- Stats sub-tab panels -->
     <div id="stats-sub-overview"  class="tab-panel sbody"><div class="empty-msg">Tap FILTER to load data.</div></div>
@@ -1645,7 +1456,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         placeholder="Ask about your play data…"
         onkeydown="if(event.key==='Enter')sendChat()" />
       <button class="chat-voice" id="voice-btn" onclick="toggleVoiceInput()" title="Voice input">🎤</button>
-      <button class="chat-send" onclick="sendChat()">Ask →</button>
+      <button class="chat-send" onclick="sendChat()">ASK →</button>
     </div>
   </div>
 
@@ -1688,14 +1499,14 @@ function defaultColumns() {
     },
     {
       id:'dn', name:'DN', type:'buttons',
-      btns:[{l:'0',v:'0'},{l:'1',v:'1'},{l:'2',v:'2'},{l:'3',v:'3'},{l:'4',v:'4'}]
+      btns:[{l:'DN1',v:'1'},{l:'DN2',v:'2'},{l:'DN3',v:'3'},{l:'DN4',v:'4'}]
     },
     {
       id:'hash', name:'HASH', type:'buttons',
       btns:[{l:'L',v:'L'},{l:'M',v:'M'},{l:'R',v:'R'}]
     },
     {
-      id:'yardln', name:'YARD LN', type:'numpad',
+      id:'yardln', name:'YARD LN', type:'list',
       list: yardLineList()
     },
     {
@@ -1703,7 +1514,7 @@ function defaultColumns() {
       btns:[{l:'1-3',v:'1-3'},{l:'4-6',v:'4-6'},{l:'7-9',v:'7-9'},{l:'10+',v:'10+'}]
     },
     {
-      id:'dist2', name:'DIST', type:'numpad', dataKey:'dist2',
+      id:'dist2', name:'DIST', type:'list', dataKey:'dist2',
       list: numList(-99,99)
     },
     {
@@ -1719,12 +1530,32 @@ function defaultColumns() {
       dd:['1st DN','Batted Down','Block','Blocked Def TD','Complete','Complete Fumble','Complete TD','COP','Def TD','Downed','Dropped','Fair Catch','Fumble','Fumble Def TD','Good','Incomplete','Interception','Interception Def TD','Interception Fumble','No Good','No Good Def TD','Offsetting Penalties','Out of Bounds','Penalty','Penalty Safety','Recovered','Return','Rush','Rush Safety','Rush TD','Sack','Sack Fumble','Sack Fumble Def TD','Sack Safety','Safety','Scramble','Scramble TD','TD','Timeout','Tipped','Touchback']
     },
     {
-      id:'gainloss', name:'GAIN/LOSS', type:'numpad',
+      id:'gainloss', name:'GAIN/LOSS', type:'list',
       list: numList(-99,99)
     },
     {
       id:'series', name:'SERIES', type:'list',
       list: numList(1,20)
+    },
+    {
+      id:'skip', name:'SKIP', type:'buttons',
+      btns:[{l:'SKIP',v:'SKIP'}]
+    },
+    {
+      id:'kickland', name:'KICK LAND', type:'list',
+      list: yardLineList()
+    },
+    {
+      id:'kickyds', name:'KICK YDS', type:'calc',
+      calc:'kickyds'
+    },
+    {
+      id:'retspot', name:'RET SPOT', type:'list',
+      list: yardLineList()
+    },
+    {
+      id:'retyds', name:'RET YDS', type:'calc',
+      calc:'retyds'
     },
     {
       id:'offform', name:'OFF FORM', type:'btn_dds',
@@ -1739,66 +1570,6 @@ function defaultColumns() {
         {l:'Special', opts:['Variation 1','Variation 2','Variation 3','Variation 4']},
         {l:'Scout', opts:['Scout']},
       ]
-    },
-    {
-      id:'backfield', name:'BACKFIELD', type:'btns_dd',
-      btns:[{l:'GUN',v:'Gun'},{l:'I-FORM',v:'I-Form'},{l:'PRO',v:'Pro'},{l:'PISTOL',v:'Pistol'}],
-      ddLbl:'MORE',
-      dd:['Ace','Empty','Full House','Gun','Gun Left','Gun Right','Gun Strong','Gun Weak','I-Form','I-Near','I-Strong','I-Weak','Pro','Pro Ace','Pro Strong','Pro Weak','Pistol','Pistol Left','Pistol Right','Wing-T','Single Wing','Flexbone','Split Back','Wildcat']
-    },
-    {
-      id:'blitz', name:'BLITZ', type:'btns_dd',
-      btns:[{l:'ZONE',v:'Zone'},{l:'HOUSE',v:'House'},{l:'NONE',v:'No blitz'}],
-      ddLbl:'MORE',
-      dd:['House','Boundary','Field','Free Safety','Strong Safety','Mike','Will','Sam','ILBs','OLBs','Corner','Zone','Show Bail','No blitz']
-    },
-    {
-      id:'coverage', name:'COVERAGE', type:'btns_dd',
-      btns:[{l:'0',v:'0'},{l:'1',v:'1'},{l:'2',v:'2'},{l:'3',v:'3'},{l:'4',v:'4'}],
-      ddLbl:'MORE',
-      dd:['0','1','2','3','4','2 invert','4 Press','Man Free','Press Man','2 Man','Quarters','Bingo','Box']
-    },
-    {
-      id:'deffront', name:'DEF FRONT', type:'buttons',
-      btns:[{l:'OVER',v:'Over'},{l:'UNDER',v:'Under'},{l:'BEAR',v:'Bear'},{l:'3-4',v:'3-4'},{l:'4-3',v:'4-3'},{l:'3-3',v:'3-3 Stack'},{l:'4-2',v:'4-2'}]
-    },
-    {
-      id:'eff', name:'EFF', type:'buttons',
-      btns:[{l:'Y',v:'Y'},{l:'N',v:'N'}]
-    },
-    {
-      id:'gap', name:'GAP', type:'buttons',
-      btns:[{l:'A',v:'A'},{l:'B',v:'B'},{l:'C',v:'C'},{l:'D',v:'D'},{l:'E',v:'E-Alley'}]
-    },
-    {
-      id:'backfield', name:'BACKFIELD', type:'btns_dd',
-      btns:[{l:'GUN',v:'Gun'},{l:'I',v:'I-Form'},{l:'PRO',v:'Pro'},{l:'PISTOL',v:'Pistol'}],
-      ddLbl:'▼',
-      dd:['Ace','Empty','Full House','Gun','Gun Left','Gun Right','Gun Strong','Gun Weak','I-Form','I-Near','I-Strong','I-Weak','Pro','Pro Ace','Pro Strong','Pro Weak','Pistol','Pistol Left','Pistol Right','Wing-T','Single Wing','Flexbone','Split Back','Wildcat']
-    },
-    {
-      id:'blitz', name:'BLITZ', type:'btns_dd',
-      btns:[{l:'NO',v:'No blitz'},{l:'HOUSE',v:'House'},{l:'ZONE',v:'Zone'}],
-      ddLbl:'▼',
-      dd:['House','Boundary','Field','Free Safety','Strong Safety','Mike','Will','Sam','ILBs','OLBs','Corner','Zone','Show Bail','No blitz']
-    },
-    {
-      id:'coverage', name:'COVERAGE', type:'btns_dd',
-      btns:[{l:'0',v:'0'},{l:'1',v:'1'},{l:'2',v:'2'},{l:'3',v:'3'},{l:'4',v:'4'}],
-      ddLbl:'▼',
-      dd:['0','1','2','3','4','2 invert','4 Press','Man Free','Press Man','2 Man','Quarters','Bingo','Box']
-    },
-    {
-      id:'deffront', name:'DEF FRONT', type:'buttons',
-      btns:[{l:'OVER',v:'Over'},{l:'UNDER',v:'Under'},{l:'BEAR',v:'Bear'},{l:'3-4',v:'3-4'},{l:'4-3',v:'4-3'},{l:'3-3',v:'3-3 Stack'},{l:'4-2',v:'4-2'}]
-    },
-    {
-      id:'eff', name:'EFF', type:'buttons',
-      btns:[{l:'Y',v:'Y'},{l:'N',v:'N'}]
-    },
-    {
-      id:'gap', name:'GAP', type:'buttons',
-      btns:[{l:'A',v:'A'},{l:'B',v:'B'},{l:'C',v:'C'},{l:'D',v:'D'},{l:'E',v:'E-Alley'}]
     }
   ];
 }
@@ -1806,7 +1577,7 @@ function defaultColumns() {
 function defaultTemplate() {
   return {
     id:'odk-default', name:'ODK',
-    colIds:['odk','qtr','dn','dist2','yardln','hash','playtype','result','gainloss','offform']
+    colIds:['odk','qtr','dn','dist','dist2','yardln','hash','playtype','result','gainloss','offform']
   };
 }
 
@@ -1989,13 +1760,6 @@ function addSpotlightFeedback(insight, liked) {
   saveSpotlightFeedback(fb);
 }
 
-function removeSpotlightFeedback(insight) {
-  const fb = getSpotlightFeedback();
-  fb.liked = fb.liked.filter(x => x.headline !== insight.headline);
-  fb.disliked = fb.disliked.filter(x => x.headline !== insight.headline);
-  saveSpotlightFeedback(fb);
-}
-
 // ════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════
@@ -2004,28 +1768,6 @@ let playIdx = 0;          // current play index
 let activeCols = [];      // resolved columns for current game
 let autoTimer = null;
 let layoutCols = 1;       // 1 or 2 column layout
-
-function toggleTrackerMenu() {
-  const menu = document.getElementById('tracker-menu');
-  if (menu.style.display === 'none') {
-    menu.style.display = 'block';
-    // Close on tap outside
-    setTimeout(() => document.addEventListener('click', closeTrackerMenuOutside, { once: true }), 10);
-  } else {
-    closeTrackerMenu();
-  }
-}
-function closeTrackerMenu() {
-  document.getElementById('tracker-menu').style.display = 'none';
-}
-function closeTrackerMenuOutside(e) {
-  const menu = document.getElementById('tracker-menu');
-  const btn = document.getElementById('tracker-menu-btn');
-  if (menu && !menu.contains(e.target) && e.target !== btn) closeTrackerMenu();
-  else if (menu.style.display === 'block') {
-    setTimeout(() => document.addEventListener('click', closeTrackerMenuOutside, { once: true }), 10);
-  }
-}
 
 function toggleLayout() {
   layoutCols = layoutCols === 2 ? 1 : 2;
@@ -2248,40 +1990,11 @@ function updateLanding() {
   const games = getGames();
   document.getElementById('trackers-sub').textContent =
     games.length > 0 ? `${games.length} game${games.length!==1?'s':''} · track, archive & manage` : 'Track, archive & manage games';
-
-  // Update "last game tracked" status bar
-  const nameEl = document.getElementById('landing-last-game-name');
-  const timeEl = document.getElementById('landing-last-game-time');
-  if (nameEl && games.length > 0) {
-    // Find most recently modified game
-    const sorted = [...games].sort((a,b) => parseInt(b.id) - parseInt(a.id));
-    const last = sorted[0];
-    const label = (last.home && last.away) ? `${last.home} vs ${last.away}` : 'Untitled game';
-    const weekStr = last.week ? ` · Week ${last.week}` : '';
-    nameEl.textContent = label + weekStr;
-    // Time ago
-    const ms = Date.now() - parseInt(last.id);
-    const mins = Math.floor(ms / 60000);
-    const hrs = Math.floor(mins / 60);
-    const days = Math.floor(hrs / 24);
-    timeEl.textContent = days > 0 ? `${days}d ago` : hrs > 0 ? `${hrs}h ago` : mins > 0 ? `${mins}m ago` : 'just now';
-  } else if (nameEl) {
-    nameEl.textContent = 'No games yet';
-    timeEl.textContent = '';
-  }
 }
 
 // ════════════════════════════════════════
 // NEW GAME MODAL
 // ════════════════════════════════════════
-let newGameType = 'Game';
-
-function setNewGameType(btn, type) {
-  newGameType = type;
-  document.querySelectorAll('#ng-type-row .sf-btn').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-}
-
 function openNewGameModal() {
   const tmpls = getTmpls();
   const sel = document.getElementById('ng-tmpl');
@@ -2290,10 +2003,6 @@ function openNewGameModal() {
   document.getElementById('ng-home').value = '';
   document.getElementById('ng-away').value = '';
   document.getElementById('ng-week').value = '';
-  // Reset type to Game
-  newGameType = 'Game';
-  document.querySelectorAll('#ng-type-row .sf-btn').forEach(b => b.classList.remove('on'));
-  document.querySelector('#ng-type-row .sf-btn')?.classList.add('on');
   openModal('m-new-game');
 }
 
@@ -2303,11 +2012,10 @@ function startGame() {
   const date = document.getElementById('ng-date').value.trim();
   const week = document.getElementById('ng-week').value.trim();
   const tmplId = document.getElementById('ng-tmpl').value;
-  const gameType = newGameType || 'Game';
   const plays = Array.from({length: 200}, () => ({}));
   const g = {
     id: Date.now().toString(),
-    home, away, date, week, tmplId, gameType,
+    home, away, date, week, tmplId,
     plays,
     createdAt: new Date().toISOString()
   };
@@ -2321,7 +2029,7 @@ function startGame() {
 // ════════════════════════════════════════
 // TRACKER CORE
 // ════════════════════════════════════════
-function loadTracker(gameId, resumePlay) {
+function loadTracker(gameId) {
   const games = getGames();
   game = JSON.parse(JSON.stringify(games.find(g => g.id === gameId)));
   if (!game) return;
@@ -2332,31 +2040,13 @@ function loadTracker(gameId, resumePlay) {
   const allCols = getCols();
   activeCols = tmpl.colIds.map(id => allCols.find(c => c.id === id)).filter(Boolean);
 
-  // Restore last play position if requested
-  if (resumePlay) {
-    try {
-      const pos = JSON.parse(localStorage.getItem('hd_play_positions') || '{}');
-      const saved = pos[gameId];
-      playIdx = (typeof saved === 'number' && saved >= 0 && saved < game.plays.length) ? saved : 0;
-    } catch(e) { playIdx = 0; }
-  } else {
-    playIdx = 0;
-  }
-
+  playIdx = 0;
   const weekStr = game.week ? ` · WK ${game.week}` : '';
-  const typeStr = game.gameType && game.gameType !== 'Game' ? ` (${game.gameType})` : game.gameType === 'Game' ? ' (Game)' : '';
   document.getElementById('tracker-title').textContent =
-    `${game.home.toUpperCase()} VS ${game.away.toUpperCase()}${weekStr}${typeStr}`;
+    `${game.home.toUpperCase()} VS ${game.away.toUpperCase()}${weekStr}`;
 
   showView('view-tracker');
   renderTracker();
-}
-
-function loadLastGame() {
-  const games = getGames();
-  if (games.length === 0) { showToast('No games yet'); return; }
-  const sorted = [...games].sort((a,b) => parseInt(b.id) - parseInt(a.id));
-  loadTracker(sorted[0].id, true);
 }
 
 function persist() {
@@ -2406,14 +2096,13 @@ function renderCard(col, val) {
       <div class="col-card-name">${col.name}</div>
       <div onclick="openColBtnEditor('${col.id}')" style="font-size:12px;color:var(--muted);cursor:pointer;padding:2px 6px;-webkit-tap-highlight-color:transparent">⚙</div>
     </div>
-    <div class="col-card-body" style="padding:8px">${renderColInner(col, val)}</div>
+    <div class="col-card-body" style="padding:7px">${renderColInner(col, val)}</div>
   </div>`;
 }
 
 function gridCls(n) {
   if (n <= 2) return 'bg-2';
   if (n === 3) return 'bg-3';
-  if (n === 5) return 'bg-5';
   return 'bg-4';
 }
 
@@ -2506,10 +2195,10 @@ function renderColInner(col, val) {
   switch(col.type) {
     case 'buttons':     return renderBtns(col, val);
     case 'list':        return renderListBtn(col, val);
-    case 'numpad':      return renderNumpad(col, val);
     case 'btns_list':   return renderBtnsList(col, val);
     case 'btns_dd':     return renderBtnsDd(col, val);
     case 'btn_dds':     return renderBtnDds(col, val);
+    case 'calc':        return renderCalc(col, val);
     default:            return renderBtns(col, val);
   }
 }
@@ -2519,10 +2208,81 @@ function renderBtns(col, val) {
   let h = `<div class="btn-grid ${gc}">`;
   col.btns.forEach(b => {
     const sel = val===b.v ? ' sel':'';
-    h += `<div class="t-btn${sel}" onclick="setVal('${col.id}','${esc(b.v)}')">${b.l}</div>`;
+    // SKIP toggles off when re-tapped; all other buttons just set the value
+    const handler = (col.id === 'skip')
+      ? `setVal('${col.id}', '${esc(b.v)}'===((game.plays[playIdx]||{}).skip||'') ? '' : '${esc(b.v)}')`
+      : `setVal('${col.id}','${esc(b.v)}')`;
+    h += `<div class="t-btn${sel}" onclick="${handler}">${b.l}</div>`;
   });
   return h + '</div>';
 }
+
+// ════════════════════════════════════════
+// CALCULATED COLUMNS (read-only, auto-computed from other columns)
+// ════════════════════════════════════════
+// A "real" play has at least one filled-in field AND is not flagged SKIP.
+// Used to filter out blank rows and explicitly-skipped plays before stats/AI.
+function isRealPlay(p) {
+  if (!p || typeof p !== 'object') return false;
+  if (p.skip === 'SKIP') return false;
+  return Object.keys(p).some(k => k !== 'skip' && p[k] !== '' && p[k] != null);
+}
+
+function renderCalc(col, val) {
+  const hasVal = val !== '' && val !== null && val !== undefined;
+  const display = hasVal ? val : '—';
+  return `<div class="btn-grid bg-1">
+    <div class="t-btn calc-cell${hasVal?' has-val sel':''}"
+         style="cursor:default;opacity:.92"
+         title="Calculated automatically">${display}</div>
+  </div>`;
+}
+
+// Convert signed yard-line string ('-30','50','15') to a 0-100 scale
+// (0 = own goal line, 100 = opponent goal line)
+function ydlnTo100(v) {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = parseInt(v, 10);
+  if (isNaN(n)) return null;
+  if (n === 50) return 50;
+  if (n < 0) return -n;        // -30 (own 30) → 30 yds from own goal
+  return 100 - n;              // opp 30 → 70 yds from own goal
+}
+
+// KICK YDS — distance the ball traveled, always positive
+function calcKickYds(yardln, kickland) {
+  const a = ydlnTo100(yardln);
+  const b = ydlnTo100(kickland);
+  if (a === null || b === null) return '';
+  return Math.abs(b - a);
+}
+
+// RET YDS — signed return yards. Positive = returner moved against the kick
+// direction (a productive return). Negative = returner went backward.
+function calcRetYds(yardln, kickland, retspot) {
+  const a = ydlnTo100(yardln);
+  const b = ydlnTo100(kickland);
+  const c = ydlnTo100(retspot);
+  if (a === null || b === null || c === null) return '';
+  const kickDir = Math.sign(b - a);
+  if (kickDir === 0) return 0;
+  return (b - c) * kickDir;
+}
+
+// Recompute calc fields on the play and write them back to game.plays[playIdx].
+// Called from setVal after any change so calc cells stay in sync.
+function recalcCalcFields() {
+  if (!game || !game.plays[playIdx]) return;
+  const play = game.plays[playIdx];
+  const yardln   = play.yardln   || '';
+  const kickland = play.kickland || '';
+  const retspot  = play.retspot  || '';
+  const kickyds = calcKickYds(yardln, kickland);
+  const retyds  = calcRetYds(yardln, kickland, retspot);
+  play.kickyds = kickyds === '' ? '' : String(kickyds);
+  play.retyds  = retyds  === '' ? '' : String(retyds);
+}
+
 
 function renderListBtn(col, val) {
   const hasVal = !!val;
@@ -2530,20 +2290,6 @@ function renderListBtn(col, val) {
   return `<div class="btn-grid bg-1">
     <div class="t-btn list-open${hasVal?' has-val sel':''}"
          onclick="openList('${col.id}')">${display}</div>
-  </div>`;
-}
-
-function renderNumpad(col, val) {
-  const hasVal = val !== '' && val !== undefined && val !== null;
-  const display = hasVal ? val : '';
-  const placeholder = col.name;
-  return `<div class="btn-grid bg-1">
-    <input type="number" inputmode="numeric" pattern="[0-9-]*"
-      class="numpad-input${hasVal ? ' has-val' : ''}"
-      value="${display}" placeholder="${placeholder}"
-      onfocus="this.select()"
-      onchange="setVal('${col.id}', this.value)"
-      onblur="setVal('${col.id}', this.value)" />
   </div>`;
 }
 
@@ -2596,19 +2342,31 @@ function setVal(colId, value) {
   const col = activeCols.find(c => c.id === colId);
   const key = (col && col.dataKey) ? col.dataKey : colId;
   game.plays[playIdx][key] = value;
+  // Recompute kicking calc fields if any input field changed
+  if (key === 'yardln' || key === 'kickland' || key === 'retspot') {
+    recalcCalcFields();
+  }
   persist();
   renderTracker();
-  
-  // If DN or DIST was just set, try to backfill previous play's gain/loss
-  if (key === 'dn' || key === 'dist2') tryBackfillGainLoss();
-  
   checkAutoAdvance();
 }
 
 function checkAutoAdvance() {
   if (autoTimer) clearTimeout(autoTimer);
   const play = game.plays[playIdx] || {};
+  // SKIP'd plays auto-advance immediately
+  if (play.skip === 'SKIP') {
+    autoTimer = setTimeout(() => {
+      if (playIdx < game.plays.length - 1) nextPlay();
+      else newPlay();
+    }, 400);
+    return;
+  }
   const allDone = activeCols.every(c => {
+    // Calc columns are derived — they don't need a value to count as "done"
+    if (c.type === 'calc') return true;
+    // SKIP is optional — never required for auto-advance
+    if (c.id === 'skip') return true;
     const key = c.dataKey || c.id;
     return play[key] && play[key] !== '';
   });
@@ -2640,74 +2398,7 @@ function prevPlay() {
 }
 
 function nextPlay() {
-  if (!game || playIdx >= game.plays.length - 1) return;
-  
-  // Auto-fill next play's DN and DIST based on current play
-  const cur = game.plays[playIdx] || {};
-  const next = game.plays[playIdx + 1] || {};
-  
-  if (cur.odk !== 'K' && cur.odk !== 'S') {
-    const curDn = parseInt(cur.dn);
-    const curDist = parseFloat(cur.dist2);
-    const curGL = parseFloat(cur.gainloss);
-    
-    if (!isNaN(curDn) && !isNaN(curDist) && !isNaN(curGL)) {
-      // Only auto-fill if next play's fields are empty
-      if (!next.dn && !next.dist2) {
-        if (curGL >= curDist) {
-          // First down
-          next.dn = '1';
-          next.dist2 = '10';
-        } else if (curDn < 4) {
-          // Next down
-          next.dn = String(curDn + 1);
-          next.dist2 = String(Math.round(curDist - curGL));
-        }
-        // Carry over ODK if not set
-        if (!next.odk && cur.odk) next.odk = cur.odk;
-        if (!game.plays[playIdx + 1]) game.plays[playIdx + 1] = {};
-        Object.assign(game.plays[playIdx + 1], next);
-        persist();
-      }
-    }
-  }
-  
-  playIdx++;
-  renderTracker();
-}
-
-// Backward auto-fill: infer GAIN/LOSS from previous play when DN+DIST are set
-function tryBackfillGainLoss() {
-  if (!game || playIdx === 0) return;
-  const cur = game.plays[playIdx] || {};
-  const prev = game.plays[playIdx - 1] || {};
-  
-  // Skip if previous play is K or S, or already has gainloss
-  if (prev.odk === 'K' || prev.odk === 'S') return;
-  if (prev.gainloss && prev.gainloss !== '') return;
-  
-  const prevDist = parseFloat(prev.dist2);
-  const curDn = parseInt(cur.dn);
-  const curDist = parseFloat(cur.dist2);
-  
-  if (isNaN(prevDist) || isNaN(curDn) || isNaN(curDist)) return;
-  
-  // If current play is 1st & 10, previous play gained enough for a first down
-  if (curDn === 1 && curDist === 10) {
-    // They got the first down — gain was at least prevDist
-    // But we can't know exact gain, so don't guess
-    return;
-  }
-  
-  // If same drive (down incremented by 1), we can calculate gain
-  const prevDn = parseInt(prev.dn);
-  if (!isNaN(prevDn) && curDn === prevDn + 1) {
-    const inferredGain = Math.round(prevDist - curDist);
-    prev.gainloss = String(inferredGain);
-    game.plays[playIdx - 1] = prev;
-    persist();
-    renderTracker(); // Re-render to show the inferred value
-  }
+  if (playIdx < game.plays.length - 1) { playIdx++; renderTracker(); }
 }
 
 function showConfirm(title, msg, onOk) {
@@ -2724,46 +2415,15 @@ function clearRow() {
   });
 }
 
-let clearAllBackup = null;
-
 function clearAll() {
-  showConfirm('Clear all plays?', 'This will erase all play data for this game.', () => {
-    // Save backup for undo
-    clearAllBackup = { gameId: game.id, plays: JSON.parse(JSON.stringify(game.plays)), playIdx: playIdx };
+  showConfirm('Clear All Plays?', 'This will erase all play data. Cannot be undone.', () => {
     game.plays = Array.from({length:200}, () => ({}));
     playIdx = 0;
     persist(); renderTracker();
-    showUndoToast('All plays cleared', undoClearAll);
   });
 }
 
-function undoClearAll() {
-  if (!clearAllBackup || !game || game.id !== clearAllBackup.gameId) return;
-  game.plays = clearAllBackup.plays;
-  playIdx = clearAllBackup.playIdx;
-  clearAllBackup = null;
-  persist(); renderTracker();
-  showToast('Undo successful');
-}
-
-function showUndoToast(msg, undoFn) {
-  const toast = document.getElementById('toast');
-  toast.innerHTML = msg + ' <span onclick="event.stopPropagation()" style="margin-left:10px;color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline" id="undo-link">UNDO</span>';
-  toast.classList.add('show');
-  document.getElementById('undo-link').onclick = () => { toast.classList.remove('show'); undoFn(); };
-  clearTimeout(toast._tid);
-  toast._tid = setTimeout(() => { toast.classList.remove('show'); clearAllBackup = null; }, 8000);
-}
-
 function leaveTracker() {
-  // Save last play position for this game
-  if (game && game.id) {
-    try {
-      const pos = JSON.parse(localStorage.getItem('hd_play_positions') || '{}');
-      pos[game.id] = playIdx;
-      localStorage.setItem('hd_play_positions', JSON.stringify(pos));
-    } catch(e) {}
-  }
   goTrackersHub();
   updateLanding();
 }
@@ -3092,7 +2752,7 @@ function renderArchive() {
   }
   let h = '';
   games.forEach(g => {
-    const plays = g.plays ? g.plays.filter(p => Object.keys(p).length > 0).length : 0;
+    const plays = g.plays ? g.plays.filter(isRealPlay).length : 0;
     const weekStr = g.week ? `Wk ${g.week} · ` : '';
     const dateStr = g.date ? `${g.date} · ` : '';
     const tmpl = tmpls.find(t => t.id === g.tmplId);
@@ -3932,8 +3592,7 @@ function setStatsTab(tab) {
 
 function setStatsSubTab(sub) {
   ['overview','offense','defense','field','quarter'].forEach(s => {
-    const btn = document.getElementById(`sstab-${s}`);
-    if (btn) { btn.classList.toggle('on', s === sub); }
+    document.getElementById(`sstab-${s}`)?.classList.toggle('active', s === sub);
     const panel = document.getElementById(`stats-sub-${s}`);
     if (panel) panel.style.display = s === sub ? 'flex' : 'none';
   });
@@ -4114,7 +3773,7 @@ async function confirmPickerStats() {
   localChecked.forEach(c => {
     const g = getGames().find(x => x.id === c.dataset.gameid);
     const gameTitle = c.closest('.cutup-item')?.querySelector('.cutup-item-label')?.textContent || g?.title || '';
-    if (g) localPlays.push(...(g.plays || []).filter(p => Object.keys(p).length > 0).map(p => ({ ...p, _gameTitle: gameTitle })));
+    if (g) localPlays.push(...(g.plays || []).filter(isRealPlay).map(p => ({ ...p, _gameTitle: gameTitle })));
   });
 
   const normalize = c => ({
@@ -4233,21 +3892,8 @@ async function confirmPickerTracker() {
 function updateActiveLabel(text) {
   const wrap = document.getElementById('stats-active-label');
   const lbl = document.getElementById('stats-active-text');
-  const filterBtn = document.getElementById('stats-filter-btn');
-  if (text) {
-    wrap.style.display = ''; lbl.textContent = text;
-    // Update filter button to show what's loaded
-    if (filterBtn) {
-      // Shorten label for the button — truncate if too long
-      let short = statsLabel || text;
-      if (short.length > 20) short = short.substring(0, 18) + '…';
-      filterBtn.textContent = short + ' ▼';
-    }
-  }
-  else {
-    wrap.style.display = 'none';
-    if (filterBtn) filterBtn.textContent = 'FILTER ▼';
-  }
+  if (text) { wrap.style.display = ''; lbl.textContent = text; }
+  else { wrap.style.display = 'none'; }
 }
 
 function refreshStats() {
@@ -4279,7 +3925,7 @@ function getUnifiedItems() {
     items.push({
       source: 'local', id: g.id, internalId: 'local_' + g.id,
       title: `${g.home} vs ${g.away} (${wk}${dt})`,
-      clip_count: g.plays ? g.plays.filter(p=>Object.keys(p).length>0).length : 0,
+      clip_count: g.plays ? g.plays.filter(isRealPlay).length : 0,
       category: 'tracker'
     });
   });
@@ -4295,7 +3941,7 @@ function getUnifiedItems() {
 }
 
 function parseWeekSort(title) {
-  const m = title.match(/[Ww][Kk]\s*0*(\d+)/);
+  const m = title.match(/[Ww]k\s*0*(\d+)/);
   return m ? parseInt(m[1], 10) : -1;
 }
 
@@ -4328,15 +3974,8 @@ function goStats() {
     '<div class="chat-msg assistant">Hi Coach! Load data using the FILTER button, then ask me anything about your plays.</div>';
   setStatsTab('spotlight');
   showView('view-stats');
-  // Update filter button to reflect current state
-  const filterBtn = document.getElementById('stats-filter-btn');
-  if (statsGameData && statsGameData.length > 0 && statsLabel) {
-    let short = statsLabel;
-    if (short.length > 20) short = short.substring(0, 18) + '…';
-    filterBtn.textContent = short + ' ▼';
-  } else {
-    filterBtn.textContent = 'FILTER ▼';
-    // Auto-open picker if no data is loaded
+  // Auto-open picker if no data is loaded
+  if (!statsGameData || statsGameData.length === 0) {
     setTimeout(() => openHudlPicker('stats'), 100);
   }
 }
@@ -4815,7 +4454,7 @@ async function runSpotlightAnalysis(plays, append = false) {
       </div>`;
   }
 
-  const active = (plays || []).filter(p => Object.keys(p).length > 0);
+  const active = (plays || []).filter(isRealPlay);
   if (active.length === 0) {
     panel.innerHTML = '<div class="empty-msg">No play data to analyze.</div>';
     return;
@@ -4939,19 +4578,20 @@ async function runSpotlightAnalysis(plays, append = false) {
   const systemPrompt = `You are an elite football analytics assistant for a high school coach. Analyze play data and surface the most important, actionable findings for BOTH offense and defense.
 ${getPlaybookContext()}
 
-Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 OFF insights (tag "O") and 2-5 DEF insights (tag "D"). Only include genuinely useful findings. Quality over quantity. Each object must have:
-- "stat": The key data point. Max 6 words. Use coaching shorthand: Q1/Q2/Q3/Q4 (never spell out quarter), 1st DN/2nd DN/3rd DN/4th DN, OFF/DEF, conv, avg, YPC, YPP, R Hash/L Hash/M, neg, comp, inc, STK, INT. Examples: "23% 3rd DN conv", "72% run on 1st DN", "Q3 OFF avg 7.2 YPP", "DEF Q4 allowing 6.1 avg"
-- "headline": Coaching recommendation. Max 8 words. Same shorthand.
-- "why": Ultra-brief context. Max 6 words.
-- "tag": "O" or "D"
+Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 offensive insights (tag "O") and 2-5 defensive insights (tag "D"). Only include an insight if it's genuinely useful — do NOT pad with filler. If there are only 2 real findings on one side, return 2. Quality over quantity. Each object must have:
+- "stat": Supporting data point (e.g. "71% run rate on 3rd & long", "Opponents convert 80% of 3rd downs"). Keep under 10 words.
+- "headline": The actionable takeaway or recommendation. This is the BIG text the coach reads first. Max 12 words.
+- "why": Brief context on why (max 12 words)
+- "tag": one of "O", "D", "K", "G" (G = general)
 - "priority": "high" if exploitable/alarming, "medium" if notable, "low" if interesting
 
 CRITICAL RULES:
-- Analyze BOTH "offense" and "defense" sections. Do not skip defense.
-- DEF analysis: yards allowed, opp run/pass tendencies, 3rd DN stop rate, sacks, TFLs, INTs, down-by-down.
-- Check "playsWithYardage" and "missingYardage". If fewer than 10 plays with yardage, do NOT make avg claims.
-- Be specific with numbers. Use shorthand everywhere.
-- Do NOT repeat prior insights (listed below if follow-up).`;
+- You MUST analyze both the "offense" and "defense" sections of the data. Do not skip defense.
+- For defense: look at yards allowed, opponent run/pass tendencies, 3rd down stop rate, sacks, TFLs, interceptions, and down-by-down breakdowns.
+- Check "playsWithYardage" and "missingYardage" fields. If a category has fewer than 10 plays with yardage data, do NOT make YPP/average claims about it — the sample is too small.
+- Never compare averages between groups where one has significant missing data.
+- Be specific with numbers but honest about limitations.
+- Do NOT repeat insights you have already provided (prior insights will be listed if this is a follow-up request).`;
 
   // Inject coach feedback into prompt if available
   const fb = getSpotlightFeedback();
@@ -5001,22 +4641,20 @@ CRITICAL RULES:
     const otherInsights = spotlightInsights.filter(i => i.tag !== 'O' && i.tag !== 'D');
 
     const escHtml = s => s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    const renderCards = (list, side) => list
+    const renderCards = (list) => list
       .sort((a,b) => (priorityOrder[a.priority]||1) - (priorityOrder[b.priority]||1))
       .map((ins, i) => {
-        const globalIdx = spotlightInsights.indexOf(ins);
-        const tagLabel2 = tagLabel[ins.tag] || 'GENERAL';
-        // Green = offense, Blue = defense
-        const sideColor = side === 'O' ? 'var(--green)' : side === 'D' ? 'var(--blue)' : 'var(--muted)';
-        return `<div class="spotlight-card" style="border-left:3px solid ${sideColor}">
+        const insJson = escHtml(JSON.stringify({headline:ins.headline,stat:ins.stat,tag:ins.tag}));
+        return `<div class="spotlight-card ${ins.priority || 'medium'}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <span style="font-size:11px;color:${sideColor};font-weight:600">${tagLabel2}</span>
-          <div style="display:flex;gap:4px;flex-shrink:0">
-            <button onclick="rateSpotlightByIdx(this,${globalIdx},true)" class="spot-rate" data-dir="up" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;opacity:0.35" title="Useful">👍</button>
-            <button onclick="rateSpotlightByIdx(this,${globalIdx},false)" class="spot-rate" data-dir="down" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;opacity:0.35" title="Not useful">👎</button>
+          <span class="spotlight-tag">${(tagLabel[ins.tag] || 'GENERAL')}</span>
+          <div style="display:flex;gap:2px;flex-shrink:0">
+            <button onclick="showMethodology('${insJson}')" style="background:none;border:1px solid var(--border);border-radius:50%;width:22px;height:22px;font-size:11px;cursor:pointer;color:var(--muted);font-family:var(--font-btn);font-weight:900;line-height:1" title="How was this calculated?">?</button>
+            <button onclick="rateSpotlight(this, '${insJson}', true)" style="background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px;opacity:0.4" title="Useful">👍</button>
+            <button onclick="rateSpotlight(this, '${insJson}', false)" style="background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px;opacity:0.4" title="Not useful">👎</button>
           </div>
         </div>
-        <div class="spotlight-stat" onclick="showMethodologyByIdx(${globalIdx})" style="cursor:pointer;color:${sideColor}">${ins.stat}</div>
+        <div class="spotlight-stat">${ins.stat}</div>
         <div class="spotlight-headline">${ins.headline}</div>
         <div class="spotlight-why">${ins.why}</div>
       </div>`;
@@ -5024,26 +4662,26 @@ CRITICAL RULES:
 
     let html = `<div style="padding:4px 0">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <span style="font-family:var(--font-btn);font-weight:700;font-size:14px">AI Spotlight</span>
+        <span style="font-family:var(--font-btn);font-weight:900;font-size:14px">⚡ AI SPOTLIGHT</span>
         <button class="hdr-btn" onclick="runSpotlightAnalysis(statsGameData)" style="font-size:10px;padding:4px 10px">↺ REFRESH</button>
       </div>`;
 
     if (offInsights.length > 0) {
-      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:600;color:var(--accent);margin-bottom:6px;margin-top:4px;letter-spacing:0.06em">OFFENSE</div>`;
-      html += renderCards(offInsights, 'O');
+      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:900;color:var(--green);margin-bottom:6px;margin-top:4px">OFFENSE</div>`;
+      html += renderCards(offInsights);
     }
     if (defInsights.length > 0) {
-      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:600;color:var(--blue);margin-bottom:6px;margin-top:14px;letter-spacing:0.06em">DEFENSE</div>`;
-      html += renderCards(defInsights, 'D');
+      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:900;color:var(--red);margin-bottom:6px;margin-top:14px">DEFENSE</div>`;
+      html += renderCards(defInsights);
     }
     if (otherInsights.length > 0) {
-      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:600;color:var(--muted2);margin-bottom:6px;margin-top:14px;letter-spacing:0.06em">GENERAL</div>`;
-      html += renderCards(otherInsights, 'G');
+      html += `<div style="font-size:11px;font-family:var(--font-btn);font-weight:900;color:var(--yellow);margin-bottom:6px;margin-top:14px">GENERAL</div>`;
+      html += renderCards(otherInsights);
     }
 
     html += `<div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-secondary" id="spotlight-more-btn" onclick="runSpotlightAnalysis(statsGameData, true)" style="flex:1;padding:12px;font-size:12px">Generate more</button>
-      <button class="btn btn-primary" onclick="setStatsTab('ai')" style="flex:1;padding:12px;font-size:12px">Ask a question →</button>
+      <button class="btn btn-secondary" id="spotlight-more-btn" onclick="runSpotlightAnalysis(statsGameData, true)" style="flex:1;padding:12px;font-size:12px">GENERATE MORE</button>
+      <button class="btn btn-primary" onclick="setStatsTab('ai')" style="flex:1;padding:12px;font-size:12px">ASK A QUESTION →</button>
     </div></div>`;
 
     panel.innerHTML = html;
@@ -5068,50 +4706,13 @@ CRITICAL RULES:
 
 function rateSpotlight(btn, insightJson, liked) {
   const insight = JSON.parse(insightJson);
+  addSpotlightFeedback(insight, liked);
+  // Visual feedback — highlight the tapped button, dim the other
   const container = btn.parentElement;
-  const upBtn = container.querySelector('[data-dir="up"]');
-  const downBtn = container.querySelector('[data-dir="down"]');
-  const isAlreadyActive = btn.style.opacity === '1';
-
-  if (isAlreadyActive) {
-    removeSpotlightFeedback(insight);
-    upBtn.style.opacity = '0.35';
-    downBtn.style.opacity = '0.35';
-    showToast('Rating removed');
-  } else {
-    addSpotlightFeedback(insight, liked);
-    upBtn.style.opacity = liked ? '1' : '0.15';
-    downBtn.style.opacity = liked ? '0.15' : '1';
-    showToast(liked ? '👍 Will prioritize similar insights' : '👎 Will deprioritize similar insights');
-  }
-}
-
-function rateSpotlightByIdx(btn, idx, liked) {
-  const ins = spotlightInsights[idx];
-  if (!ins) return;
-  const insight = { headline: ins.headline, stat: ins.stat, tag: ins.tag };
-  const container = btn.parentElement;
-  const upBtn = container.querySelector('[data-dir="up"]');
-  const downBtn = container.querySelector('[data-dir="down"]');
-  const isAlreadyActive = btn.style.opacity === '1';
-
-  if (isAlreadyActive) {
-    removeSpotlightFeedback(insight);
-    upBtn.style.opacity = '0.35';
-    downBtn.style.opacity = '0.35';
-    showToast('Rating removed');
-  } else {
-    addSpotlightFeedback(insight, liked);
-    upBtn.style.opacity = liked ? '1' : '0.15';
-    downBtn.style.opacity = liked ? '0.15' : '1';
-    showToast(liked ? '👍 Will prioritize similar' : '👎 Will deprioritize similar');
-  }
-}
-
-function showMethodologyByIdx(idx) {
-  const ins = spotlightInsights[idx];
-  if (!ins) { showToast('Insight not found'); return; }
-  showMethodology(JSON.stringify({ headline: ins.headline, stat: ins.stat, tag: ins.tag }));
+  const buttons = container.querySelectorAll('button');
+  buttons.forEach(b => b.style.opacity = '0.2');
+  btn.style.opacity = '1';
+  showToast(liked ? '👍 Noted — will prioritize similar insights' : '👎 Noted — will deprioritize similar insights');
 }
 
 async function showMethodology(insightJson) {
@@ -5141,7 +4742,7 @@ async function showMethodology(insightJson) {
 
 // ── CLAUDE CHAT ──
 function buildDataSummary() {
-  const active = (statsGameData || []).filter(p => Object.keys(p).length > 0);
+  const active = (statsGameData || []).filter(isRealPlay);
   if (active.length === 0) return 'No play data available.';
   // Compact CSV-style format to minimize tokens
   const header = 'game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
@@ -5451,7 +5052,7 @@ function updateHubSubs() {
 function goStatsFromTracker() {
   if (!game) return;
   statsReturnView = 'view-tracker';
-  const plays = (game.plays || []).filter(p => Object.keys(p).length > 0);
+  const plays = (game.plays || []).filter(isRealPlay);
   statsGameData = plays;
   const weekStr = game.week ? ' · Wk ' + game.week : '';
   statsLabel = game.home + ' vs ' + game.away + weekStr;
@@ -5472,7 +5073,7 @@ function goStatsFromArchive(gameId) {
   const g = getGames().find(x => x.id === gameId);
   if (!g) return;
   statsReturnView = 'view-archive';
-  const plays = (g.plays || []).filter(p => Object.keys(p).length > 0);
+  const plays = (g.plays || []).filter(isRealPlay);
   statsGameData = plays;
   const weekStr = g.week ? ' · Wk ' + g.week : '';
   statsLabel = g.home + ' vs ' + g.away + weekStr;
@@ -5613,10 +5214,10 @@ function toggleHelpSection(id) {
   section.classList.toggle('collapsed');
 }
 
-const HELP_SYSTEM_PROMPT = `You are a friendly help assistant for Assistant Coach — a football play-tracking and analytics app built for coaching staffs, designed for phones and tablets. Your job is to answer questions about how to USE the app. Be concise, direct, and practical. Use bold for button names and screen names.
+const HELP_SYSTEM_PROMPT = `You are a friendly help assistant for Hudl Tagger — a football play-tracking and analytics app built for coaching staffs, designed for phones and tablets. Your job is to answer questions about how to USE the app. Be concise, direct, and practical. Use bold for button names and screen names.
 
 ## APP OVERVIEW
-Assistant Coach has four main sections accessible from the home screen:
+Hudl Tagger has four main sections accessible from the home screen:
 - **Game Trackers** — create, track, and archive games play-by-play
 - **Stats & Analysis** — AI-powered analysis of play data with charts and chat
 - **Settings** — AI context editors, backup/restore, Hudl cache
@@ -5624,8 +5225,8 @@ Assistant Coach has four main sections accessible from the home screen:
 
 ## GAME TRACKERS
 - **New Game Tracker** — choose a template, enter team names (optional), tap START GAME
-- **Tracker screen** — each row = one play; tap buttons to record values; use + Rows / ← Prev to move between plays
-- **Next play** — adds more play rows to the sheet
+- **Tracker screen** — each row = one play; tap buttons to record values; use NEXT → / ← PREV to move between plays
+- **+ ADD ROWS** — adds more play rows to the sheet
 - **▤ 1COL / 2COL** button — toggles single or two-column layout
 - **Play navigator** — tap the play number chip in the sheet bar to jump to any play number
 - **Template chip** — tap in the sheet bar to switch templates mid-game (data is preserved)
@@ -5758,10 +5359,10 @@ async function sendHelpChat() {
 // ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
-if (localStorage.getItem('hd_ver') !== '12') {
+if (localStorage.getItem('hd_ver') !== '9') {
   localStorage.removeItem('hd_cols');
   localStorage.removeItem('hd_tmpls');
-  localStorage.setItem('hd_ver', '12');
+  localStorage.setItem('hd_ver', '9');
 }
 if (!localStorage.getItem('hd_cols'))  saveCols(defaultColumns());
 if (!localStorage.getItem('hd_tmpls')) saveTmpls([defaultTemplate()]);
