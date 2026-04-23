@@ -1571,6 +1571,8 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     </div>
     <!-- Footer -->
     <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0">
+      <button onclick="refreshHudlLibrary()" title="Refresh from Hudl"
+        style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--muted);font-size:12px;cursor:pointer;flex-shrink:0">↺</button>
       <div style="font-size:11px;color:var(--muted);flex:1" id="picker-status"></div>
       <button class="btn btn-primary" id="picker-load-btn" onclick="confirmPicker()"
         style="padding:9px 20px;font-size:12px;white-space:nowrap">LOAD →</button>
@@ -5056,6 +5058,16 @@ async function loadHudlLibrary() {
       '<div style="padding:16px;font-size:12px;color:var(--muted);text-align:center">Error loading cutups</div>';
     filterPickerList();
   }
+}
+
+async function refreshHudlLibrary() {
+  hudlLibrary = null;
+  localStorage.removeItem('hd_library_cache');
+  localStorage.removeItem('hd_library_cache_at');
+  const status = document.getElementById('picker-status');
+  if (status) status.textContent = 'Refreshing…';
+  await loadHudlLibrary();
+  showToast('Cutup list refreshed');
 }
 
 // ── LOCAL GAME DATA ──
