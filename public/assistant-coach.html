@@ -4294,13 +4294,13 @@ async function executeHudlPush() {
     if (result.errors > 0) {
       status.textContent = 'Done: ' + result.success + ' ok, ' + result.errors + ' errors';
       status.style.color = '#e67e22';
-      btn.textContent = 'DONE (WITH ERRORS)';
+      btn.textContent = 'CLOSE';
+      btn.disabled = false;
+      btn.onclick = function() { closeModal('m-hudl-push'); };
       showToast('Pushed with ' + result.errors + ' errors');
     } else {
-      status.textContent = '✓ ' + result.success + ' updates pushed successfully';
-      status.style.color = '#27ae60';
-      btn.textContent = '✓ DONE';
       showToast('Pushed ' + result.success + ' updates to Hudl!');
+      setTimeout(function() { closeModal('m-hudl-push'); }, 600);
     }
 
     console.log('Hudl push results:', result);
