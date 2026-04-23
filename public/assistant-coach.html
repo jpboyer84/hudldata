@@ -1771,36 +1771,6 @@ function defaultColumns() {
       btns:[{l:'A',v:'A'},{l:'B',v:'B'},{l:'C',v:'C'},{l:'D',v:'D'},{l:'E',v:'E-Alley'}]
     },
     {
-      id:'backfield', name:'BACKFIELD', type:'btns_dd',
-      btns:[{l:'GUN',v:'Gun'},{l:'I',v:'I-Form'},{l:'PRO',v:'Pro'},{l:'PISTOL',v:'Pistol'}],
-      ddLbl:'▼',
-      dd:['Ace','Empty','Full House','Gun','Gun Left','Gun Right','Gun Strong','Gun Weak','I-Form','I-Near','I-Strong','I-Weak','Pro','Pro Ace','Pro Strong','Pro Weak','Pistol','Pistol Left','Pistol Right','Wing-T','Single Wing','Flexbone','Split Back','Wildcat']
-    },
-    {
-      id:'blitz', name:'BLITZ', type:'btns_dd',
-      btns:[{l:'NO',v:'No blitz'},{l:'HOUSE',v:'House'},{l:'ZONE',v:'Zone'}],
-      ddLbl:'▼',
-      dd:['House','Boundary','Field','Free Safety','Strong Safety','Mike','Will','Sam','ILBs','OLBs','Corner','Zone','Show Bail','No blitz']
-    },
-    {
-      id:'coverage', name:'COVERAGE', type:'btns_dd',
-      btns:[{l:'0',v:'0'},{l:'1',v:'1'},{l:'2',v:'2'},{l:'3',v:'3'},{l:'4',v:'4'}],
-      ddLbl:'▼',
-      dd:['0','1','2','3','4','2 invert','4 Press','Man Free','Press Man','2 Man','Quarters','Bingo','Box']
-    },
-    {
-      id:'deffront', name:'DEF FRONT', type:'buttons',
-      btns:[{l:'OVER',v:'Over'},{l:'UNDER',v:'Under'},{l:'BEAR',v:'Bear'},{l:'3-4',v:'3-4'},{l:'4-3',v:'4-3'},{l:'3-3',v:'3-3 Stack'},{l:'4-2',v:'4-2'}]
-    },
-    {
-      id:'eff', name:'EFF', type:'buttons',
-      btns:[{l:'Y',v:'Y'},{l:'N',v:'N'}]
-    },
-    {
-      id:'gap', name:'GAP', type:'buttons',
-      btns:[{l:'A',v:'A'},{l:'B',v:'B'},{l:'C',v:'C'},{l:'D',v:'D'},{l:'E',v:'E-Alley'}]
-    },
-    {
       id:'ignore', name:'SKIP', type:'buttons',
       btns:[{l:'✕',v:'SKIP'}]
     },
@@ -5838,10 +5808,10 @@ async function sendHelpChat() {
 // ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
-if (localStorage.getItem('hd_ver') !== '13') {
+if (localStorage.getItem('hd_ver') !== '14') {
   localStorage.removeItem('hd_cols');
   localStorage.removeItem('hd_tmpls');
-  localStorage.setItem('hd_ver', '13');
+  localStorage.setItem('hd_ver', '14');
 }
 if (!localStorage.getItem('hd_cols'))  saveCols(defaultColumns());
 if (!localStorage.getItem('hd_tmpls')) saveTmpls([defaultTemplate()]);
