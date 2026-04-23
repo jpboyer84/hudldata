@@ -41,8 +41,12 @@ body {
 }
 
 /* ── VIEWS ── */
-.view { display: none; flex-direction: column; height: 100dvh; overflow: hidden; max-width: 1200px; margin: 0 auto; width: 100%; }
+.view { display: none; flex-direction: column; height: 100dvh; overflow: hidden; }
 .view.active { display: flex; }
+
+@media (min-width: 768px) {
+  .view { max-width: 85%; margin: 0 auto; }
+}
 
 /* ── HEADER ── */
 .hdr {
