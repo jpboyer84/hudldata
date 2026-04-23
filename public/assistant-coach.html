@@ -1799,6 +1799,22 @@ function defaultColumns() {
     {
       id:'gap', name:'GAP', type:'buttons',
       btns:[{l:'A',v:'A'},{l:'B',v:'B'},{l:'C',v:'C'},{l:'D',v:'D'},{l:'E',v:'E-Alley'}]
+    },
+    {
+      id:'ignore', name:'SKIP', type:'buttons',
+      btns:[{l:'✕',v:'SKIP'}]
+    },
+    {
+      id:'kickland', name:'KICK LAND', type:'numpad'
+    },
+    {
+      id:'kickyds', name:'KICK YDS', type:'calc', calcFn:'calcKickYds'
+    },
+    {
+      id:'retspot', name:'RET SPOT', type:'numpad'
+    },
+    {
+      id:'retyds', name:'RET YDS', type:'calc', calcFn:'calcRetYds'
     }
   ];
 }
@@ -2507,6 +2523,7 @@ function renderColInner(col, val) {
     case 'buttons':     return renderBtns(col, val);
     case 'list':        return renderListBtn(col, val);
     case 'numpad':      return renderNumpad(col, val);
+    case 'calc':        return renderCalc(col, val);
     case 'btns_list':   return renderBtnsList(col, val);
     case 'btns_dd':     return renderBtnsDd(col, val);
     case 'btn_dds':     return renderBtnDds(col, val);
@@ -2545,6 +2562,69 @@ function renderNumpad(col, val) {
       onchange="setVal('${col.id}', this.value)"
       onblur="setVal('${col.id}', this.value)" />
   </div>`;
+}
+
+function renderCalc(col, val) {
+  // Recalculate on every render
+  const play = game ? (game.plays[playIdx] || {}) : {};
+  let computed = '';
+  if (col.calcFn === 'calcKickYds') computed = calcKickYds(play);
+  else if (col.calcFn === 'calcRetYds') computed = calcRetYds(play);
+  // Store the computed value
+  if (computed !== '' && game) {
+    const key = col.dataKey || col.id;
+    if (play[key] !== computed) {
+      play[key] = computed;
+      if (!game.plays[playIdx]) game.plays[playIdx] = {};
+      game.plays[playIdx][key] = computed;
+      persist();
+    }
+  }
+  const hasVal = computed !== '';
+  return `<div class="btn-grid bg-1">
+    <div class="numpad-input${hasVal ? ' has-val' : ''}" style="display:flex;align-items:center;justify-content:center;font-size:22px;cursor:default">
+      ${hasVal ? computed : col.name}
+    </div>
+  </div>`;
+}
+
+// Convert yard line to distance from end zone (own perspective)
+function ydlToDistFromEZ(val) {
+  const n = parseFloat(val);
+  if (isNaN(n)) return null;
+  if (n === 0) return 100; // end zone / TD
+  return n < 0 ? Math.abs(n) : 100 - n;
+}
+
+// Convert yard line to distance from KICKER's end zone (receiver's perspective input)
+function ydlToDistFromKickerEZ(val) {
+  const n = parseFloat(val);
+  if (isNaN(n)) return null;
+  if (n === 0) return 0; // kicker's end zone
+  return n > 0 ? n : 100 + n;
+}
+
+function calcKickYds(play) {
+  const los = parseFloat(play.yardln);
+  const land = parseFloat(play.kickland);
+  if (isNaN(los) || isNaN(land)) return '';
+  // LOS from kicker's perspective: convert to distance from kicker's EZ
+  const kickerDist = los < 0 ? Math.abs(los) : 100 - los;
+  // Landing from receiver's perspective: convert to distance from kicker's EZ
+  const landDist = land > 0 ? land : 100 + land;
+  const yds = landDist - kickerDist;
+  return yds >= 0 ? String(yds) : String(yds);
+}
+
+function calcRetYds(play) {
+  const land = parseFloat(play.kickland);
+  const ret = parseFloat(play.retspot);
+  if (isNaN(land) || isNaN(ret)) return '';
+  // Both from receiver's perspective: convert to distance from receiver's EZ
+  const landDist = land < 0 ? Math.abs(land) : 100 - land;
+  const retDist = ret < 0 ? Math.abs(ret) : 100 - ret;
+  const yds = retDist - landDist;
+  return String(yds);
 }
 
 function renderBtnsList(col, val) {
@@ -4478,6 +4558,8 @@ function getStatsLabel() {
 
 function renderStatsFromData(plays, label, append = false) {
   statSectionId = 0;
+  // Filter out skipped/ignored plays
+  plays = (plays || []).filter(p => p.ignore !== 'SKIP');
   if (!plays || plays.length === 0) {
     ['overview','offense','defense','field','quarter'].forEach(s => {
       const el = document.getElementById('stats-sub-' + s);
@@ -4815,7 +4897,7 @@ async function runSpotlightAnalysis(plays, append = false) {
       </div>`;
   }
 
-  const active = (plays || []).filter(p => Object.keys(p).length > 0);
+  const active = (plays || []).filter(p => Object.keys(p).length > 0 && p.ignore !== 'SKIP');
   if (active.length === 0) {
     panel.innerHTML = '<div class="empty-msg">No play data to analyze.</div>';
     return;
@@ -5141,7 +5223,7 @@ async function showMethodology(insightJson) {
 
 // ── CLAUDE CHAT ──
 function buildDataSummary() {
-  const active = (statsGameData || []).filter(p => Object.keys(p).length > 0);
+  const active = (statsGameData || []).filter(p => Object.keys(p).length > 0 && p.ignore !== 'SKIP');
   if (active.length === 0) return 'No play data available.';
   // Compact CSV-style format to minimize tokens
   const header = 'game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
@@ -5451,7 +5533,7 @@ function updateHubSubs() {
 function goStatsFromTracker() {
   if (!game) return;
   statsReturnView = 'view-tracker';
-  const plays = (game.plays || []).filter(p => Object.keys(p).length > 0);
+  const plays = (game.plays || []).filter(p => Object.keys(p).length > 0 && p.ignore !== 'SKIP');
   statsGameData = plays;
   const weekStr = game.week ? ' · Wk ' + game.week : '';
   statsLabel = game.home + ' vs ' + game.away + weekStr;
@@ -5462,9 +5544,8 @@ function goStatsFromTracker() {
   showView('view-stats');
   renderStatsFromData(plays, statsLabel, false);
   updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
-  setStatsTab('spotlight');
+  setStatsTab('stats');
   setStatsSubTab('overview');
-
   runSpotlightAnalysis(plays);
 }
 
@@ -5472,7 +5553,7 @@ function goStatsFromArchive(gameId) {
   const g = getGames().find(x => x.id === gameId);
   if (!g) return;
   statsReturnView = 'view-archive';
-  const plays = (g.plays || []).filter(p => Object.keys(p).length > 0);
+  const plays = (g.plays || []).filter(p => Object.keys(p).length > 0 && p.ignore !== 'SKIP');
   statsGameData = plays;
   const weekStr = g.week ? ' · Wk ' + g.week : '';
   statsLabel = g.home + ' vs ' + g.away + weekStr;
@@ -5483,9 +5564,8 @@ function goStatsFromArchive(gameId) {
   showView('view-stats');
   renderStatsFromData(plays, statsLabel, false);
   updateActiveLabel(statsLabel + ' · ' + plays.length + ' plays');
-  setStatsTab('spotlight');
+  setStatsTab('stats');
   setStatsSubTab('overview');
-
   runSpotlightAnalysis(plays);
 }
 
@@ -5758,10 +5838,10 @@ async function sendHelpChat() {
 // ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
-if (localStorage.getItem('hd_ver') !== '12') {
+if (localStorage.getItem('hd_ver') !== '13') {
   localStorage.removeItem('hd_cols');
   localStorage.removeItem('hd_tmpls');
-  localStorage.setItem('hd_ver', '12');
+  localStorage.setItem('hd_ver', '13');
 }
 if (!localStorage.getItem('hd_cols'))  saveCols(defaultColumns());
 if (!localStorage.getItem('hd_tmpls')) saveTmpls([defaultTemplate()]);
