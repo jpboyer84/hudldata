@@ -6199,7 +6199,9 @@ Current dataset: ${label}
 Game location: ${gameLocation}
 Season: ${season}
 Play data (CSV format — columns: odk,qtr,dn,dist,ydln,hash,type,result,gl,form):
-${buildDataSummary()}`;
+${buildDataSummary()}
+
+REMINDER: Your response MUST be under 100 words. Start with the answer. No play-by-play. No showing work.`;
 
   // Safety guard: ensure history ends with a user message
   while (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role !== 'user') {
