@@ -5219,6 +5219,23 @@ function formatChatResponse(text) {
     .replace(/\n{2,}/g, '<br><br>')
     .replace(/\n/g, '<br>');
 }
+
+const chatCopyStore = {};
+
+function copyChat(btnEl, copyId) {
+  var text = chatCopyStore[copyId] || '';
+  if (!text) {
+    // Fallback: grab text from the parent message div
+    var msg = btnEl.closest('.chat-msg');
+    if (msg) text = msg.innerText.replace(/📋 COPY|📌 SAVE/g, '').trim();
+  }
+  navigator.clipboard.writeText(text).then(function() {
+    btnEl.textContent = '✓ Copied';
+    setTimeout(function() { btnEl.textContent = '📋 COPY'; }, 1500);
+  }).catch(function() {
+    showToast('Could not copy — try selecting the text manually');
+  });
+}
 let statsGameData = null;
 let statsReturnView = 'view-landing';
 let statSectionId = 0;
@@ -6217,10 +6234,15 @@ ${buildDataSummary()}`;
     const saveId = 'save_' + Date.now();
     window[saveId] = () => saveInsight(savedMsg, savedReply);
 
+    const copyId = 'cp_' + Date.now();
+    chatCopyStore[copyId] = reply;
     const replyDiv = document.createElement('div');
     replyDiv.className = 'chat-msg assistant';
     replyDiv.innerHTML = formatChatResponse(reply)
-      + `<div style="margin-top:8px;text-align:right">
+      + `<div style="margin-top:8px;text-align:right;display:flex;gap:6px;justify-content:flex-end">
+          <button id="${copyId}" onclick="copyChat(this,'${copyId}')"
+            style="font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);
+                   border-radius:4px;padding:3px 8px;cursor:pointer;font-family:var(--font-ui)">📋 COPY</button>
           <button onclick="window['${saveId}']()"
             style="font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);
                    border-radius:4px;padding:3px 8px;cursor:pointer;font-family:var(--font-ui)">📌 SAVE</button>
