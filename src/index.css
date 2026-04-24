@@ -1,10 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ══════════════════════════════════════
    DESIGN TOKENS — exact match to HTML :root
 ══════════════════════════════════════ */
-@theme {
+:root {
   --color-bg: #0c0c0e;
   --color-surface: #161618;
   --color-surface2: #1e1e20;
