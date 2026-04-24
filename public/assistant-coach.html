@@ -765,6 +765,7 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <button class="hdr-btn" onclick="leaveTracker()">← Back</button>
     <div class="hdr-title" id="tracker-title" onclick="openEditGameModal()" style="cursor:pointer">Game</div>
     <div style="display:flex;gap:5px">
+      <button class="hdr-btn" id="btn-send-hudl" onclick="openHudlPushModal()" style="display:none;color:#27ae60">▲ Send</button>
       <button class="hdr-btn" id="layout-btn" onclick="toggleLayout()">▤ 1COL</button>
       <button class="hdr-btn white" onclick="openTrackerColPicker()">+ Add</button>
       <button class="hdr-btn" onclick="toggleTrackerMenu()" id="tracker-menu-btn" style="font-size:18px;padding:4px 10px;line-height:1">⋯</button>
@@ -793,10 +794,6 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div class="tracker-menu-item" onclick="openExportXlsxModal();closeTrackerMenu()">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 3V10M5 7L8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       Export XLSX
-    </div>
-    <div class="tracker-menu-item" id="menu-hudl-push" onclick="openHudlPushModal();closeTrackerMenu()" style="display:none">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 13V6M5 9L8 6L11 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 4H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      Push to Hudl
     </div>
     <div style="height:1px;background:var(--border);margin:2px 0"></div>
     <div class="tracker-menu-item" onclick="clearRow();closeTrackerMenu()" style="color:var(--yellow)">
@@ -2647,9 +2644,9 @@ function loadTracker(gameId, resumePlay) {
     `${game.home.toUpperCase()} VS ${game.away.toUpperCase()}${weekStr}${typeStr}`;
 
   showView('view-tracker');
-  // Show "Push to Hudl" menu item only for games loaded from Hudl
-  const pushMenuItem = document.getElementById('menu-hudl-push');
-  if (pushMenuItem) pushMenuItem.style.display = game.hudlCutupId ? '' : 'none';
+  // Show "▲ Send" button only for games loaded from Hudl
+  const sendBtn = document.getElementById('btn-send-hudl');
+  if (sendBtn) sendBtn.style.display = game.hudlCutupId ? '' : 'none';
   renderTracker();
 }
 
