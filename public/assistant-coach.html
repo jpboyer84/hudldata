@@ -2328,13 +2328,16 @@ async function renderTemplateList() {
     return;
   }
   let h = '';
+  const hasHudl = !!getHudlSession()?.cookie;
   tmpls.forEach((t, i) => {
     const allCols = getCols();
     const colNames = t.colIds.map(id => allCols.find(c=>c.id===id)?.name||id).join(', ');
+    const hudlBtn = hasHudl ? `<button class="hdr-btn" onclick="saveTemplateToHudl('${t.id}')" style="color:#27ae60">▲ HUDL</button>` : '';
     h += `<div class="arch-card" data-idx="${i}" style="flex-direction:column;align-items:flex-start;gap:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
         <div class="arch-title" style="flex:1">${t.name}</div>
         <div style="display:flex;gap:8px;align-items:center">
+          ${hudlBtn}
           <button class="hdr-btn white" onclick="editTemplate('${t.id}')">EDIT</button>
           <button class="hdr-btn red" onclick="deleteTemplate('${t.id}')">DELETE</button>
           <div class="drag-handle tmpl-drag" data-idx="${i}" style="margin-left:4px">⠿</div>
@@ -2447,6 +2450,71 @@ function deleteTemplate(id) {
     saveTmpls(tmpls);
     renderTemplateList();
     showToast('Deleted');
+  });
+}
+
+// Reverse map: app key → Hudl column ID
+const APP_KEY_TO_HUDL = {
+  'dn':2626907, 'dist2':2626908, 'playtype':2626909, 'result':2626910,
+  'gainloss':2626911, 'odk':2626912, 'yardln':2626913, 'hash':2626914,
+  'series':2626915, 'offform':2626917, 'offplay':2626918, 'qtr':2626932,
+  'offstr':2626916, 'playdir':2626919, 'gap':2626920, 'defstr':2626921,
+  'deffront':2626922, 'blitz':2626923, 'coverage':2626924, 'penalty':2626927,
+  'twomin':2626928, 'passzone':2626933, 'personnel':2626934,
+  'motion':2626935, 'motiondir':2626936,
+};
+
+async function saveTemplateToHudl(id) {
+  var tmpls = getTmpls();
+  var t = tmpls.find(function(x) { return x.id === id; });
+  if (!t) return;
+
+  var session = getHudlSession();
+  if (!session || !session.cookie) {
+    showToast('Connect to Hudl first');
+    return;
+  }
+
+  // Map app column keys to Hudl IDs
+  var hudlIds = t.colIds.map(function(k) { return APP_KEY_TO_HUDL[k]; }).filter(Boolean);
+  if (hudlIds.length === 0) {
+    showToast('No columns could be mapped to Hudl');
+    return;
+  }
+
+  var unmapped = t.colIds.filter(function(k) { return !APP_KEY_TO_HUDL[k]; });
+
+  var msg = 'Save "' + t.name + '" as a Hudl column set?\n\n' + hudlIds.length + ' columns will be saved.';
+  if (unmapped.length > 0) {
+    msg += '\n' + unmapped.length + ' column(s) have no Hudl equivalent and will be skipped.';
+  }
+
+  showConfirm('Save to Hudl?', msg, async function() {
+    try {
+      showToast('Saving to Hudl…');
+      var resp = await hudlFetch(HUDL_API + '/api/hudl/column-sets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: t.name,
+          columnIds: hudlIds,
+          columnSetId: 0
+        })
+      });
+
+      if (!resp.ok) {
+        var err = await resp.json().catch(function() { return { error: 'Failed' }; });
+        throw new Error(err.error || 'Save failed');
+      }
+
+      // Refresh Hudl templates
+      hudlTemplatesLoaded = false;
+      await fetchHudlColumnSets();
+      renderTemplateList();
+      showToast('"' + t.name + '" saved to Hudl!');
+    } catch(e) {
+      showToast('Error: ' + e.message);
+    }
   });
 }
 
