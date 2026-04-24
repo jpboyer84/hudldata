@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import {
   LogoIcon, TagGameIcon, StatsIcon, PlaybookIcon,
   HudlConnectIcon, HudlConnectedIcon, HelpIcon,
@@ -8,14 +9,43 @@ import {
 } from '../icons/Icons';
 import HudlLoginModal from '../components/HudlLoginModal';
 
+function UserIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ marginBottom: 8 }}>
+      <circle cx="10" cy="7" r="3" stroke="#555" strokeWidth="1.5"/>
+      <path d="M4 17C4 14 6.5 12 10 12C13.5 12 16 14 16 17" stroke="#555" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function SettingsHelpIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ marginBottom: 8 }}>
+      <circle cx="10" cy="10" r="3" stroke="#555" strokeWidth="1.5"/>
+      <path d="M10 3V5M10 15V17M17 10H15M5 10H3" stroke="#555" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { coach } = useAuth();
+  const { user, coach } = useAuth();
+  const showToast = useToast();
   const [hudlModalOpen, setHudlModalOpen] = useState(false);
 
+  const isLoggedIn = !!user;
   const hudlConnected = !!coach?.hudl_cookie;
-  const teamName = coach?.teams?.name || 'My Team';
+  const teamName = coach?.teams?.name || '';
   const schoolName = coach?.teams?.school || '';
+
+  function requireAuth(path) {
+    if (!isLoggedIn) {
+      showToast('Sign in to access this feature');
+      navigate('/login');
+      return;
+    }
+    navigate(path);
+  }
 
   return (
     <div className="view">
@@ -29,7 +59,12 @@ export default function LandingPage() {
             </div>
             <div className="landing-logo-title">ASSISTANT COACH</div>
             <div className="landing-logo-sub">
-              {schoolName ? `${schoolName.toUpperCase()} ${teamName.toUpperCase()}` : teamName.toUpperCase()}
+              {schoolName
+                ? `${schoolName.toUpperCase()} ${teamName.toUpperCase()}`
+                : isLoggedIn && teamName
+                  ? teamName.toUpperCase()
+                  : 'FOOTBALL COACHING TOOL'
+              }
             </div>
           </div>
 
@@ -40,7 +75,7 @@ export default function LandingPage() {
             maxWidth: 500, margin: '0 auto', width: '100%'
           }}>
 
-            {/* Tag a game */}
+            {/* Tag a game — open to everyone */}
             <div className="lcard" onClick={() => navigate('/trackers')}>
               <div className="lcard-icon">
                 <TagGameIcon />
@@ -52,8 +87,8 @@ export default function LandingPage() {
               <ChevronRight />
             </div>
 
-            {/* Stats & analysis */}
-            <div className="lcard" onClick={() => navigate('/stats')}>
+            {/* Stats & analysis — requires auth */}
+            <div className="lcard" onClick={() => requireAuth('/stats')}>
               <div className="lcard-icon">
                 <StatsIcon />
               </div>
@@ -64,8 +99,8 @@ export default function LandingPage() {
               <ChevronRight />
             </div>
 
-            {/* Playbook */}
-            <div className="lcard" onClick={() => navigate('/playbook')}>
+            {/* Playbook — requires auth */}
+            <div className="lcard" onClick={() => requireAuth('/playbook')}>
               <div className="lcard-icon">
                 <PlaybookIcon />
               </div>
@@ -78,7 +113,11 @@ export default function LandingPage() {
 
             {/* Small cards row */}
             <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
-              <div className="lcard-sm" onClick={() => setHudlModalOpen(true)}>
+              {/* Hudl — requires auth */}
+              <div className="lcard-sm" onClick={() => {
+                if (!isLoggedIn) { requireAuth('/settings'); return; }
+                setHudlModalOpen(true);
+              }}>
                 <div style={{ marginBottom: 8 }}>
                   {hudlConnected ? <HudlConnectedIcon /> : <HudlConnectIcon />}
                 </div>
@@ -86,13 +125,22 @@ export default function LandingPage() {
                   {hudlConnected ? 'Hudl ✓' : 'Connect to Hudl'}
                 </div>
               </div>
-              <div className="lcard-sm" onClick={() => navigate('/help')}>
-                <HelpIcon />
-                <div className="lcard-sm-label">Help</div>
-              </div>
+
+              {/* Settings & Help combined */}
               <div className="lcard-sm" onClick={() => navigate('/settings')}>
-                <SettingsGearIcon />
-                <div className="lcard-sm-label">Settings</div>
+                <SettingsHelpIcon />
+                <div className="lcard-sm-label">Settings & Help</div>
+              </div>
+
+              {/* Sign in / Account */}
+              <div className="lcard-sm" onClick={() => {
+                if (isLoggedIn) navigate('/settings');
+                else navigate('/login');
+              }}>
+                <UserIcon />
+                <div className="lcard-sm-label">
+                  {isLoggedIn ? (coach?.display_name || 'Account') : 'Sign in'}
+                </div>
               </div>
             </div>
 
