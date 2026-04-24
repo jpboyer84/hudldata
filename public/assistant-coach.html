@@ -2503,40 +2503,69 @@ async function saveTemplateToHudl(id) {
     return;
   }
 
-  var unmapped = t.colIds.filter(function(k) { return !APP_KEY_TO_HUDL[k]; });
+  // Fetch existing Hudl column sets to let coach pick one to update
+  showToast('Loading Hudl column sets…');
+  try {
+    var resp = await hudlFetch(HUDL_API + '/api/hudl/column-sets');
+    if (!resp.ok) throw new Error('Could not load column sets');
+    var data = await resp.json();
+    var sets = data.columnSets || [];
 
-  var msg = 'Save "' + t.name + '" as a Hudl column set?\n\n' + hudlIds.length + ' columns will be saved.';
-  if (unmapped.length > 0) {
-    msg += '\n' + unmapped.length + ' column(s) have no Hudl equivalent and will be skipped.';
-  }
-
-  showConfirm('Save to Hudl?', msg, async function() {
-    try {
-      showToast('Saving to Hudl…');
-      var resp = await hudlFetch(HUDL_API + '/api/hudl/column-sets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: t.name,
-          columnIds: hudlIds,
-          columnSetId: 0
-        })
-      });
-
-      if (!resp.ok) {
-        var err = await resp.json().catch(function() { return { error: 'Failed' }; });
-        throw new Error(err.error || 'Save failed');
-      }
-
-      // Refresh Hudl templates
-      hudlTemplatesLoaded = false;
-      await fetchHudlColumnSets();
-      renderTemplateList();
-      showToast('"' + t.name + '" saved to Hudl!');
-    } catch(e) {
-      showToast('Error: ' + e.message);
+    if (sets.length === 0) {
+      showToast('No column sets found in Hudl');
+      return;
     }
-  });
+
+    // Build a picker using the confirm modal body
+    var msg = 'Pick a Hudl column set to update with "' + t.name + '" columns (' + hudlIds.length + ' columns):\n\n';
+    var pickerHtml = '<div style="font-size:13px;color:var(--text);margin-bottom:12px">Pick a Hudl column set to update with <strong>' + t.name + '</strong> (' + hudlIds.length + ' columns):</div>';
+    pickerHtml += '<div style="display:flex;flex-direction:column;gap:6px">';
+    sets.forEach(function(s) {
+      pickerHtml += '<div onclick="executeSaveToHudl(' + s.id + ',' + JSON.stringify(hudlIds).replace(/"/g, '&quot;') + ',\'' + t.name.replace(/'/g, "\\'") + '\')" style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;font-weight:500">' + s.name + '</div>';
+    });
+    pickerHtml += '</div>';
+
+    // Use the confirm modal with custom HTML
+    var overlay = document.getElementById('m-confirm');
+    var titleEl = overlay.querySelector('.modal-title');
+    var bodyEl = overlay.querySelector('.confirm-msg');
+    var btnRow = overlay.querySelector('.modal-foot');
+    titleEl.textContent = 'Save to Hudl';
+    bodyEl.innerHTML = pickerHtml;
+    btnRow.innerHTML = '<button class="btn btn-secondary" onclick="closeModal(\'m-confirm\')" style="flex:1">Cancel</button>';
+    openModal('m-confirm');
+
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+}
+
+async function executeSaveToHudl(columnSetId, hudlIds, name) {
+  closeModal('m-confirm');
+  showToast('Saving to Hudl…');
+  try {
+    var resp = await hudlFetch(HUDL_API + '/api/hudl/column-sets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name,
+        columnIds: hudlIds,
+        columnSetId: columnSetId
+      })
+    });
+
+    if (!resp.ok) {
+      var err = await resp.json().catch(function() { return { error: 'Failed' }; });
+      throw new Error(err.error || 'Save failed');
+    }
+
+    hudlTemplatesLoaded = false;
+    await fetchHudlColumnSets();
+    renderTemplateList();
+    showToast('Saved to Hudl!');
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
 }
 
 function editTemplate(id) {
