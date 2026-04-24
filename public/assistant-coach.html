@@ -1112,17 +1112,18 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
   </div>
 </div>
 
-<!-- SETTINGS -->
-<div class="view" id="view-settings">
+<!-- PLAYBOOK -->
+<div class="view" id="view-playbook">
   <div class="hdr">
-    <button class="hdr-btn" onclick="showView('view-landing')">← Back</button>
-    <div class="hdr-title">Settings</div>
+    <button class="hdr-btn" onclick="showView('view-landing');updateLanding()">← Back</button>
+    <div class="hdr-title">Playbook</div>
     <div style="width:60px"></div>
   </div>
-  <div class="settings-body">
-    <div class="settings-group">
-      <div class="settings-group-title">🤖 AI Context</div>
-      <div class="settings-group-sub">Tell the AI about your program. Everything here is injected into every AI prompt — Spotlight, Ask AI, and Methodology explanations.</div>
+  <div class="abody" style="padding:16px">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5">
+      Tell the AI about your program. Everything here is shared with your staff and injected into every AI prompt — Spotlight, Ask AI, and Methodology explanations.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
       <div class="settings-row">
         <div class="settings-btn" onclick="openPbSection('team')"><span class="settings-btn-icon">🏫</span>TEAM INFO<span class="settings-btn-label">Name, school, rivals</span></div>
         <div class="settings-btn" onclick="openPbSection('terms')"><span class="settings-btn-icon">🗣</span>TERMINOLOGY<span class="settings-btn-label">Abbrevs &amp; vocab</span></div>
@@ -1140,6 +1141,18 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
         <div class="settings-btn" onclick="openPbSection('general')"><span class="settings-btn-icon">📝</span>GENERAL<span class="settings-btn-label">Anything else for the AI</span></div>
       </div>
     </div>
+    <div id="playbook-sync-status" style="font-size:11px;color:var(--muted);text-align:center;margin-top:16px"></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="view" id="view-settings">
+  <div class="hdr">
+    <button class="hdr-btn" onclick="showView('view-landing')">← Back</button>
+    <div class="hdr-title">Settings</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="settings-body">
     <div class="settings-group">
       <div class="settings-group-title">💾 Save Full Backup</div>
       <div class="settings-group-sub">Save all your games, templates, and columns to a safe location. Useful for backing up or moving to another device.</div>
@@ -6309,7 +6322,7 @@ let archiveSelected = new Set();
 function goTrackersHub() { updateLanding(); showView('view-landing'); }
 function goImportGameData() { showView('view-import-game'); }
 function goSettings() { showView('view-settings'); }
-function goPlaybook() { showView('view-settings'); }
+function goPlaybook() { showView('view-playbook'); }
 function goHelp() { setHelpTab('faq'); showView('view-help'); }
 function leaveStats() { showView(statsReturnView); }
 
