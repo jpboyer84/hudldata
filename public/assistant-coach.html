@@ -1125,19 +1125,18 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="settings-row">
-        <div class="settings-btn" onclick="openPbSection('team')"><span class="settings-btn-icon">🏫</span>TEAM INFO<span class="settings-btn-label">Name, school, rivals</span></div>
-        <div class="settings-btn" onclick="openPbSection('terms')"><span class="settings-btn-icon">🗣</span>TERMINOLOGY<span class="settings-btn-label">Abbrevs &amp; vocab</span></div>
-      </div>
-      <div class="settings-row">
+        <div class="settings-btn" onclick="openPbSection('team')"><span class="settings-btn-icon">🏫</span>TEAM INFO<span class="settings-btn-label">Name, school, rivals, conference</span></div>
         <div class="settings-btn" onclick="openPbSection('runplays')"><span class="settings-btn-icon">🏃</span>RUN PLAYS<span class="settings-btn-label">Names &amp; concepts</span></div>
+      </div>
+      <div class="settings-row">
         <div class="settings-btn" onclick="openPbSection('passplays')"><span class="settings-btn-icon">🎯</span>PASS PLAYS<span class="settings-btn-label">Names &amp; concepts</span></div>
-      </div>
-      <div class="settings-row">
         <div class="settings-btn" onclick="openPbSection('formations')"><span class="settings-btn-icon">🗂</span>FORMATIONS<span class="settings-btn-label">Personnel &amp; groupings</span></div>
-        <div class="settings-btn" onclick="openPbSection('tags')"><span class="settings-btn-icon">🏷</span>TAGS &amp; MOTION<span class="settings-btn-label">Play modifiers</span></div>
       </div>
       <div class="settings-row">
+        <div class="settings-btn" onclick="openPbSection('tags')"><span class="settings-btn-icon">🏷</span>TAGS &amp; MOTION<span class="settings-btn-label">Play modifiers</span></div>
         <div class="settings-btn" onclick="openPbSection('statrules')"><span class="settings-btn-icon">📐</span>STAT RULES<span class="settings-btn-label">How stats are calculated</span></div>
+      </div>
+      <div class="settings-row">
         <div class="settings-btn" onclick="openPbSection('general')"><span class="settings-btn-icon">📝</span>GENERAL<span class="settings-btn-label">Anything else for the AI</span></div>
       </div>
     </div>
@@ -1992,27 +1991,9 @@ function saveSpotlightFeedback(d) { localStorage.setItem('hd_spotlight_feedback'
 const PLAYBOOK_DEFAULTS = {
   team: `Team Name = Your School Name (Abbreviation)
 School = Full School Name, City, State
-Rivalry Games = Opponent 1, Opponent 2, Opponent 3`,
-
-  terms: `LOS = Line of scrimmage
-Pass pro = Pass protection
-Cov Shell = Number of safeties (0, 1, or 2)
-Cov Type = Coverage type (Man, Zone, or Mix)
-Off Str = Offensive strength direction (L, Bal, R)
-Play Dir = Direction the play is designed to go
-Pen Yards = Penalty yards
-STK = Special teams / kicking
-DN = Down
-YPC = Yards per carry
-YPP = Yards per play
-conv = conversion
-avg = average
-comp = completion
-inc = incomplete
-neg = negative
-INT = interception
-TFL = tackle for loss
-RZ = red zone`,
+Rivals = Opponent 1, Opponent 2, Opponent 3
+3 Best Opponents (Big 3) = Opponent 1, Opponent 2, Opponent 3
+Conference Opponents = Opponent 1, Opponent 2, Opponent 3`,
 
   runplays: `Play Name = Concept (e.g. Power Right)
 Play Name = Concept (e.g. Counter Left)
@@ -2045,8 +2026,7 @@ Negative Play = gainLoss < 0`,
 
 // Section metadata — title, hint, prompt heading
 const PB_SECTIONS = {
-  team:       { title: '🏫 TEAM INFO',         hint: 'Key = Value format, one per line. Tells the AI who you are, your rivalries, and how to identify specific games.',  heading: 'TEAM INFO' },
-  terms:      { title: '🗣 TERMINOLOGY',        hint: 'Abbreviation = Full meaning, one per line. The AI will understand these shorthand terms in your questions.',        heading: 'COACHING TERMINOLOGY' },
+  team:       { title: '🏫 TEAM INFO',         hint: 'Key = Value format, one per line. Tells the AI who you are, your rivalries, and conference opponents.',  heading: 'TEAM INFO' },
   runplays:   { title: '🏃 RUN PLAYS',          hint: 'Play Name = Concept, one per line. The AI will recognize these names when they appear in your play data.',          heading: 'RUN PLAY NAMES' },
   passplays:  { title: '🎯 PASS PLAYS',         hint: 'Play Name = Concept, one per line. Add your pass play names and route concepts.',                                   heading: 'PASS PLAY NAMES' },
   formations: { title: '🗂 FORMATIONS',         hint: 'Formation Name = Personnel / description, one per line. The AI will use these when discussing formation tendencies.', heading: 'FORMATIONS & PERSONNEL' },
@@ -2172,8 +2152,29 @@ When a number is followed by "p" (e.g. 11p, 10p, 21p, 12p), it means personnel g
 22p = 22 personnel (2 RB, 2 TE, 1 WR)
 23p = 23 personnel (2 RB, 3 TE, 0 WR)
 This convention applies everywhere — in formation names (e.g. "Red Near = 11p" means Red Near uses 11 personnel), in data fields, and in coach questions.`);
+
+  parts.push(`## COACHING TERMINOLOGY
+LOS = Line of scrimmage
+Pass pro = Pass protection
+Cov Shell = Number of safeties (0, 1, or 2)
+Cov Type = Coverage type (Man, Zone, or Mix)
+Off Str = Offensive strength direction (L, Bal, R)
+Play Dir = Direction the play is designed to go
+Pen Yards = Penalty yards
+STK = Special teams / kicking
+DN = Down
+YPC = Yards per carry
+YPP = Yards per play
+conv = conversion
+avg = average
+comp = completion
+inc = incomplete
+neg = negative
+INT = interception
+TFL = tackle for loss
+RZ = red zone`);
+
   if (pb.team?.trim())       parts.push('## TEAM INFO\n'                  + pb.team.trim());
-  if (pb.terms?.trim())      parts.push('## COACHING TERMINOLOGY\n'       + pb.terms.trim());
   if (pb.runplays?.trim())   parts.push('## RUN PLAY NAMES\n'             + pb.runplays.trim());
   if (pb.passplays?.trim())  parts.push('## PASS PLAY NAMES\n'            + pb.passplays.trim());
   if (pb.formations?.trim()) parts.push('## FORMATIONS & PERSONNEL\n'     + pb.formations.trim());
