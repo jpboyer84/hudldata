@@ -2547,14 +2547,16 @@ function renderColumnList() {
   const cols = getCols().slice().sort((a,b) => a.name.localeCompare(b.name));
   const body = document.getElementById('col-list-body');
   const sub = document.getElementById('col-sub');
+  const hasHudl = !!getHudlSession()?.cookie;
   if (sub) sub.textContent = `${cols.length} column${cols.length!==1?'s':''}`;
   let h = '';
   cols.forEach(col => {
-    // Built-in columns can be edited but not deleted
     const isBuiltIn = !col.id.startsWith('custom_');
+    const hudlBtn = (!isBuiltIn && hasHudl) ? `<button class="hdr-btn" onclick="createColumnInHudl('${col.id}')" style="color:#27ae60">▲ HUDL</button>` : '';
     h += `<div class="arch-card">
       <div class="arch-title">${col.name}</div>
       <div style="display:flex;gap:8px">
+        ${hudlBtn}
         <button class="hdr-btn white" onclick="editColumn('${col.id}')">EDIT</button>
         ${!isBuiltIn ? `<button class="hdr-btn red" onclick="deleteColumn('${col.id}')">DELETE</button>` : ''}
       </div>
@@ -2569,6 +2571,49 @@ function deleteColumn(id) {
     saveCols(cols);
     renderColumnList();
     showToast('Deleted');
+  });
+}
+
+async function createColumnInHudl(id) {
+  var cols = getCols();
+  var col = cols.find(function(c) { return c.id === id; });
+  if (!col) return;
+
+  var session = getHudlSession();
+  if (!session || !session.cookie) { showToast('Connect to Hudl first'); return; }
+
+  // Get known values if the column has any
+  var knownValues = col.values || [];
+
+  var msg = 'Create "' + col.name + '" as a column in Hudl?';
+  if (knownValues.length > 0) {
+    msg += '\n\n' + knownValues.length + ' known values will also be added.';
+  }
+
+  showConfirm('Create in Hudl?', msg, async function() {
+    try {
+      showToast('Creating in Hudl…');
+      var resp = await hudlFetch(HUDL_API + '/api/hudl/columns/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: col.name,
+          dataType: '1',
+          knownValues: knownValues
+        })
+      });
+
+      if (!resp.ok) {
+        var err = await resp.json().catch(function() { return { error: 'Failed' }; });
+        throw new Error(err.error || 'Create failed');
+      }
+
+      var result = await resp.json();
+      showToast('"' + col.name + '" created in Hudl! (ID: ' + result.columnId + ')');
+
+    } catch(e) {
+      showToast('Error: ' + e.message);
+    }
   });
 }
 
