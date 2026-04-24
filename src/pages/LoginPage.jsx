@@ -1,17 +1,23 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import { LogoIcon } from '../icons/Icons';
+import { HUDL_API } from '../lib/constants';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [connectHudl, setConnectHudl] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, updateHudlConnection } = useAuth();
+  const showToast = useToast();
+  const navigate = useNavigate();
 
   async function handleSubmit(e) {
-    e.preventDefault();
+    e?.preventDefault();
     if (!email || !password) {
       setError('Email and password are required');
       return;
@@ -20,8 +26,36 @@ export default function LoginPage() {
     setLoading(true);
 
     const { error: err } = await signIn(email, password);
-    if (err) setError(err.message);
+    if (err) {
+      setError(err.message);
+      setLoading(false);
+      return;
+    }
+
+    // If connect Hudl is checked, try logging into Hudl with same credentials
+    if (connectHudl) {
+      try {
+        const resp = await fetch(`${HUDL_API}/api/hudl/auth`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await resp.json();
+        if (resp.ok && data.cookie) {
+          await updateHudlConnection({
+            cookie: data.cookie,
+            teamId: data.teamId,
+            teamName: data.teamName,
+          });
+          showToast(`Connected to Hudl — ${data.teamName || 'Team'}`);
+        }
+      } catch (hudlErr) {
+        // Hudl connect failed silently — they're still signed in to the app
+      }
+    }
+
     setLoading(false);
+    navigate('/');
   }
 
   return (
@@ -53,7 +87,7 @@ export default function LoginPage() {
           />
         </div>
 
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 14 }}>
           <label className="fl">PASSWORD</label>
           <input
             type="password"
@@ -63,6 +97,37 @@ export default function LoginPage() {
             onChange={e => setPassword(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSubmit(e)}
           />
+        </div>
+
+        {/* Checkboxes */}
+        <div style={{ marginBottom: 6 }}>
+          <label style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            fontSize: 12, color: 'var(--color-muted2)', cursor: 'pointer', userSelect: 'none'
+          }}>
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={e => setRememberMe(e.target.checked)}
+              style={{ accentColor: 'var(--color-accent)', width: 16, height: 16 }}
+            />
+            Keep me signed in
+          </label>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            fontSize: 12, color: 'var(--color-muted2)', cursor: 'pointer', userSelect: 'none'
+          }}>
+            <input
+              type="checkbox"
+              checked={connectHudl}
+              onChange={e => setConnectHudl(e.target.checked)}
+              style={{ accentColor: 'var(--color-accent)', width: 16, height: 16 }}
+            />
+            Also connect my Hudl account (same login)
+          </label>
         </div>
 
         <div style={{ textAlign: 'right', marginBottom: 14 }}>
