@@ -1126,18 +1126,19 @@ select.fi { cursor: pointer; -webkit-appearance: none; }
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="settings-row">
         <div class="settings-btn" onclick="openPbSection('team')"><span class="settings-btn-icon">🏫</span>TEAM INFO<span class="settings-btn-label">Name, school, rivals, conference</span></div>
-        <div class="settings-btn" onclick="openPbSection('runplays')"><span class="settings-btn-icon">🏃</span>RUN PLAYS<span class="settings-btn-label">Names &amp; concepts</span></div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-btn" onclick="openPbSection('passplays')"><span class="settings-btn-icon">🎯</span>PASS PLAYS<span class="settings-btn-label">Names &amp; concepts</span></div>
-        <div class="settings-btn" onclick="openPbSection('formations')"><span class="settings-btn-icon">🗂</span>FORMATIONS<span class="settings-btn-label">Personnel &amp; groupings</span></div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-btn" onclick="openPbSection('tags')"><span class="settings-btn-icon">🏷</span>TAGS &amp; MOTION<span class="settings-btn-label">Play modifiers</span></div>
-        <div class="settings-btn" onclick="openPbSection('statrules')"><span class="settings-btn-icon">📐</span>STAT RULES<span class="settings-btn-label">How stats are calculated</span></div>
-      </div>
-      <div class="settings-row">
         <div class="settings-btn" onclick="openPbSection('general')"><span class="settings-btn-icon">📝</span>GENERAL<span class="settings-btn-label">Anything else for the AI</span></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-btn" onclick="openPbSection('runplays')"><span class="settings-btn-icon">🏃</span>RUN PLAYS &amp; PASS PRO<span class="settings-btn-label">Names &amp; concepts</span></div>
+        <div class="settings-btn" onclick="openPbSection('passplays')"><span class="settings-btn-icon">🎯</span>PASS PLAYS<span class="settings-btn-label">Names &amp; concepts</span></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-btn" onclick="openPbSection('formations')"><span class="settings-btn-icon">🗂</span>FORMATIONS<span class="settings-btn-label">Personnel &amp; groupings</span></div>
+        <div class="settings-btn" onclick="openPbSection('tags')"><span class="settings-btn-icon">🏷</span>TAGS &amp; MOTION<span class="settings-btn-label">Play modifiers</span></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-btn" onclick="openPbSection('defense')"><span class="settings-btn-icon">🛡</span>DEFENSIVE TERMS<span class="settings-btn-label">Fronts, coverages, blitzes</span></div>
+        <div class="settings-btn" onclick="openPbSection('statrules')"><span class="settings-btn-icon">📐</span>STAT RULES<span class="settings-btn-label">How stats are calculated</span></div>
       </div>
     </div>
     <div id="playbook-sync-status" style="font-size:11px;color:var(--muted);text-align:center;margin-top:16px"></div>
@@ -2008,6 +2009,10 @@ Formation Name = Personnel grouping`,
   tags: `Tag Name = What it does (e.g. extra blocker added)
 Motion Name = How the player moves pre-snap`,
 
+  defense: `Front Name = Description (e.g. Under = Weak 3-tech, Strong 5-tech)
+Coverage Name = Description (e.g. Cover 3 = 3 deep, 4 under)
+Blitz Name = Description (e.g. Fire Zone = 5-man pressure with 3 dropping)`,
+
   statrules: `First Down = gainLoss >= dist, OR result contains "TD", OR result is "1st DN"
 3rd/4th Down Conversion = same logic as First Down
 Yards Per Carry = sum gainLoss for Run plays / run count
@@ -2027,10 +2032,11 @@ Negative Play = gainLoss < 0`,
 // Section metadata — title, hint, prompt heading
 const PB_SECTIONS = {
   team:       { title: '🏫 TEAM INFO',         hint: 'Key = Value format, one per line. Tells the AI who you are, your rivalries, and conference opponents.',  heading: 'TEAM INFO' },
-  runplays:   { title: '🏃 RUN PLAYS',          hint: 'Play Name = Concept, one per line. The AI will recognize these names when they appear in your play data.',          heading: 'RUN PLAY NAMES' },
+  runplays:   { title: '🏃 RUN PLAYS & PASS PRO', hint: 'Play Name = Concept, one per line. Include run plays and pass protection schemes.',          heading: 'RUN PLAYS & PASS PROTECTION' },
   passplays:  { title: '🎯 PASS PLAYS',         hint: 'Play Name = Concept, one per line. Add your pass play names and route concepts.',                                   heading: 'PASS PLAY NAMES' },
   formations: { title: '🗂 FORMATIONS',         hint: 'Formation Name = Personnel / description, one per line. The AI will use these when discussing formation tendencies.', heading: 'FORMATIONS & PERSONNEL' },
   tags:       { title: '🏷 TAGS & MOTION',      hint: 'Tag = What it means, one per line. These are modifiers added to play names.',                                       heading: 'PLAY TAGS & MOTION' },
+  defense:    { title: '🛡 DEFENSIVE TERMS',    hint: 'Term = Meaning, one per line. Fronts, coverages, blitz packages, and defensive terminology your staff uses.',        heading: 'DEFENSIVE TERMINOLOGY' },
   statrules:  { title: '📐 STAT RULES',         hint: 'Stat Name = How it\'s calculated, one per line. Defines thresholds and logic for key statistics.',                  heading: 'STAT CALCULATION RULES' },
   general:    { title: '📝 GENERAL NOTES',      hint: 'Free-form notes for the AI. Anything you want it to know that doesn\'t fit in another section — coaching philosophy, special situations, personnel notes, whatever.',  heading: 'GENERAL COACHING NOTES' }
 };
@@ -2079,7 +2085,7 @@ async function syncPlaybookFromServer() {
       // Server has newer data — merge it in (server overwrites local for each non-empty section)
       var merged = { ...local };
       var serverPb = data.playbook;
-      var sections = ['team','terms','runplays','passplays','formations','tags','statrules','general'];
+      var sections = ['team','runplays','passplays','formations','tags','defense','statrules','general'];
       var changes = 0;
       for (var i = 0; i < sections.length; i++) {
         var key = sections[i];
@@ -2179,6 +2185,7 @@ RZ = red zone`);
   if (pb.passplays?.trim())  parts.push('## PASS PLAY NAMES\n'            + pb.passplays.trim());
   if (pb.formations?.trim()) parts.push('## FORMATIONS & PERSONNEL\n'     + pb.formations.trim());
   if (pb.tags?.trim())       parts.push('## PLAY TAGS & MOTION\n'         + pb.tags.trim());
+  if (pb.defense?.trim())    parts.push('## DEFENSIVE TERMINOLOGY\n'      + pb.defense.trim());
   if (pb.statrules?.trim())  parts.push('## STAT CALCULATION RULES\n'     + pb.statrules.trim());
   if (pb.general?.trim())    parts.push('## GENERAL COACHING NOTES\n'     + pb.general.trim());
   return '\n\n## COACH-DEFINED CONTEXT\n' + parts.join('\n\n');
