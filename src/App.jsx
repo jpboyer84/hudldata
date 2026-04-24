@@ -1,25 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './hooks/useAuth';
+import { AuthProvider } from './hooks/useAuth';
 import { ToastProvider } from './hooks/useToast';
 
 // Pages
+import LandingPage from './pages/LandingPage';
+import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import TeamSetupPage from './pages/TeamSetupPage';
-import LandingPage from './pages/LandingPage';
-import SettingsPage from './pages/SettingsPage';
-
-function LoadingScreen() {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      height: '100dvh', color: 'var(--color-muted)', fontSize: 13
-    }}>
-      Loading…
-    </div>
-  );
-}
 
 // Placeholder pages for future phases
 function PlaceholderPage({ title }) {
@@ -40,60 +29,27 @@ function PlaceholderPage({ title }) {
   );
 }
 
-function ProtectedRoute({ children }) {
-  const { user, coach, loading } = useAuth();
-
-  if (loading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/login" replace />;
-  // User is authenticated but has no team/coach profile yet
-  if (!coach) return <Navigate to="/team-setup" replace />;
-
-  return children;
-}
-
-function AuthRoute({ children }) {
-  const { user, coach, loading } = useAuth();
-
-  if (loading) return <LoadingScreen />;
-  if (user && coach) return <Navigate to="/" replace />;
-  if (user && !coach) return <Navigate to="/team-setup" replace />;
-
-  return children;
-}
-
-function TeamSetupRoute() {
-  const { user, coach, loading } = useAuth();
-
-  if (loading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/login" replace />;
-  if (coach) return <Navigate to="/" replace />;
-
-  return <TeamSetupPage />;
-}
-
 function AppRoutes() {
   return (
     <Routes>
-      {/* Auth routes */}
-      <Route path="/login" element={<AuthRoute><LoginPage /></AuthRoute>} />
-      <Route path="/signup" element={<AuthRoute><SignupPage /></AuthRoute>} />
-      <Route path="/forgot-password" element={<AuthRoute><ForgotPasswordPage /></AuthRoute>} />
-      <Route path="/team-setup" element={<TeamSetupRoute />} />
+      {/* Main app — no auth required */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/trackers" element={<PlaceholderPage title="Tag a game" />} />
+      <Route path="/tracker/:gameId" element={<PlaceholderPage title="Tracker" />} />
+      <Route path="/archive" element={<PlaceholderPage title="Archive" />} />
+      <Route path="/templates" element={<PlaceholderPage title="Templates" />} />
+      <Route path="/columns" element={<PlaceholderPage title="Columns" />} />
+      <Route path="/stats" element={<PlaceholderPage title="Stats & Analysis" />} />
+      <Route path="/playbook" element={<PlaceholderPage title="Playbook" />} />
+      <Route path="/help" element={<PlaceholderPage title="Help" />} />
+      <Route path="/import" element={<PlaceholderPage title="Import" />} />
 
-      {/* Protected routes */}
-      <Route path="/" element={<ProtectedRoute><LandingPage /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-
-      {/* Phase 2+ placeholders */}
-      <Route path="/trackers" element={<ProtectedRoute><PlaceholderPage title="Tag a game" /></ProtectedRoute>} />
-      <Route path="/tracker/:gameId" element={<ProtectedRoute><PlaceholderPage title="Tracker" /></ProtectedRoute>} />
-      <Route path="/archive" element={<ProtectedRoute><PlaceholderPage title="Archive" /></ProtectedRoute>} />
-      <Route path="/templates" element={<ProtectedRoute><PlaceholderPage title="Templates" /></ProtectedRoute>} />
-      <Route path="/columns" element={<ProtectedRoute><PlaceholderPage title="Columns" /></ProtectedRoute>} />
-      <Route path="/stats" element={<ProtectedRoute><PlaceholderPage title="Stats & Analysis" /></ProtectedRoute>} />
-      <Route path="/playbook" element={<ProtectedRoute><PlaceholderPage title="Playbook" /></ProtectedRoute>} />
-      <Route path="/help" element={<ProtectedRoute><PlaceholderPage title="Help" /></ProtectedRoute>} />
-      <Route path="/import" element={<ProtectedRoute><PlaceholderPage title="Import" /></ProtectedRoute>} />
+      {/* Auth pages — available but not required */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/team-setup" element={<TeamSetupPage />} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
