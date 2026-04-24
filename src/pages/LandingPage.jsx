@@ -139,7 +139,7 @@ export default function LandingPage() {
               }}>
                 <UserIcon />
                 <div className="lcard-sm-label">
-                  {isLoggedIn ? (coach?.display_name || 'Account') : 'Sign in'}
+                  {isLoggedIn ? (coach?.display_name || 'Account') : 'Sign up / Sign in'}
                 </div>
               </div>
             </div>
