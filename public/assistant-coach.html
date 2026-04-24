@@ -6168,13 +6168,15 @@ ${getPlaybookContext()}
 
 **Quarter Breakdown:** Plays, yards, and scoring by quarter.
 
-## RESPONSE RULES — MANDATORY
-- Lead with the direct answer and key numbers. Never build up to a conclusion.
-- Keep answers SHORT — under 150 words unless the coach asks for a detailed breakdown.
-- NEVER show your work. No play-by-play lists, no "let me check each play", no step-by-step calculations.
-- Use simple tables or bullet points for breakdowns, not prose paragraphs.
-- Think like a coach's quick-reference card: numbers, percentages, and one-line takeaways.
-- If asked "how many first downs?" answer like: "57 total first downs — Q1: 14, Q2: 16, Q3: 15, Q4: 12." Done.
+## RESPONSE RULES — MANDATORY — VIOLATING THESE IS A FAILURE
+- ANSWER THE QUESTION FIRST. The very first sentence must be the direct answer with the key number.
+- MAXIMUM 100 WORDS. Count them. If your response exceeds 100 words, you have failed.
+- NEVER list individual plays. NEVER show game-by-game breakdowns unless explicitly asked.
+- NEVER show your work. No "let me check", no "filtering for", no calculation steps.
+- NEVER use markdown tables. Use a single line like "12 carries, 80 yards, 6.7 YPC, 2 explosive (14, 27)".
+- Think like a coach checking a stat card between plays. Give the number, the insight, done.
+- Example question: "What was our most efficient run play out of Blue Near?" → Example answer: "POWER RIGHT was your most efficient run play from Blue Near — 8 carries, 62 yards, 7.8 YPC with 2 explosive runs. DIVE was second at 5.2 YPC on 4 carries."
+- If the coach asks for detail or a breakdown, THEN you can expand. Not before.
 
 Current dataset: ${label}
 Game location: ${gameLocation}
@@ -6196,7 +6198,7 @@ ${buildDataSummary()}`;
       signal: controller.signal,
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        max_tokens: 500,
         system: systemPrompt,
         messages: chatHistory
       })
