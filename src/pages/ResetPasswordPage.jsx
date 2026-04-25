@@ -26,7 +26,7 @@ export default function ResetPasswordPage() {
       setError(err.message);
     } else {
       setPasswordRecovery(false);
-      setDone(true);
+      navigate('/login');
     }
     setLoading(false);
   }
