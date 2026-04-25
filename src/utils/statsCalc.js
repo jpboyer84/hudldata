@@ -2,27 +2,41 @@
 const pct = (n, total) => total > 0 ? Math.round((n / total) * 100) : 0;
 const avg = arr => arr.length > 0 ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '—';
 const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+
+// Field accessors — support both camelCase (old) and lowercase (new/Hudl) keys
+const getOdk = p => p.odk;
+const getQtr = p => p.qtr;
+const getDn = p => p.dn || p.down;
+const getDist = p => p.dist2 || p.dist;
+const getHash = p => p.hash;
+const getYardLn = p => p.yardln || p.yardLn;
+const getPlayType = p => p.playtype || p.playType;
+const getResult = p => p.result;
+const getGL = p => num(p.gainloss ?? p.gainLoss);
+const getForm = p => {
+  const f = p.offform || p.offForm;
+  return f ? (f.includes('|') ? f.split('|')[1] : f) : null;
+};
+
+const isRun = p => { const t = getPlayType(p); return t ? t.toLowerCase().includes('run') : false; };
+const isPass = p => { const t = getPlayType(p); return t ? t.toLowerCase().includes('pass') : false; };
+
 const tally = (arr, fn) => {
   const m = {};
   arr.forEach(p => { const v = fn(p); if (v != null && v !== '') m[v] = (m[v] || 0) + 1; });
   return m;
 };
 
-const isRun = p => !!(p.playType?.toLowerCase().includes('run'));
-const isPass = p => !!(p.playType?.toLowerCase().includes('pass'));
-const getGL = p => num(p.gainLoss);
-
 // ─── MAIN CALC ───────────────────────────────────────────────
 export function calcStats(plays) {
   if (!plays || plays.length === 0) return null;
 
-  // Filter to filled plays only
   const all = plays.filter(p => p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0);
   if (all.length === 0) return null;
 
-  const off = all.filter(p => p.odk === 'O');
-  const def = all.filter(p => p.odk === 'D');
-  const st = all.filter(p => p.odk === 'K' || p.odk === 'S');
+  const off = all.filter(p => getOdk(p) === 'O');
+  const def = all.filter(p => getOdk(p) === 'D');
+  const st = all.filter(p => getOdk(p) === 'K' || getOdk(p) === 'S');
   const runs = off.filter(isRun);
   const passes = off.filter(isPass);
   const offGL = off.map(getGL).filter(v => v !== null);
@@ -50,75 +64,63 @@ export function calcStats(plays) {
   };
 
   // ── OFFENSE ──
-  const dnCounts = tally(off, p => p.dn);
-  const third = off.filter(p => p.dn === '3' || p.dn === 3);
+  const third = off.filter(p => String(getDn(p)) === '3');
   const thirdConv = third.filter(p => {
-    const r = (p.result || '').toLowerCase();
+    const r = (getResult(p) || '').toLowerCase();
     if (r.includes('td')) return true;
     const gl = getGL(p);
-    const dist = num(p.dist);
+    const dist = num(getDist(p));
     if (gl !== null && dist !== null && gl >= dist) return true;
-    return r.includes('first') || r.includes('1st');
+    return r.includes('first') || r.includes('1st') || r.includes('conv');
   });
 
-  // Formation breakdown
-  const formCounts = tally(off, p => p.offForm);
+  const formCounts = tally(off, getForm);
   const formYards = {};
   off.forEach(p => {
-    if (p.offForm) {
-      if (!formYards[p.offForm]) formYards[p.offForm] = [];
+    const f = getForm(p);
+    if (f) {
+      if (!formYards[f]) formYards[f] = [];
       const gl = getGL(p);
-      if (gl !== null) formYards[p.offForm].push(gl);
+      if (gl !== null) formYards[f].push(gl);
     }
   });
 
   const formations = Object.keys(formCounts).map(f => ({
-    name: f,
-    count: formCounts[f],
+    name: f, count: formCounts[f],
     pct: pct(formCounts[f], off.length),
     avgYds: avg(formYards[f] || []),
   })).sort((a, b) => b.count - a.count);
 
   const offense = {
-    dnCounts,
     thirdDown: third.length,
     thirdConv: thirdConv.length,
     thirdPct: pct(thirdConv.length, third.length),
     formations,
     dnBreakdown: ['1', '2', '3', '4'].map(d => {
-      const dnPlays = off.filter(p => String(p.dn) === d);
+      const dnPlays = off.filter(p => String(getDn(p)) === d);
       const dnRuns = dnPlays.filter(isRun);
       const dnPasses = dnPlays.filter(isPass);
       const dnGL = dnPlays.map(getGL).filter(v => v !== null);
       return {
-        down: d,
-        total: dnPlays.length,
-        runs: dnRuns.length,
-        passes: dnPasses.length,
-        avgYds: avg(dnGL),
-        runPct: pct(dnRuns.length, dnPlays.length),
+        down: d, total: dnPlays.length, runs: dnRuns.length, passes: dnPasses.length,
+        avgYds: avg(dnGL), runPct: pct(dnRuns.length, dnPlays.length),
       };
     }).filter(d => d.total > 0),
   };
 
   // ── DEFENSE ──
   const defGL = def.map(getGL).filter(v => v !== null);
-  const defRuns = def.filter(isRun);
-  const defPasses = def.filter(isPass);
-  const sacks = def.filter(p => (p.result || '').toLowerCase().includes('sack'));
-  const ints = def.filter(p => (p.result || '').toLowerCase().includes('interception'));
-  const stops = def.filter(p => {
-    const gl = getGL(p);
-    return gl !== null && gl <= 0;
-  });
+  const sacks = def.filter(p => (getResult(p) || '').toLowerCase().includes('sack'));
+  const ints = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('int') || r.includes('interception'); });
+  const stops = def.filter(p => { const gl = getGL(p); return gl !== null && gl <= 0; });
 
   const defense = {
     totalPlays: def.length,
     avgYdsAllowed: avg(defGL),
     totalYdsAllowed: defGL.reduce((a, b) => a + b, 0),
-    oppRuns: defRuns.length,
-    oppPasses: defPasses.length,
-    oppRunPct: pct(defRuns.length, def.length),
+    oppRuns: def.filter(isRun).length,
+    oppPasses: def.filter(isPass).length,
+    oppRunPct: pct(def.filter(isRun).length, def.length),
     sacks: sacks.length,
     interceptions: ints.length,
     stops: stops.length,
@@ -126,26 +128,26 @@ export function calcStats(plays) {
   };
 
   // ── FIELD ──
-  const hashCounts = tally(off, p => p.hash);
+  const hashCounts = tally(off, getHash);
   const hashYards = {};
   off.forEach(p => {
-    if (p.hash) {
-      if (!hashYards[p.hash]) hashYards[p.hash] = [];
+    const h = getHash(p);
+    if (h) {
+      if (!hashYards[h]) hashYards[h] = [];
       const gl = getGL(p);
-      if (gl !== null) hashYards[p.hash].push(gl);
+      if (gl !== null) hashYards[h].push(gl);
     }
   });
 
   const redZone = off.filter(p => {
-    const yl = num(p.yardLn);
-    return yl !== null && yl >= 0 && yl <= 20;
+    const yl = num(getYardLn(p));
+    return yl !== null && yl >= 1 && yl <= 20;
   });
-  const rzTD = redZone.filter(p => (p.result || '').toLowerCase().includes('td'));
+  const rzTD = redZone.filter(p => (getResult(p) || '').toLowerCase().includes('td'));
 
   const field = {
     hashBreakdown: ['L', 'M', 'R'].map(h => ({
-      hash: h,
-      count: hashCounts[h] || 0,
+      hash: h, count: hashCounts[h] || 0,
       pct: pct(hashCounts[h] || 0, off.length),
       avgYds: avg(hashYards[h] || []),
     })),
@@ -156,24 +158,26 @@ export function calcStats(plays) {
 
   // ── BY QUARTER ──
   const quarters = ['1', '2', '3', '4'].map(q => {
-    // Match both "1" and "1Q" formats
-    const qPlays = all.filter(p => String(p.qtr) === q || String(p.qtr) === `${q}Q`);
-    const qOff = qPlays.filter(p => p.odk === 'O');
-    const qDef = qPlays.filter(p => p.odk === 'D');
-    const qRuns = qOff.filter(isRun);
-    const qPasses = qOff.filter(isPass);
+    const qPlays = all.filter(p => String(getQtr(p)) === q);
+    const qOff = qPlays.filter(p => getOdk(p) === 'O');
+    const qDef = qPlays.filter(p => getOdk(p) === 'D');
     const qGL = qOff.map(getGL).filter(v => v !== null);
     return {
-      quarter: q,
-      totalPlays: qPlays.length,
-      offPlays: qOff.length,
-      defPlays: qDef.length,
-      runs: qRuns.length,
-      passes: qPasses.length,
-      avgYds: avg(qGL),
-      totalYards: qGL.reduce((a, b) => a + b, 0),
+      quarter: q, totalPlays: qPlays.length,
+      offPlays: qOff.length, defPlays: qDef.length,
+      runs: qOff.filter(isRun).length, passes: qOff.filter(isPass).length,
+      avgYds: avg(qGL), totalYards: qGL.reduce((a, b) => a + b, 0),
     };
   }).filter(q => q.totalPlays > 0);
 
   return { overview, offense, defense, field, quarters, all, off, def };
+}
+
+// ─── BUILD CSV for AI prompt (matches HTML buildDataSummary) ───
+export function buildPlaysCsv(plays) {
+  const active = (plays || []).filter(p => p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0);
+  const rows = active.map(p =>
+    [getOdk(p), getQtr(p), getDn(p), getDist(p), getYardLn(p), getHash(p), getPlayType(p), getResult(p), getGL(p) ?? '', getForm(p) || ''].join(',')
+  );
+  return 'odk,qtr,dn,dist,ydln,hash,type,result,gl,form\n' + rows.join('\n');
 }

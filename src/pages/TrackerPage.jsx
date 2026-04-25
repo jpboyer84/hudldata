@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchGame, updateGame } from '../lib/supaData';
-import { DEFAULT_COLUMNS } from '../columns';
+import { DEFAULT_COLUMNS, resolveTemplateColumns, defaultTemplate } from '../columns';
 import ColumnCard from '../components/ColumnCard';
 import ConfirmModal from '../components/ConfirmModal';
 import { DropdownModal, PlayNavModal, EditGameModal } from '../components/Modals';
@@ -302,8 +302,8 @@ export default function TrackerPage() {
         {columns.map(col => (
           <div key={col.id} className="s-cell" onClick={() => setJumpOpen(true)}>
             <span className="s-cell-lbl">{col.name}</span>
-            <span className="s-cell-val" style={{ color: currentPlay[col.id] ? 'var(--color-muted2)' : '#333' }}>
-              {currentPlay[col.id] || '·'}
+            <span className="s-cell-val" style={{ color: currentPlay[col.dataKey || col.id] ? 'var(--color-muted2)' : '#333' }}>
+              {currentPlay[col.dataKey || col.id] || '·'}
             </span>
           </div>
         ))}
@@ -316,7 +316,7 @@ export default function TrackerPage() {
             <ColumnCard
               key={col.id}
               col={col}
-              value={currentPlay[col.id] ?? null}
+              value={currentPlay[col.dataKey || col.id] ?? null}
               onSetValue={setVal}
               onOpenModal={setModal}
             />

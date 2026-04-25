@@ -1,17 +1,19 @@
 import { HUDL_API } from './constants';
 
-// Map from Hudl normalized clip fields → our column IDs
+// Map from Hudl normalized clip fields → our column IDs (matches HTML)
 const HUDL_TO_COL = {
   odk: 'odk',
   quarter: 'qtr',
   down: 'dn',
-  distance: 'dist',
-  yard_line: 'yardLn',
+  distance: 'dist2',    // exact numeric distance
+  yard_line: 'yardln',
   hash: 'hash',
-  play_type: 'playType',
+  play_type: 'playtype',
   result: 'result',
-  gain_loss: 'gainLoss',
-  off_form: 'offForm',
+  gain_loss: 'gainloss',
+  off_form: 'offform',
+  play_dir: 'playdir',
+  eff: 'eff',
 };
 
 // Map from our column IDs → Hudl column names (for write-back)
@@ -19,16 +21,18 @@ const COL_TO_HUDL_NAME = {
   odk: 'ODK',
   qtr: 'QTR',
   dn: 'DN',
-  dist: 'DIST',
-  yardLn: 'YARD LN',
+  dist2: 'DIST',
+  yardln: 'YARD LN',
   hash: 'HASH',
-  playType: 'PLAY TYPE',
+  playtype: 'PLAY TYPE',
   result: 'RESULT',
-  gainLoss: 'GN/LS',
-  offForm: 'OFF FORM',
+  gainloss: 'GN/LS',
+  series: 'SERIES',
+  offform: 'OFF FORM',
+  offplay: 'OFF PLAY',
 };
 
-// Known Hudl column IDs (from the HTML app's HAR capture)
+// Known Hudl column IDs (from HAR capture)
 const HUDL_COLUMN_IDS = {
   'ODK': 2626912,
   'QTR': 2626932,
@@ -47,14 +51,12 @@ const HUDL_COLUMN_IDS = {
 export function hudlClipsToPlays(clips) {
   return clips.map(clip => {
     const play = {};
-    // Map each Hudl field to our column ID
     for (const [hudlKey, colId] of Object.entries(HUDL_TO_COL)) {
       const val = clip[hudlKey];
       if (val != null && val !== '' && val !== 'null') {
         play[colId] = String(val);
       }
     }
-    // Store Hudl metadata for write-back
     play._clipId = String(clip.id);
     return play;
   });
@@ -66,14 +68,13 @@ export function playsToHudlBulk(plays, cutupId) {
   const hudlPlays = [];
 
   for (const play of plays) {
-    if (!play._clipId) continue; // Skip plays without Hudl clip IDs
+    if (!play._clipId) continue;
     const clipId = play._clipId;
     const fields = {};
 
     for (const [colId, hudlName] of Object.entries(COL_TO_HUDL_NAME)) {
       if (play[colId] != null && play[colId] !== '') {
         fields[hudlName] = String(play[colId]);
-        // Ensure column ID is in the map
         if (HUDL_COLUMN_IDS[hudlName]) {
           columnMap[hudlName] = HUDL_COLUMN_IDS[hudlName];
         }

@@ -21,6 +21,7 @@ import ColumnsPage from './pages/ColumnsPage';
 import ColumnBuilderPage from './pages/ColumnBuilderPage';
 import StatsPage from './pages/StatsPage';
 import HelpPage from './pages/HelpPage';
+import PlaybookPage from './pages/PlaybookPage';
 import { useAuth } from './hooks/useAuth';
 
 // Placeholder for future phases
@@ -87,7 +88,7 @@ function AppRoutes() {
       <Route path="/help" element={<HelpPage />} />
 
       {/* Future */}
-      <Route path="/playbook" element={<PlaceholderPage title="Playbook" />} />
+      <Route path="/playbook" element={<PlaybookPage />} />
       <Route path="/import" element={<PlaceholderPage title="Import" />} />
 
       {/* Auth pages */}

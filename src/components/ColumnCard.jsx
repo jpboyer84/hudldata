@@ -1,109 +1,108 @@
-import { useState } from 'react';
-
-// Grid class based on button count (matches HTML gridCls)
-function gridCls(n) {
-  if (n <= 2) return 'bg-2';
-  if (n === 3) return 'bg-3';
-  if (n === 5) return 'bg-5';
-  return 'bg-4';
-}
+// ColumnCard — handles all column types: buttons, btns_dd, btn_dds, numpad
+// Matches HTML renderColumn + renderColInner exactly
 
 export default function ColumnCard({ col, value, onSetValue, onOpenModal }) {
   const v = value ?? '';
+  const colKey = col.dataKey || col.id;
 
   function handleBtnClick(btnValue) {
-    // Toggle: if already selected, deselect
-    onSetValue(col.id, v === btnValue ? '' : btnValue);
+    onSetValue(colKey, v === btnValue ? '' : btnValue);
   }
 
-  function renderButtons() {
-    if (!col.options || col.options.length === 0) {
-      return <div style={{ padding: 8, color: 'var(--color-muted)', fontSize: 12, textAlign: 'center' }}>No buttons</div>;
-    }
+  function gridCls(n) {
+    if (n <= 2) return 'bg-2';
+    if (n === 3) return 'bg-3';
+    if (n === 5) return 'bg-5';
+    return 'bg-4';
+  }
 
-    const gc = gridCls(col.options.length);
+  // ── TYPE: buttons ──
+  function renderButtons() {
+    const btns = col.btns || [];
+    if (btns.length === 0) return <div style={{ padding: 8, color: 'var(--color-muted)', fontSize: 12, textAlign: 'center' }}>No buttons</div>;
+    const gc = gridCls(btns.length);
     return (
       <div className={`btn-grid ${gc}`}>
-        {col.options.map((opt, i) => {
-          // Direct value button
-          if (!opt.action) {
-            const sel = v === (opt.value || opt.label);
-            return (
-              <div
-                key={i}
-                className={`t-btn${sel ? ' sel' : ''}${col.options.length > 4 ? ' sm' : ''}`}
-                onClick={() => handleBtnClick(opt.value || opt.label)}
-              >
-                {opt.label}
-              </div>
-            );
-          }
-
-          // Modal-dropdown button
-          if (opt.action === 'modal-dropdown') {
-            return (
-              <div
-                key={i}
-                className={`t-btn${col.options.length > 4 ? ' sm' : ''}`}
-                onClick={() => onOpenModal({
-                  type: 'dropdown',
-                  columnId: col.id,
-                  title: col.name,
-                  options: opt.dropdownOptions,
-                  centerOn: opt.centerOn,
-                })}
-              >
-                {opt.label}
-              </div>
-            );
-          }
-
-          // Modal-suboptions button (like OFF FORM formations)
-          if (opt.action === 'modal-suboptions') {
-            const sel = opt.subOptions && opt.subOptions.includes(v);
-            return (
-              <div
-                key={i}
-                className={`t-btn${sel ? ' sel' : ''}${col.options.length > 4 ? ' sm' : ''}`}
-                onClick={() => onOpenModal({
-                  type: 'dropdown',
-                  columnId: col.id,
-                  title: `${col.name} — ${opt.label}`,
-                  options: opt.subOptions,
-                })}
-              >
-                {sel ? v : opt.label}
-              </div>
-            );
-          }
-
-          return null;
+        {btns.map((btn, i) => {
+          const sel = v === btn.v;
+          return (
+            <div
+              key={i}
+              className={`t-btn${sel ? ' sel' : ''}${btns.length > 4 ? ' sm' : ''}`}
+              onClick={() => handleBtnClick(btn.v)}
+            >
+              {btn.l}
+            </div>
+          );
         })}
       </div>
     );
   }
 
-  function renderModalList() {
-    const hasVal = !!v;
-    const display = hasVal ? v : col.name;
+  // ── TYPE: btns_dd (buttons + dropdown trigger) ──
+  function renderBtnsDd() {
+    const btns = col.btns || [];
+    const allItems = [...btns.map(b => b), { isDd: true }];
+    const gc = gridCls(allItems.length);
     return (
-      <div className="btn-grid bg-1">
+      <div className={`btn-grid ${gc}`}>
+        {btns.map((btn, i) => {
+          const sel = v === btn.v;
+          return (
+            <div
+              key={i}
+              className={`t-btn${sel ? ' sel' : ''}${allItems.length > 4 ? ' sm' : ''}`}
+              onClick={() => handleBtnClick(btn.v)}
+            >
+              {btn.l}
+            </div>
+          );
+        })}
         <div
-          className={`t-btn list-open${hasVal ? ' has-val sel' : ''}`}
+          className={`t-btn${allItems.length > 4 ? ' sm' : ''}`}
           onClick={() => onOpenModal({
             type: 'dropdown',
-            columnId: col.id,
+            columnId: colKey,
             title: col.name,
-            options: col.listOptions,
-            centerOn: col.centerOn,
+            options: col.dd || [],
           })}
+          style={{ color: 'var(--color-accent)' }}
         >
-          {display}
+          {col.ddLbl || '▼'}
         </div>
       </div>
     );
   }
 
+  // ── TYPE: btn_dds (each button opens its own sub-dropdown) ──
+  function renderBtnDds() {
+    const btns = col.btns || [];
+    const gc = gridCls(btns.length);
+    return (
+      <div className={`btn-grid ${gc}`}>
+        {btns.map((btn, i) => {
+          // Check if current value is one of this button's options
+          const sel = btn.opts && btn.opts.includes(v);
+          return (
+            <div
+              key={i}
+              className={`t-btn${sel ? ' sel' : ''}${btns.length > 4 ? ' sm' : ''}`}
+              onClick={() => onOpenModal({
+                type: 'dropdown',
+                columnId: colKey,
+                title: `${col.name} — ${btn.l}`,
+                options: btn.opts || [],
+              })}
+            >
+              {sel ? v : btn.l}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ── TYPE: numpad ──
   function renderNumpad() {
     const hasVal = v !== '' && v !== undefined && v !== null;
     return (
@@ -116,8 +115,7 @@ export default function ColumnCard({ col, value, onSetValue, onOpenModal }) {
           value={hasVal ? v : ''}
           placeholder={col.name}
           onFocus={e => e.target.select()}
-          onChange={e => onSetValue(col.id, e.target.value)}
-          onBlur={e => onSetValue(col.id, e.target.value)}
+          onChange={e => onSetValue(colKey, e.target.value)}
         />
       </div>
     );
@@ -125,10 +123,12 @@ export default function ColumnCard({ col, value, onSetValue, onOpenModal }) {
 
   function renderInner() {
     switch (col.type) {
-      case 'modal-list': return renderModalList();
-      case 'numpad': return renderNumpad();
-      case 'buttons':
-      default: return renderButtons();
+      case 'buttons':  return renderButtons();
+      case 'btns_dd':  return renderBtnsDd();
+      case 'btn_dds':  return renderBtnDds();
+      case 'numpad':   return renderNumpad();
+      case 'calc':     return <div className="btn-grid bg-1"><div className="t-btn" style={{ cursor: 'default', color: 'var(--color-muted)' }}>{v || '—'}</div></div>;
+      default:         return renderButtons();
     }
   }
 
