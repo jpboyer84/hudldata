@@ -1,156 +1,131 @@
-import { useState, useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
-// ─── Base modal wrapper ───────────────────────────────────────────────────────
+export function DropdownModal({ title, options, currentValue, onSelect, onClose, centerOn }) {
+  const listRef = useRef(null);
 
-export function Modal({ title, onClose, children, wide = false }) {
-  // Close on Escape
   useEffect(() => {
-    const handler = e => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [onClose]);
+    if (!listRef.current || !options) return;
+    // Scroll to current value or centerOn value
+    const target = currentValue || centerOn;
+    if (target) {
+      const idx = options.indexOf(String(target));
+      if (idx >= 0) {
+        const items = listRef.current.children;
+        if (items[idx]) {
+          items[idx].scrollIntoView({ block: 'center' });
+        }
+      }
+    }
+  }, [options, currentValue, centerOn]);
+
+  if (!options) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div
-        className={`w-full rounded-lg overflow-hidden flex flex-col ${wide ? 'max-w-lg' : 'max-w-xs'}`}
-        style={{ backgroundColor: '#1e1e1e', border: '1px solid #555555', maxHeight: '80vh' }}
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-          style={{ borderBottom: '1px solid #3a3a3a' }}
-        >
-          <span className="font-nunito font-black text-white text-sm uppercase tracking-wider">
-            {title}
-          </span>
-          <button
-            onClick={onClose}
-            className="text-white/40 hover:text-white transition-colors p-1 -mr-1"
-          >
-            <X size={16} />
-          </button>
+    <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal" style={{ maxHeight: '70dvh' }}>
+        <div className="modal-hdr">
+          <div className="modal-title">{title}</div>
+          <div className="modal-x" onClick={onClose}>✕</div>
         </div>
-        {children}
+        <div className="list-scroll" ref={listRef}>
+          {options.map((opt, i) => {
+            const sel = String(currentValue) === String(opt);
+            return (
+              <div
+                key={i}
+                className={`dd-item${sel ? ' sel' : ''}`}
+                onClick={() => { onSelect(opt); onClose(); }}
+              >
+                {opt}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Number input modal ───────────────────────────────────────────────────────
-
-export function NumberModal({ title, min, max, currentValue, onConfirm, onClose }) {
-  const [raw, setRaw] = useState(currentValue != null ? String(currentValue) : '');
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    // Short delay so the modal animation doesn't fight focus
-    const t = setTimeout(() => inputRef.current?.select(), 80);
-    return () => clearTimeout(t);
-  }, []);
-
-  const n = parseInt(raw, 10);
-  const valid = !isNaN(n) && n >= min && n <= max;
-
-  function handleConfirm() {
-    if (!valid) return;
-    onConfirm(String(n));
-    onClose();
-  }
+export function PlayNavModal({ current, max, filledSet, onJump, onClose }) {
+  const plays = Array.from({ length: max }, (_, i) => i);
 
   return (
-    <Modal title={title} onClose={onClose}>
-      <div className="p-4 flex flex-col gap-3">
-        <input
-          ref={inputRef}
-          type="number"
-          inputMode="numeric"
-          value={raw}
-          onChange={e => setRaw(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleConfirm()}
-          min={min}
-          max={max}
-          className="bg-bg border border-edge text-white font-mono text-3xl text-center px-4 py-5 focus:outline-none focus:border-white/50 transition-colors w-full"
-        />
-        <div className="text-white/25 text-[10px] font-mono text-center">
-          {min} to {max}
+    <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal" style={{ maxHeight: '70dvh' }}>
+        <div className="modal-hdr">
+          <div className="modal-title">Jump to play</div>
+          <div className="modal-x" onClick={onClose}>✕</div>
         </div>
-        {currentValue != null && (
-          <button
-            onClick={() => { onConfirm(null); onClose(); }}
-            className="py-2 border border-edge text-white/40 font-nunito font-black text-xs tracking-wider hover:text-white hover:border-white/40 transition-colors"
-            style={{ backgroundColor: '#111111' }}
-          >
-            CLEAR
-          </button>
-        )}
-        <button
-          onClick={handleConfirm}
-          disabled={!valid}
-          className="py-3.5 bg-white text-black font-nunito font-black text-sm uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/90 transition-colors"
-        >
-          CONFIRM
-        </button>
+        <div className="modal-body">
+          <div className="play-nav-grid">
+            {plays.map(idx => {
+              const isCur = idx === current;
+              const isFilled = filledSet?.has(idx);
+              return (
+                <div
+                  key={idx}
+                  className={`pn-item${isCur ? ' cur' : isFilled ? ' filled' : ' empty'}`}
+                  onClick={() => { onJump(idx); onClose(); }}
+                >
+                  {idx + 1}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
-    </Modal>
+    </div>
   );
 }
 
-// ─── Scrollable dropdown / sub-options modal ──────────────────────────────────
-// centerOn: if provided and no currentValue, scroll to this item on open
+export function EditGameModal({ open, game, onSave, onClose }) {
+  if (!open || !game) return null;
 
-export function DropdownModal({ title, options, currentValue, onSelect, onClose, centerOn }) {
-  const activeRef  = useRef(null);
-  const centerRef  = useRef(null);
-
-  useEffect(() => {
-    if (activeRef.current) {
-      activeRef.current.scrollIntoView({ block: 'center' });
-    } else if (centerRef.current) {
-      centerRef.current.scrollIntoView({ block: 'center' });
-    }
-  }, []);
+  function handleSubmit(e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    onSave({
+      home: fd.get('home') || '',
+      away: fd.get('away') || '',
+      week: fd.get('week') || '',
+      date: fd.get('date') || '',
+    });
+  }
 
   return (
-    <Modal title={title} onClose={onClose} wide>
-      <div className="overflow-y-auto flex-1">
-        {/* Clear button */}
-        {currentValue != null && (
-          <button
-            onClick={() => { onSelect(null); onClose(); }}
-            className="w-full px-4 py-3 text-left font-mono tracking-wider text-white/30 hover:text-white hover:bg-white/5 transition-colors"
-            style={{ borderBottom: '1px solid #3a3a3a', fontSize: 20 }}
-          >
-            — CLEAR —
-          </button>
-        )}
-        {options.map(opt => {
-          const active = opt === currentValue;
-          const isCenterTarget = !currentValue && centerOn === opt;
-          return (
-            <button
-              key={opt}
-              ref={active ? activeRef : isCenterTarget ? centerRef : null}
-              onClick={() => { onSelect(opt); onClose(); }}
-              className="w-full px-4 py-4 text-left font-mono transition-colors"
-              style={{
-                borderBottom: '1px solid #3a3a3a',
-                backgroundColor: active ? '#ffffff' : 'transparent',
-                color: active ? '#000000' : '#ffffff',
-                fontWeight: active ? 700 : 400,
-                fontSize: 20,
-              }}
-            >
-              {opt}
-            </button>
-          );
-        })}
+    <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal">
+        <div className="modal-hdr">
+          <div className="modal-title">EDIT GAME INFO</div>
+          <div className="modal-x" onClick={onClose}>✕</div>
+        </div>
+        <div className="modal-body">
+          <form onSubmit={handleSubmit} id="edit-game-form">
+            <div className="fg">
+              <label className="fl">Home Team</label>
+              <input className="fi" name="home" defaultValue={game.home || ''} placeholder="Home team" />
+            </div>
+            <div className="fg">
+              <label className="fl">Away Team</label>
+              <input className="fi" name="away" defaultValue={game.away || ''} placeholder="Away team" />
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div className="fg" style={{ flex: '0 0 110px' }}>
+                <label className="fl">Week</label>
+                <input className="fi" name="week" defaultValue={game.week || ''} placeholder="e.g. 5" type="number" min="1" max="20" />
+              </div>
+              <div className="fg" style={{ flex: 1 }}>
+                <label className="fl">Date</label>
+                <input className="fi" name="date" defaultValue={game.date || ''} placeholder="e.g. 10/4/2025" />
+              </div>
+            </div>
+          </form>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" type="submit" form="edit-game-form">Save</button>
+        </div>
       </div>
-    </Modal>
+    </div>
   );
 }

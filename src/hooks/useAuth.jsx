@@ -10,7 +10,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -18,7 +17,6 @@ export function AuthProvider({ children }) {
       else setLoading(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
@@ -80,60 +78,35 @@ export function AuthProvider({ children }) {
     return { data, error };
   }
 
-  // Create team + coach profile after signup
   async function createTeamAndProfile({ teamName, school, city, state, displayName }) {
     if (!user) throw new Error('Not authenticated');
 
-    // Create team
-    const { data: team, error: teamError } = await supabase
-      .from('teams')
-      .insert({ name: teamName, school, city, state })
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('create_team_and_coach', {
+      p_team_name: teamName,
+      p_school: school || null,
+      p_city: city || null,
+      p_state: state || null,
+      p_display_name: displayName || user.email,
+    });
 
-    if (teamError) throw teamError;
-
-    // Create coach profile linked to team
-    const { data: coachData, error: coachError } = await supabase
-      .from('coaches')
-      .insert({
-        id: user.id,
-        email: user.email,
-        display_name: displayName || user.email,
-        team_id: team.id,
-        role: 'head_coach',
-      })
-      .select('*, teams(*)')
-      .single();
-
-    if (coachError) throw coachError;
-
-    setCoach(coachData);
-    return coachData;
+    if (error) throw error;
+    setCoach(data);
+    return data;
   }
 
-  // Join existing team with invite code
   async function joinTeam({ teamId, displayName }) {
     if (!user) throw new Error('Not authenticated');
 
-    const { data: coachData, error } = await supabase
-      .from('coaches')
-      .insert({
-        id: user.id,
-        email: user.email,
-        display_name: displayName || user.email,
-        team_id: teamId,
-        role: 'coach',
-      })
-      .select('*, teams(*)')
-      .single();
+    const { data, error } = await supabase.rpc('join_team_with_code', {
+      p_team_id: teamId,
+      p_display_name: displayName || user.email,
+    });
 
     if (error) throw error;
-    setCoach(coachData);
-    return coachData;
+    setCoach(data);
+    return data;
   }
 
-  // Update Hudl connection info on coach record
   async function updateHudlConnection({ cookie, teamId, teamName }) {
     if (!coach) return;
     const { error } = await supabase

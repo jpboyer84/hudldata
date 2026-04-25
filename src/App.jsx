@@ -10,6 +10,15 @@ import SignupPage from './pages/SignupPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import TeamSetupPage from './pages/TeamSetupPage';
 
+// Phase 2 pages
+import TrackersHubPage from './pages/TrackersHubPage';
+import TrackerPage from './pages/TrackerPage';
+import ArchivePage from './pages/ArchivePage';
+import TemplatesPage from './pages/TemplatesPage';
+import TemplateBuilderPage from './pages/TemplateBuilderPage';
+import ColumnsPage from './pages/ColumnsPage';
+import ColumnBuilderPage from './pages/ColumnBuilderPage';
+
 // Placeholder pages for future phases
 function PlaceholderPage({ title }) {
   return (
@@ -23,7 +32,7 @@ function PlaceholderPage({ title }) {
         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: 'var(--color-muted)', fontSize: 14
       }}>
-        Coming in Phase 2
+        Coming in Phase 3
       </div>
     </div>
   );
@@ -32,20 +41,30 @@ function PlaceholderPage({ title }) {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Main app — no auth required */}
+      {/* Main app */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/settings" element={<SettingsPage />} />
-      <Route path="/trackers" element={<PlaceholderPage title="Tag a game" />} />
-      <Route path="/tracker/:gameId" element={<PlaceholderPage title="Tracker" />} />
-      <Route path="/archive" element={<PlaceholderPage title="Archive" />} />
-      <Route path="/templates" element={<PlaceholderPage title="Templates" />} />
-      <Route path="/columns" element={<PlaceholderPage title="Columns" />} />
+
+      {/* Phase 2: Game tracker */}
+      <Route path="/trackers" element={<TrackersHubPage />} />
+      <Route path="/tracker/:gameId" element={<TrackerPage />} />
+      <Route path="/archive" element={<ArchivePage />} />
+
+      {/* Phase 2: Templates & Columns */}
+      <Route path="/templates" element={<TemplatesPage />} />
+      <Route path="/templates/new" element={<TemplateBuilderPage />} />
+      <Route path="/templates/edit/:id" element={<TemplateBuilderPage />} />
+      <Route path="/columns" element={<ColumnsPage />} />
+      <Route path="/columns/new" element={<ColumnBuilderPage />} />
+      <Route path="/columns/edit/:id" element={<ColumnBuilderPage />} />
+
+      {/* Phase 3 placeholders */}
       <Route path="/stats" element={<PlaceholderPage title="Stats & Analysis" />} />
       <Route path="/playbook" element={<PlaceholderPage title="Playbook" />} />
       <Route path="/help" element={<PlaceholderPage title="Help" />} />
       <Route path="/import" element={<PlaceholderPage title="Import" />} />
 
-      {/* Auth pages — available but not required */}
+      {/* Auth pages */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
