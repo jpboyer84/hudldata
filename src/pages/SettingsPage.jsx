@@ -121,6 +121,18 @@ export default function SettingsPage() {
       <Header title="Settings & Help" onBack={() => navigate('/')} />
 
       <div className="settings-body">
+        {/* Help / FAQ */}
+        <div className="settings-group">
+          <div className="settings-group-title">❓ Help</div>
+          <div className="settings-row">
+            <div className="settings-btn" onClick={() => navigate('/help')}>
+              <span className="settings-btn-icon">📖</span>
+              Help & FAQ
+              <span className="settings-btn-label">How-to guides & Ask AI</span>
+            </div>
+          </div>
+        </div>
+
         {/* Team info */}
         {coach?.teams && (
           <div className="settings-group">
@@ -250,18 +262,6 @@ export default function SettingsPage() {
             >
               <span className="settings-btn-icon">🚪</span>
               Sign out
-            </div>
-          </div>
-        </div>
-
-        {/* Help / FAQ */}
-        <div className="settings-group">
-          <div className="settings-group-title">❓ Help</div>
-          <div className="settings-row">
-            <div className="settings-btn" onClick={() => navigate('/help')}>
-              <span className="settings-btn-icon">📖</span>
-              Help & FAQ
-              <span className="settings-btn-label">How-to guides & Ask AI</span>
             </div>
           </div>
         </div>
