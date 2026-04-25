@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { LogoIcon, HudlConnectIcon } from '../icons/Icons';
@@ -17,6 +18,7 @@ export default function TeamSetupPage() {
   const [loading, setLoading] = useState(false);
   const { createTeamAndProfile, joinTeam, updateHudlConnection, user } = useAuth();
   const showToast = useToast();
+  const navigate = useNavigate();
 
   async function handleHudlConnect() {
     if (!hudlEmail || !hudlPassword) { setError('Enter your Hudl email and password'); return; }
@@ -50,6 +52,7 @@ export default function TeamSetupPage() {
       });
 
       showToast(`Connected — ${data.teamName || 'Team'}`);
+      navigate('/');
     } catch (err) {
       setError(err.message);
     }
@@ -68,6 +71,7 @@ export default function TeamSetupPage() {
         state: state.trim(),
         displayName: user?.user_metadata?.display_name || user?.email,
       });
+      navigate('/');
     } catch (err) {
       setError(err.message);
     }
@@ -83,6 +87,7 @@ export default function TeamSetupPage() {
         teamId: inviteCode.trim(),
         displayName: user?.user_metadata?.display_name || user?.email,
       });
+      navigate('/');
     } catch (err) {
       setError(err.message);
     }
