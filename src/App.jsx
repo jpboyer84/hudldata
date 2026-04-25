@@ -41,11 +41,24 @@ function PlaceholderPage({ title }) {
 }
 
 function AppRoutes() {
-  const { passwordRecovery } = useAuth();
+  const { passwordRecovery, user, coach, loading } = useAuth();
 
   // If password recovery mode, show reset form regardless of route
   if (passwordRecovery) {
     return <ResetPasswordPage />;
+  }
+
+  // If logged in but no coach/team profile, send to team setup
+  // (skip while loading, and allow auth pages to remain accessible)
+  if (!loading && user && !coach) {
+    return (
+      <Routes>
+        <Route path="/team-setup" element={<TeamSetupPage />} />
+        <Route path="/login" element={<Navigate to="/team-setup" replace />} />
+        <Route path="/signup" element={<Navigate to="/team-setup" replace />} />
+        <Route path="*" element={<Navigate to="/team-setup" replace />} />
+      </Routes>
+    );
   }
 
   return (
