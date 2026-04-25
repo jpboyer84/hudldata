@@ -55,12 +55,6 @@ export default function TrackersHubPage() {
     }
 
     try {
-      // Get template columns
-      const tmpl = templates.find(t => t.id === opts.template_id);
-      // Build columns_config from template col_ids
-      // For now use DEFAULT_COLUMNS; templates store col_ids referencing built-in + custom columns
-      const columnsConfig = tmpl ? null : DEFAULT_COLUMNS; // TODO: resolve col_ids
-
       const game = await createGame({
         team_id: coach.team_id,
         created_by: coach.id,
@@ -246,6 +240,10 @@ export default function TrackersHubPage() {
         open={newGameOpen}
         onClose={() => setNewGameOpen(false)}
         onStart={handleStartGame}
+        onNavigate={(path) => {
+          if (path === 'hudl') setHudlOpen(true);
+          else navigate(path);
+        }}
       />
       <HudlLibraryModal
         open={hudlOpen}

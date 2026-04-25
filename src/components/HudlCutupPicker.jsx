@@ -35,7 +35,7 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
 
     // Type filter
     if (typeFilter === 'Tracked') {
-      // TODO: show only locally-tracked games
+      // Tracked filter: requires local game storage integration (future feature)
       f = [];
     } else if (typeFilter !== 'ALL') {
       const cat = typeFilter.toLowerCase();

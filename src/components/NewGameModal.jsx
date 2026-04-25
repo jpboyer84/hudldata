@@ -4,7 +4,7 @@ import { fetchTemplates } from '../lib/supaData';
 
 const GAME_TYPES = ['Game', 'JV', 'Scout', 'Other'];
 
-export default function NewGameModal({ open, onClose, onStart }) {
+export default function NewGameModal({ open, onClose, onStart, onNavigate }) {
   const { coach } = useAuth();
   const [templates, setTemplates] = useState([]);
   const [templateId, setTemplateId] = useState('');
@@ -54,13 +54,13 @@ export default function NewGameModal({ open, onClose, onStart }) {
           {/* Quick nav row */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
             {[
-              { label: 'Archive', action: 'archive' },
-              { label: 'Import', action: 'import' },
-              { label: 'Load Hudl', action: 'hudl' },
+              { label: 'Archive', path: '/archive' },
+              { label: 'Import', path: '/settings' },
+              { label: 'Load Hudl', path: 'hudl' },
             ].map(item => (
               <div
-                key={item.action}
-                onClick={() => { onClose(); /* TODO: navigate */ }}
+                key={item.path}
+                onClick={() => { onClose(); if (onNavigate) onNavigate(item.path); }}
                 style={{
                   flex: 1, textAlign: 'center', padding: '10px 8px', fontSize: 12,
                   fontWeight: 600, color: 'var(--color-muted)', cursor: 'pointer',

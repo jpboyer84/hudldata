@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { defaultColumns, defaultTemplate, resolveTemplateColumns } from '../columns';
+import { defaultTemplate, resolveTemplateColumns } from '../columns';
 
 function getFilledPlays(plays) {
   if (!Array.isArray(plays)) return [];

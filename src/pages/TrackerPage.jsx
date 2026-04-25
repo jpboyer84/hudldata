@@ -3,13 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchGame, updateGame } from '../lib/supaData';
-import { DEFAULT_COLUMNS, resolveTemplateColumns, defaultTemplate } from '../columns';
+import { DEFAULT_COLUMNS } from '../columns';
 import ColumnCard from '../components/ColumnCard';
 import ConfirmModal from '../components/ConfirmModal';
 import { DropdownModal, PlayNavModal, EditGameModal } from '../components/Modals';
 import { exportGameXLSX } from '../utils/xlsxExport';
 import { sendToHudl } from '../lib/hudlData';
-import { HUDL_API } from '../lib/constants';
 
 const INITIAL_PLAYS = 200;
 
@@ -259,9 +258,9 @@ export default function TrackerPage() {
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 13V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M6 13V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M9 13V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M12 13V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
               Stats
             </div>
-            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); /* TODO: col picker */ }}>
+            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); navigate('/columns'); }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              Add column
+              Manage columns
             </div>
             <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); showToast('Save as template — coming soon'); }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="3" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M3 6H13" stroke="currentColor" strokeWidth="1.5" opacity="0.5"/></svg>
