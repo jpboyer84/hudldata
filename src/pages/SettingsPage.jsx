@@ -50,7 +50,7 @@ export default function SettingsPage() {
                 </div>
               )}
               <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 10, borderTop: '1px solid var(--color-border)', paddingTop: 8 }}>
-                Invite code: <span style={{ fontFamily: 'monospace', color: 'var(--color-muted2)', userSelect: 'all' }}>{coach.team_id}</span>
+                Invite code: <span style={{ fontFamily: 'monospace', color: 'var(--color-muted2)', userSelect: 'all', fontSize: 16, fontWeight: 700, letterSpacing: '0.1em' }}>{coach.teams.invite_code || coach.team_id}</span>
               </div>
             </div>
           </div>

@@ -277,7 +277,7 @@ export default function TeamSetupPage() {
 
         <div style={{ marginBottom: 14 }}>
           <label className="fl">TEAM INVITE CODE</label>
-          <input className="fi" placeholder="Paste invite code here" value={inviteCode} onChange={e => setInviteCode(e.target.value)} />
+          <input className="fi" placeholder="e.g. 6RK9BU" value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())} maxLength={6} style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 700, letterSpacing: '0.15em', textAlign: 'center' }} />
         </div>
 
         {error && <div className="auth-error">{error}</div>}
