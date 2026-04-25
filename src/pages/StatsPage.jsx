@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchGames } from '../lib/supaData';
+import { fetchHudlClips, hudlClipsToPlays } from '../lib/hudlData';
 import { calcStats } from '../utils/statsCalc';
 import { HUDL_API } from '../lib/constants';
+import HudlPickerModal from '../components/HudlPickerModal';
 
-const TABS = ['STATS', 'ASK AI'];
 const SUB_TABS = ['OVERVIEW', 'OFFENSE', 'DEFENSE', 'FIELD', 'BY QTR'];
 
 function BarRow({ label, value, total, color }) {
@@ -36,17 +37,8 @@ function StatBig({ value, label }) {
 function StatCard({ title, subtitle, children }) {
   const [open, setOpen] = useState(true);
   return (
-    <div style={{
-      background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-      borderRadius: 12, marginBottom: 10, overflow: 'hidden',
-    }}>
-      <div
-        onClick={() => setOpen(!open)}
-        style={{
-          padding: '12px 14px', display: 'flex', justifyContent: 'space-between',
-          alignItems: 'center', cursor: 'pointer',
-        }}
-      >
+    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, marginBottom: 10, overflow: 'hidden' }}>
+      <div onClick={() => setOpen(!open)} style={{ padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em' }}>{title}</div>
           {subtitle && <div style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: 2 }}>{subtitle}</div>}
@@ -58,7 +50,6 @@ function StatCard({ title, subtitle, children }) {
   );
 }
 
-// ─── OVERVIEW TAB ──────────────────────────────────────────
 function OverviewTab({ s }) {
   const o = s.overview;
   return (
@@ -97,7 +88,6 @@ function OverviewTab({ s }) {
   );
 }
 
-// ─── OFFENSE TAB ───────────────────────────────────────────
 function OffenseTab({ s }) {
   const { offense, overview } = s;
   return (
@@ -115,9 +105,7 @@ function OffenseTab({ s }) {
         <StatCard title="DOWN BREAKDOWN" subtitle="Plays per down">
           {offense.dnBreakdown.map(d => (
             <div key={d.down} style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
-                {['1ST', '2ND', '3RD', '4TH'][parseInt(d.down) - 1]} DOWN — {d.total} plays · Avg {d.avgYds} yds
-              </div>
+              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>{['1ST','2ND','3RD','4TH'][parseInt(d.down)-1]} DOWN — {d.total} plays · Avg {d.avgYds} yds</div>
               <BarRow label="RUN" value={d.runs} total={d.total} color="var(--color-accent)" />
               <BarRow label="PASS" value={d.passes} total={d.total} color="#3b82f6" />
             </div>
@@ -141,7 +129,6 @@ function OffenseTab({ s }) {
   );
 }
 
-// ─── DEFENSE TAB ───────────────────────────────────────────
 function DefenseTab({ s }) {
   const d = s.defense;
   if (d.totalPlays === 0) return <div className="empty-msg">No defensive plays found.</div>;
@@ -168,7 +155,6 @@ function DefenseTab({ s }) {
   );
 }
 
-// ─── FIELD TAB ─────────────────────────────────────────────
 function FieldTab({ s }) {
   const f = s.field;
   return (
@@ -176,15 +162,8 @@ function FieldTab({ s }) {
       <StatCard title="HASH MARK TENDENCIES">
         {f.hashBreakdown.map(h => (
           <div key={h.hash} style={{ marginBottom: 6 }}>
-            <BarRow
-              label={h.hash === 'L' ? 'LEFT' : h.hash === 'M' ? 'MIDDLE' : 'RIGHT'}
-              value={h.count}
-              total={s.overview.offense}
-              color={h.hash === 'L' ? '#ef4444' : h.hash === 'M' ? '#f59e0b' : '#22c55e'}
-            />
-            <div style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: -4, marginBottom: 4 }}>
-              Avg {h.avgYds} yds/play
-            </div>
+            <BarRow label={h.hash === 'L' ? 'LEFT' : h.hash === 'M' ? 'MIDDLE' : 'RIGHT'} value={h.count} total={s.overview.offense} color={h.hash === 'L' ? '#ef4444' : h.hash === 'M' ? '#f59e0b' : '#22c55e'} />
+            <div style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: -4, marginBottom: 4 }}>Avg {h.avgYds} yds/play</div>
           </div>
         ))}
       </StatCard>
@@ -199,7 +178,6 @@ function FieldTab({ s }) {
   );
 }
 
-// ─── BY QTR TAB ────────────────────────────────────────────
 function ByQtrTab({ s }) {
   if (s.quarters.length === 0) return <div className="empty-msg">No quarter data found.</div>;
   return (
@@ -224,17 +202,13 @@ function ByQtrTab({ s }) {
   );
 }
 
-// ─── ASK AI TAB ────────────────────────────────────────────
 function AskAITab({ plays }) {
-  const { coach } = useAuth();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
 
-  useEffect(() => {
-    scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
-  }, [messages]);
+  useEffect(() => { scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight); }, [messages]);
 
   async function handleSend() {
     if (!input.trim() || loading) return;
@@ -242,12 +216,9 @@ function AskAITab({ plays }) {
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: q }]);
     setLoading(true);
-
     try {
-      // Build play summary for context
       const filled = plays.filter(p => p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0);
-      const playJson = JSON.stringify(filled.slice(0, 200)); // Limit for token safety
-
+      const playJson = JSON.stringify(filled.slice(0, 200));
       const resp = await fetch(`${HUDL_API}/api/claude`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -261,7 +232,6 @@ function AskAITab({ plays }) {
           ],
         }),
       });
-
       const data = await resp.json();
       const answer = data.content?.map(c => c.text || '').join('\n') || 'No response';
       setMessages(prev => [...prev, { role: 'assistant', text: answer }]);
@@ -276,10 +246,7 @@ function AskAITab({ plays }) {
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 14, WebkitOverflowScrolling: 'touch' }}>
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--color-muted)', fontSize: 12, lineHeight: 2 }}>
-            Ask about your play data:<br />
-            "What's our 3rd down conversion rate?"<br />
-            "Which formation gains the most yards?"<br />
-            "How did we do in the red zone?"
+            Ask about your play data:<br />"What's our 3rd down conversion rate?"<br />"Which formation gains the most yards?"<br />"How did we do in the red zone?"
           </div>
         )}
         {messages.map((m, i) => (
@@ -289,160 +256,120 @@ function AskAITab({ plays }) {
               ? { background: 'var(--color-accent)', color: '#fff', marginLeft: 'auto' }
               : { background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }),
             fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap',
-          }}>
-            {m.text}
-          </div>
+          }}>{m.text}</div>
         ))}
-        {loading && (
-          <div style={{ padding: '10px 14px', color: 'var(--color-muted)', fontSize: 12 }}>
-            Thinking…
-          </div>
-        )}
+        {loading && <div style={{ padding: '10px 14px', color: 'var(--color-muted)', fontSize: 12 }}>Thinking…</div>}
       </div>
-      <div style={{
-        padding: '10px 14px 16px', borderTop: '1px solid var(--color-border)',
-        display: 'flex', gap: 8, flexShrink: 0,
-      }}>
-        <input
-          className="fi"
-          placeholder="Ask about your plays…"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSend()}
-          style={{ flex: 1, fontSize: 13, padding: '10px 12px' }}
-        />
-        <button
-          className="btn btn-primary"
-          onClick={handleSend}
-          disabled={loading || !input.trim()}
-          style={{ padding: '10px 16px', fontSize: 13, flexShrink: 0 }}
-        >
-          Send
-        </button>
+      <div style={{ padding: '10px 14px 16px', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, flexShrink: 0 }}>
+        <input className="fi" placeholder="Ask about your plays…" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} style={{ flex: 1, fontSize: 13, padding: '10px 12px' }} />
+        <button className="btn btn-primary" onClick={handleSend} disabled={loading || !input.trim()} style={{ padding: '10px 16px', fontSize: 13, flexShrink: 0 }}>Send</button>
       </div>
     </div>
   );
 }
 
-// ─── MAIN STATS PAGE ───────────────────────────────────────
+// ─── MAIN ──────────────────────────────────────────────────
 export default function StatsPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { coach } = useAuth();
   const showToast = useToast();
 
-  const [games, setGames] = useState([]);
-  const [selectedGameId, setSelectedGameId] = useState(null);
+  const [pickerOpen, setPickerOpen] = useState(true); // Open immediately
   const [plays, setPlays] = useState([]);
   const [stats, setStats] = useState(null);
+  const [label, setLabel] = useState('');
   const [tab, setTab] = useState('STATS');
   const [subTab, setSubTab] = useState('OVERVIEW');
+  const [loadingData, setLoadingData] = useState(false);
+  const [trackedGames, setTrackedGames] = useState([]);
 
-  // Load games
   useEffect(() => {
     if (coach?.team_id) {
-      fetchGames(coach.team_id).then(g => {
-        setGames(g);
-        // Auto-select from URL param or most recent
-        const fromUrl = searchParams.get('game');
-        if (fromUrl && g.find(gm => gm.id === fromUrl)) {
-          selectGame(fromUrl, g);
-        } else if (g.length > 0) {
-          selectGame(g[0].id, g);
-        }
-      }).catch(console.error);
+      fetchGames(coach.team_id).then(setTrackedGames).catch(console.error);
     }
   }, [coach?.team_id]);
 
-  function selectGame(id, gamesArr) {
-    const list = gamesArr || games;
-    const g = list.find(gm => gm.id === id);
-    if (!g) return;
-    setSelectedGameId(id);
-    const p = Array.isArray(g.plays) ? g.plays : [];
-    setPlays(p);
-    setStats(calcStats(p));
+  async function handlePickerLoad(selectedItems) {
+    setPickerOpen(false);
+    setLoadingData(true);
+    showToast(`Loading ${selectedItems.length} cutup${selectedItems.length > 1 ? 's' : ''}…`);
+
+    try {
+      let allPlays = [];
+      for (const item of selectedItems) {
+        const clips = await fetchHudlClips(item.id, coach);
+        const mapped = hudlClipsToPlays(clips);
+        allPlays = allPlays.concat(mapped);
+      }
+
+      setPlays(allPlays);
+      setStats(calcStats(allPlays));
+      const filledCount = allPlays.filter(p => Object.keys(p).filter(k => !k.startsWith('_')).length > 0).length;
+      setLabel(`${filledCount} plays from ${selectedItems.length} cutup${selectedItems.length > 1 ? 's' : ''}`);
+      showToast(`Loaded ${filledCount} plays`);
+    } catch (err) {
+      showToast('Load failed: ' + err.message);
+    }
+    setLoadingData(false);
   }
 
-  function gameLabel(g) {
-    if (g.home && g.away) return `${g.home} vs ${g.away}`;
-    return g.home || g.away || g.hudl_source || 'Game';
-  }
+  const TABS = ['STATS', 'ASK AI'];
 
   return (
     <div className="view">
       <div className="hdr">
-        <button className="hdr-btn" onClick={() => navigate(-1)}>← Back</button>
+        <button className="hdr-btn" onClick={() => navigate('/')}>← Back</button>
         <div className="hdr-title">Stats</div>
-        <div style={{ width: 60 }} />
+        <button className="hdr-btn" onClick={() => setPickerOpen(true)} style={{ color: 'var(--color-accent)' }}>
+          FILTER
+        </button>
       </div>
 
-      {/* Game picker */}
-      <div style={{
-        padding: '8px 14px', borderBottom: '1px solid var(--color-border)',
-        display: 'flex', alignItems: 'center', gap: 8,
-      }}>
-        <select
-          className="fi"
-          value={selectedGameId || ''}
-          onChange={e => selectGame(e.target.value)}
-          style={{ flex: 1, fontSize: 12, padding: '8px 10px', cursor: 'pointer' }}
-        >
-          {games.length === 0 && <option value="">No games</option>}
-          {games.map(g => (
-            <option key={g.id} value={g.id}>{gameLabel(g)}</option>
-          ))}
-        </select>
-      </div>
+      {/* Data label */}
+      {label && (
+        <div style={{
+          padding: '8px 16px', fontSize: 11, color: 'var(--color-muted)',
+          borderBottom: '1px solid var(--color-border)', textAlign: 'center',
+        }}>
+          {label}
+        </div>
+      )}
 
-      {/* Main tabs */}
+      {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
         {TABS.map(t => (
-          <div
-            key={t}
-            onClick={() => setTab(t)}
-            style={{
-              flex: 1, textAlign: 'center', padding: '10px 0', fontSize: 11, fontWeight: 700,
-              letterSpacing: '0.08em', cursor: 'pointer',
-              color: tab === t ? 'var(--color-accent)' : 'var(--color-muted)',
-              borderBottom: tab === t ? '2px solid var(--color-accent)' : '2px solid transparent',
-            }}
-          >
-            {t}
-          </div>
+          <div key={t} onClick={() => setTab(t)} style={{
+            flex: 1, textAlign: 'center', padding: '10px 0', fontSize: 11, fontWeight: 700,
+            letterSpacing: '0.08em', cursor: 'pointer',
+            color: tab === t ? 'var(--color-accent)' : 'var(--color-muted)',
+            borderBottom: tab === t ? '2px solid var(--color-accent)' : '2px solid transparent',
+          }}>{t}</div>
         ))}
       </div>
 
-      {/* Stats sub-tabs */}
+      {/* Sub-tabs */}
       {tab === 'STATS' && (
-        <div style={{
-          display: 'flex', overflowX: 'auto', WebkitOverflowScrolling: 'touch',
-          borderBottom: '1px solid var(--color-border)', flexShrink: 0,
-        }}>
+        <div style={{ display: 'flex', overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
           {SUB_TABS.map(st => (
-            <div
-              key={st}
-              onClick={() => setSubTab(st)}
-              style={{
-                padding: '8px 14px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
-                letterSpacing: '0.06em', cursor: 'pointer',
-                color: subTab === st ? 'var(--color-accent)' : 'var(--color-muted)',
-                borderBottom: subTab === st ? '2px solid var(--color-accent)' : '2px solid transparent',
-              }}
-            >
-              {st}
-            </div>
+            <div key={st} onClick={() => setSubTab(st)} style={{
+              padding: '8px 14px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
+              letterSpacing: '0.06em', cursor: 'pointer',
+              color: subTab === st ? 'var(--color-accent)' : 'var(--color-muted)',
+              borderBottom: subTab === st ? '2px solid var(--color-accent)' : '2px solid transparent',
+            }}>{st}</div>
           ))}
         </div>
       )}
 
       {/* Content */}
       <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        {tab === 'ASK AI' ? (
+        {loadingData ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>Loading play data…</div>
+        ) : tab === 'ASK AI' ? (
           <AskAITab plays={plays} />
         ) : !stats ? (
           <div className="empty-msg">
-            {games.length === 0 ? 'No games yet. Tag a game first.' : 'Select a game to view stats.'}
+            Tap <strong>FILTER</strong> to select cutups and load data.
           </div>
         ) : (
           <div style={{ padding: 14 }}>
@@ -454,6 +381,13 @@ export default function StatsPage() {
           </div>
         )}
       </div>
+
+      <HudlPickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onLoad={handlePickerLoad}
+        trackedGames={trackedGames}
+      />
     </div>
   );
 }
