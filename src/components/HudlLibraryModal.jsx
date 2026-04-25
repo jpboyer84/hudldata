@@ -4,6 +4,16 @@ import { HUDL_API } from '../lib/constants';
 
 const TYPE_FILTERS = ['All', 'Cutup', 'Playlist'];
 
+function getCutupCategory(title) {
+  const t = (title || '').trim().toLowerCase();
+  if (t.endsWith('(practice)')) return 'practice';
+  if (t.endsWith('(game)'))     return 'game';
+  if (t.endsWith('(scout)'))    return 'scout';
+  if (t.endsWith('(jv)'))       return 'jv';
+  if (t.endsWith('(other)'))    return 'other';
+  return 'untagged';
+}
+
 export default function HudlLibraryModal({ open, onClose, onSelect }) {
   const { coach } = useAuth();
   const [items, setItems] = useState([]);
@@ -45,7 +55,12 @@ export default function HudlLibraryModal({ open, onClose, onSelect }) {
       const resp = await fetch(`${HUDL_API}/api/library?count=500`, { headers });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Failed to load library');
-      setItems(data.items || []);
+      // Only show tagged cutups (exclude untagged and practice)
+      const tagged = (data.items || []).filter(i => {
+        const cat = getCutupCategory(i.title);
+        return cat !== 'untagged' && cat !== 'practice';
+      });
+      setItems(tagged);
     } catch (err) {
       setError(err.message);
     }
