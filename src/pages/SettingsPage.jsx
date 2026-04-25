@@ -28,7 +28,33 @@ export default function SettingsPage() {
       <Header title="Settings" onBack={() => navigate('/')} />
 
       <div className="settings-body">
-        {/* Save Full Backup */}
+        {/* Team info */}
+        {coach?.teams && (
+          <div className="settings-group">
+            <div className="settings-group-title">🏈 Your Team</div>
+            <div style={{
+              background: 'var(--color-bg)', border: '1px solid var(--color-border)',
+              borderRadius: 12, padding: 16, marginTop: 8,
+            }}>
+              <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+                {coach.teams.name || 'My Team'}
+              </div>
+              {coach.teams.school && (
+                <div style={{ fontSize: 13, color: 'var(--color-muted2)', marginBottom: 2 }}>
+                  {coach.teams.school}
+                </div>
+              )}
+              {(coach.teams.city || coach.teams.state) && (
+                <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                  {[coach.teams.city, coach.teams.state].filter(Boolean).join(', ')}
+                </div>
+              )}
+              <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 10, borderTop: '1px solid var(--color-border)', paddingTop: 8 }}>
+                Invite code: <span style={{ fontFamily: 'monospace', color: 'var(--color-muted2)', userSelect: 'all' }}>{coach.team_id}</span>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="settings-group">
           <div className="settings-group-title">💾 Save Full Backup</div>
           <div className="settings-group-sub">
@@ -137,7 +163,6 @@ export default function SettingsPage() {
           <div className="settings-group-title">Account</div>
           <div className="settings-group-sub">
             Signed in as {coach?.email || 'unknown'}
-            {coach?.teams?.name && ` • ${coach.teams.name}`}
           </div>
           <div className="settings-row">
             <div
@@ -149,14 +174,6 @@ export default function SettingsPage() {
               Sign out
             </div>
           </div>
-          {coach?.team_id && (
-            <div style={{
-              fontSize: 10, color: 'var(--color-muted)', marginTop: 10,
-              textAlign: 'center', wordBreak: 'break-all'
-            }}>
-              Team invite code: {coach.team_id}
-            </div>
-          )}
         </div>
       </div>
 
