@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LogoIcon } from '../icons/Icons';
+import OAuthButtons from '../components/OAuthButtons';
 
 export default function SignupPage() {
   const [step, setStep] = useState('account'); // account | team
@@ -126,6 +127,17 @@ export default function SignupPage() {
         >
           {loading ? 'CREATING…' : 'CREATE ACCOUNT'}
         </button>
+
+        {/* Divider */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0',
+        }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+          <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>OR</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+        </div>
+
+        <OAuthButtons />
 
         <div style={{
           textAlign: 'center', marginTop: 20,

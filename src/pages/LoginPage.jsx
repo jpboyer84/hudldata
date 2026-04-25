@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { LogoIcon } from '../icons/Icons';
 import { HUDL_API } from '../lib/constants';
+import OAuthButtons from '../components/OAuthButtons';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -148,6 +149,17 @@ export default function LoginPage() {
         >
           {loading ? 'SIGNING IN…' : 'SIGN IN'}
         </button>
+
+        {/* Divider */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0',
+        }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+          <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>OR</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+        </div>
+
+        <OAuthButtons />
 
         <div style={{
           textAlign: 'center', marginTop: 20,
