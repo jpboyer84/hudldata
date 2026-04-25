@@ -154,10 +154,8 @@ export const DEFAULT_COLUMNS = [
   },
   {
     id: 'gainLoss',
-    name: 'GAIN/LOSS',
-    type: 'modal-list',
-    listOptions: GAIN_LOSS_OPTIONS,
-    centerOn: '0',
+    name: 'GN/LS',
+    type: 'numpad',
   },
   {
     id: 'offForm',
