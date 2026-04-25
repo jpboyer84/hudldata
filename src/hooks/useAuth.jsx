@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [coach, setCoach] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -22,9 +23,7 @@ export function AuthProvider({ children }) {
         setSession(session);
         setUser(session?.user ?? null);
         if (event === 'PASSWORD_RECOVERY') {
-          // Redirect to reset password page
-          window.location.replace('/reset-password');
-          return;
+          setPasswordRecovery(true);
         }
         if (session?.user) fetchCoach(session.user.id);
         else {
@@ -172,6 +171,8 @@ export function AuthProvider({ children }) {
     user,
     coach,
     loading,
+    passwordRecovery,
+    setPasswordRecovery,
     signUp,
     signIn,
     signOut,

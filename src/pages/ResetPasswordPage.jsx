@@ -9,7 +9,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
-  const { updatePassword } = useAuth();
+  const { updatePassword, setPasswordRecovery } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
@@ -25,6 +25,7 @@ export default function ResetPasswordPage() {
     if (err) {
       setError(err.message);
     } else {
+      setPasswordRecovery(false);
       setDone(true);
     }
     setLoading(false);

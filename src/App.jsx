@@ -19,6 +19,7 @@ import TemplatesPage from './pages/TemplatesPage';
 import TemplateBuilderPage from './pages/TemplateBuilderPage';
 import ColumnsPage from './pages/ColumnsPage';
 import ColumnBuilderPage from './pages/ColumnBuilderPage';
+import { useAuth } from './hooks/useAuth';
 
 // Placeholder pages for future phases
 function PlaceholderPage({ title }) {
@@ -40,6 +41,13 @@ function PlaceholderPage({ title }) {
 }
 
 function AppRoutes() {
+  const { passwordRecovery } = useAuth();
+
+  // If password recovery mode, show reset form regardless of route
+  if (passwordRecovery) {
+    return <ResetPasswordPage />;
+  }
+
   return (
     <Routes>
       {/* Main app */}
