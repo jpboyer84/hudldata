@@ -5,6 +5,17 @@ import { HUDL_API } from '../lib/constants';
 const TYPE_FILTERS = ['ALL', 'Game', 'Scout', 'JV', 'Other', 'Tracked'];
 const YEAR_FILTERS = ['2024', '2025', '2026'];
 
+// Matches HTML getCutupCategory exactly — only tagged cutups are shown
+function getCutupCategory(title) {
+  const t = (title || '').trim().toLowerCase();
+  if (t.endsWith('(practice)')) return 'practice';
+  if (t.endsWith('(game)'))     return 'game';
+  if (t.endsWith('(scout)'))    return 'scout';
+  if (t.endsWith('(jv)'))       return 'jv';
+  if (t.endsWith('(other)'))    return 'other';
+  return 'untagged';
+}
+
 export default function HudlCutupPicker({ onLoad, onClose }) {
   const { coach } = useAuth();
   const [items, setItems] = useState([]);
@@ -12,7 +23,7 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [yearFilter, setYearFilter] = useState(null);
-  const [homeAway, setHomeAway] = useState(null); // null | 'HOME' | 'AWAY'
+  const [homeAway, setHomeAway] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,23 +35,16 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
 
     // Type filter
     if (typeFilter === 'Tracked') {
-      // TODO: filter to only items that have been tracked in the app
-      // For now show all
+      // TODO: show only locally-tracked games
+      f = [];
     } else if (typeFilter !== 'ALL') {
-      const lower = typeFilter.toLowerCase();
-      f = f.filter(i => {
-        const title = (i.title || '').toLowerCase();
-        if (lower === 'game') return title.includes('(game)');
-        if (lower === 'scout') return title.includes('(scout)') || title.includes('scout');
-        if (lower === 'jv') return title.includes('(jv)') || title.includes('jv');
-        if (lower === 'other') return title.includes('(other)') || (!title.includes('(game)') && !title.includes('(scout)') && !title.includes('(jv)'));
-        return true;
-      });
+      const cat = typeFilter.toLowerCase();
+      f = f.filter(i => i._category === cat);
     }
 
     // Year filter
     if (yearFilter) {
-      const yShort = "'" + yearFilter.slice(2); // '24, '25, '26
+      const yShort = "'" + yearFilter.slice(2);
       f = f.filter(i => {
         const title = i.title || '';
         return title.includes(yearFilter) || title.includes(yShort);
@@ -49,9 +53,12 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
 
     // Home/Away filter
     if (homeAway === 'HOME') {
-      f = f.filter(i => (i.title || '').toLowerCase().includes(' vs '));
+      f = f.filter(i => {
+        const t = (i.title || '').toLowerCase();
+        return t.includes(' vs ') && !t.includes('@');
+      });
     } else if (homeAway === 'AWAY') {
-      f = f.filter(i => (i.title || '').toLowerCase().includes(' @ '));
+      f = f.filter(i => (i.title || '').toLowerCase().includes('@'));
     }
 
     // Search
@@ -74,9 +81,14 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
       const resp = await fetch(`${HUDL_API}/api/library?count=500`, { headers });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Failed to load library');
-      setItems(data.items || []);
-      // Auto-select all
-      setSelected(new Set((data.items || []).map(i => i.id)));
+      // Only keep tagged cutups — exclude untagged and practice (matches HTML exactly)
+      const tagged = (data.items || []).filter(i => {
+        const cat = getCutupCategory(i.title);
+        return cat !== 'untagged' && cat !== 'practice';
+      }).map(i => ({ ...i, _category: getCutupCategory(i.title) }));
+      setItems(tagged);
+      // Auto-select all tagged items
+      setSelected(new Set(tagged.map(i => i.id)));
     } catch (err) {
       setError(err.message);
     }
