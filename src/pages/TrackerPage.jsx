@@ -26,7 +26,7 @@ export default function TrackerPage() {
   const [plays, setPlays] = useState([]);
   const [columns, setColumns] = useState(DEFAULT_COLUMNS);
   const [playIdx, setPlayIdx] = useState(0);
-  const [layoutCols, setLayoutCols] = useState(2);
+  const [layoutCols, setLayoutCols] = useState(1);
   const [menuOpen, setMenuOpen] = useState(false);
   const [modal, setModal] = useState(null);
   const [jumpOpen, setJumpOpen] = useState(false);

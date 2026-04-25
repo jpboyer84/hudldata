@@ -111,8 +111,7 @@ export const DEFAULT_COLUMNS = [
   {
     id: 'yardLn',
     name: 'YARD LN',
-    type: 'modal-list',
-    listOptions: YARD_LINE_OPTIONS,
+    type: 'numpad',
   },
   {
     id: 'hash',
