@@ -2,13 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
-import { fetchGames } from '../lib/supaData';
-import { fetchHudlClips, hudlClipsToPlays } from '../lib/hudlData';
 import { calcStats } from '../utils/statsCalc';
+import { fetchHudlClips, hudlClipsToPlays } from '../lib/hudlData';
 import { HUDL_API } from '../lib/constants';
-import HudlPickerModal from '../components/HudlPickerModal';
+import HudlCutupPicker from '../components/HudlCutupPicker';
 
-const SUB_TABS = ['OVERVIEW', 'OFFENSE', 'DEFENSE', 'FIELD', 'BY QTR'];
+const SUB_TABS = ['OVERVIEW', 'OFFENSE', 'DEFENSE', 'FIELD', 'BY QTR', 'ASK AI'];
 
 function BarRow({ label, value, total, color }) {
   const p = total > 0 ? Math.round((value / total) * 100) : 0;
@@ -52,154 +51,98 @@ function StatCard({ title, subtitle, children }) {
 
 function OverviewTab({ s }) {
   const o = s.overview;
-  return (
-    <>
-      <StatCard title="PLAY COUNT" subtitle={`${o.totalPlays} total plays`}>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <StatBig value={o.offense} label="OFFENSE" />
-          <StatBig value={o.defense} label="DEFENSE" />
-          <StatBig value={o.special} label="SPECIAL" />
-        </div>
+  return (<>
+    <StatCard title="PLAY COUNT" subtitle={`${o.totalPlays} total plays`}>
+      <div style={{ display: 'flex', gap: 8 }}><StatBig value={o.offense} label="OFFENSE" /><StatBig value={o.defense} label="DEFENSE" /><StatBig value={o.special} label="SPECIAL" /></div>
+    </StatCard>
+    {o.offense > 0 && (<>
+      <StatCard title="OFFENSIVE EFFICIENCY" subtitle={`${o.offense} offense plays`}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}><StatBig value={o.avgYdsPlay} label="AVG YDS/PLAY" /><StatBig value={o.avgYdsRun} label="AVG YDS/RUN" /><StatBig value={o.avgYdsPass} label="AVG YDS/PASS" /></div>
+        <BarRow label="3+ YARDS" value={o.gain3} total={o.offense} color="#22c55e" />
+        <BarRow label="5+ YARDS" value={o.gain5} total={o.offense} color="#3b82f6" />
+        <BarRow label="10+ YARDS" value={o.gain10} total={o.offense} color="var(--color-accent)" />
+        <BarRow label="NEGATIVE" value={o.negPlays} total={o.offense} color="#ef4444" />
       </StatCard>
-      {o.offense > 0 && (
-        <>
-          <StatCard title="OFFENSIVE EFFICIENCY" subtitle={`${o.offense} offense plays`}>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-              <StatBig value={o.avgYdsPlay} label="AVG YDS/PLAY" />
-              <StatBig value={o.avgYdsRun} label="AVG YDS/RUN" />
-              <StatBig value={o.avgYdsPass} label="AVG YDS/PASS" />
-            </div>
-            <BarRow label="3+ YARDS" value={o.gain3} total={o.offense} color="#22c55e" />
-            <BarRow label="5+ YARDS" value={o.gain5} total={o.offense} color="#3b82f6" />
-            <BarRow label="10+ YARDS" value={o.gain10} total={o.offense} color="var(--color-accent)" />
-            <BarRow label="NEGATIVE" value={o.negPlays} total={o.offense} color="#ef4444" />
-          </StatCard>
-          <StatCard title="RUN / PASS SPLIT" subtitle={`${o.offense} offense plays`}>
-            <BarRow label="RUN" value={o.runs} total={o.offense} color="var(--color-accent)" />
-            <BarRow label="PASS" value={o.passes} total={o.offense} color="#3b82f6" />
-            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <StatBig value={o.avgYdsRun} label="RUN AVG YDS" />
-              <StatBig value={o.avgYdsPass} label="PASS AVG YDS" />
-            </div>
-          </StatCard>
-        </>
-      )}
-    </>
-  );
+      <StatCard title="RUN / PASS SPLIT" subtitle={`${o.offense} offense plays`}>
+        <BarRow label="RUN" value={o.runs} total={o.offense} color="var(--color-accent)" />
+        <BarRow label="PASS" value={o.passes} total={o.offense} color="#3b82f6" />
+        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}><StatBig value={o.avgYdsRun} label="RUN AVG YDS" /><StatBig value={o.avgYdsPass} label="PASS AVG YDS" /></div>
+      </StatCard>
+    </>)}
+  </>);
 }
 
 function OffenseTab({ s }) {
   const { offense, overview } = s;
-  return (
-    <>
-      {offense.thirdDown > 0 && (
-        <StatCard title="3RD DOWN CONVERSIONS" subtitle={`${offense.thirdDown} attempts`}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-            <StatBig value={offense.thirdConv} label="CONVERTED" />
-            <StatBig value={`${offense.thirdPct}%`} label="CONV RATE" />
+  return (<>
+    {offense.thirdDown > 0 && (
+      <StatCard title="3RD DOWN CONVERSIONS" subtitle={`${offense.thirdDown} attempts`}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}><StatBig value={offense.thirdConv} label="CONVERTED" /><StatBig value={`${offense.thirdPct}%`} label="CONV RATE" /></div>
+        <BarRow label="CONVERTED" value={offense.thirdConv} total={offense.thirdDown} color="#22c55e" />
+      </StatCard>
+    )}
+    {offense.dnBreakdown.length > 0 && (
+      <StatCard title="DOWN BREAKDOWN" subtitle="Plays per down">
+        {offense.dnBreakdown.map(d => (<div key={d.down} style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>{['1ST','2ND','3RD','4TH'][parseInt(d.down)-1]} DOWN — {d.total} plays · Avg {d.avgYds} yds</div>
+          <BarRow label="RUN" value={d.runs} total={d.total} color="var(--color-accent)" />
+          <BarRow label="PASS" value={d.passes} total={d.total} color="#3b82f6" />
+        </div>))}
+      </StatCard>
+    )}
+    {offense.formations.length > 0 && (
+      <StatCard title="FORMATIONS" subtitle={`${offense.formations.length} formations used`}>
+        {offense.formations.slice(0, 8).map(f => (<div key={f.name} style={{ marginBottom: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, marginBottom: 2 }}>
+            <span>{f.name}</span><span style={{ color: 'var(--color-muted)' }}>{f.count} plays · Avg {f.avgYds} yds</span>
           </div>
-          <BarRow label="CONVERTED" value={offense.thirdConv} total={offense.thirdDown} color="#22c55e" />
-        </StatCard>
-      )}
-      {offense.dnBreakdown.length > 0 && (
-        <StatCard title="DOWN BREAKDOWN" subtitle="Plays per down">
-          {offense.dnBreakdown.map(d => (
-            <div key={d.down} style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>{['1ST','2ND','3RD','4TH'][parseInt(d.down)-1]} DOWN — {d.total} plays · Avg {d.avgYds} yds</div>
-              <BarRow label="RUN" value={d.runs} total={d.total} color="var(--color-accent)" />
-              <BarRow label="PASS" value={d.passes} total={d.total} color="#3b82f6" />
-            </div>
-          ))}
-        </StatCard>
-      )}
-      {offense.formations.length > 0 && (
-        <StatCard title="FORMATIONS" subtitle={`${offense.formations.length} formations used`}>
-          {offense.formations.slice(0, 8).map(f => (
-            <div key={f.name} style={{ marginBottom: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, marginBottom: 2 }}>
-                <span>{f.name}</span>
-                <span style={{ color: 'var(--color-muted)' }}>{f.count} plays · Avg {f.avgYds} yds</span>
-              </div>
-              <BarRow label="" value={f.count} total={overview.offense} color="var(--color-accent)" />
-            </div>
-          ))}
-        </StatCard>
-      )}
-    </>
-  );
+          <BarRow label="" value={f.count} total={overview.offense} color="var(--color-accent)" />
+        </div>))}
+      </StatCard>
+    )}
+  </>);
 }
 
 function DefenseTab({ s }) {
   const d = s.defense;
   if (d.totalPlays === 0) return <div className="empty-msg">No defensive plays found.</div>;
-  return (
-    <>
-      <StatCard title="DEFENSE OVERVIEW" subtitle={`${d.totalPlays} defensive plays`}>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <StatBig value={d.avgYdsAllowed} label="AVG YDS ALLOWED" />
-          <StatBig value={d.totalYdsAllowed} label="TOTAL YDS" />
-        </div>
-      </StatCard>
-      <StatCard title="OPPONENT TENDENCIES">
-        <BarRow label="OPP RUN" value={d.oppRuns} total={d.totalPlays} color="var(--color-accent)" />
-        <BarRow label="OPP PASS" value={d.oppPasses} total={d.totalPlays} color="#3b82f6" />
-      </StatCard>
-      <StatCard title="IMPACT PLAYS">
-        <div style={{ display: 'flex', gap: 8 }}>
-          <StatBig value={d.sacks} label="SACKS" />
-          <StatBig value={d.interceptions} label="INTs" />
-          <StatBig value={`${d.stopRate}%`} label="STOP RATE" />
-        </div>
-      </StatCard>
-    </>
-  );
+  return (<>
+    <StatCard title="DEFENSE OVERVIEW" subtitle={`${d.totalPlays} defensive plays`}>
+      <div style={{ display: 'flex', gap: 8 }}><StatBig value={d.avgYdsAllowed} label="AVG YDS ALLOWED" /><StatBig value={d.totalYdsAllowed} label="TOTAL YDS" /></div>
+    </StatCard>
+    <StatCard title="OPPONENT TENDENCIES">
+      <BarRow label="OPP RUN" value={d.oppRuns} total={d.totalPlays} color="var(--color-accent)" />
+      <BarRow label="OPP PASS" value={d.oppPasses} total={d.totalPlays} color="#3b82f6" />
+    </StatCard>
+    <StatCard title="IMPACT PLAYS">
+      <div style={{ display: 'flex', gap: 8 }}><StatBig value={d.sacks} label="SACKS" /><StatBig value={d.interceptions} label="INTs" /><StatBig value={`${d.stopRate}%`} label="STOP RATE" /></div>
+    </StatCard>
+  </>);
 }
 
 function FieldTab({ s }) {
   const f = s.field;
-  return (
-    <>
-      <StatCard title="HASH MARK TENDENCIES">
-        {f.hashBreakdown.map(h => (
-          <div key={h.hash} style={{ marginBottom: 6 }}>
-            <BarRow label={h.hash === 'L' ? 'LEFT' : h.hash === 'M' ? 'MIDDLE' : 'RIGHT'} value={h.count} total={s.overview.offense} color={h.hash === 'L' ? '#ef4444' : h.hash === 'M' ? '#f59e0b' : '#22c55e'} />
-            <div style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: -4, marginBottom: 4 }}>Avg {h.avgYds} yds/play</div>
-          </div>
-        ))}
-      </StatCard>
-      <StatCard title="RED ZONE" subtitle="Plays inside the 20">
-        <div style={{ display: 'flex', gap: 8 }}>
-          <StatBig value={f.redZonePlays} label="RZ PLAYS" />
-          <StatBig value={f.redZoneTD} label="RZ TDs" />
-          <StatBig value={`${f.redZonePct}%`} label="RZ TD RATE" />
-        </div>
-      </StatCard>
-    </>
-  );
+  return (<>
+    <StatCard title="HASH MARK TENDENCIES">
+      {f.hashBreakdown.map(h => (<div key={h.hash} style={{ marginBottom: 6 }}>
+        <BarRow label={h.hash === 'L' ? 'LEFT' : h.hash === 'M' ? 'MIDDLE' : 'RIGHT'} value={h.count} total={s.overview.offense} color={h.hash === 'L' ? '#ef4444' : h.hash === 'M' ? '#f59e0b' : '#22c55e'} />
+        <div style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: -4, marginBottom: 4 }}>Avg {h.avgYds} yds/play</div>
+      </div>))}
+    </StatCard>
+    <StatCard title="RED ZONE" subtitle="Plays inside the 20">
+      <div style={{ display: 'flex', gap: 8 }}><StatBig value={f.redZonePlays} label="RZ PLAYS" /><StatBig value={f.redZoneTD} label="RZ TDs" /><StatBig value={`${f.redZonePct}%`} label="RZ TD RATE" /></div>
+    </StatCard>
+  </>);
 }
 
 function ByQtrTab({ s }) {
   if (s.quarters.length === 0) return <div className="empty-msg">No quarter data found.</div>;
-  return (
-    <>
-      {s.quarters.map(q => (
-        <StatCard key={q.quarter} title={`Q${q.quarter}`} subtitle={`${q.totalPlays} plays`}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-            <StatBig value={q.offPlays} label="OFF" />
-            <StatBig value={q.defPlays} label="DEF" />
-            <StatBig value={q.avgYds} label="AVG YDS" />
-            <StatBig value={q.totalYards} label="TOTAL YDS" />
-          </div>
-          {q.offPlays > 0 && (
-            <>
-              <BarRow label="RUN" value={q.runs} total={q.offPlays} color="var(--color-accent)" />
-              <BarRow label="PASS" value={q.passes} total={q.offPlays} color="#3b82f6" />
-            </>
-          )}
-        </StatCard>
-      ))}
-    </>
-  );
+  return (<>{s.quarters.map(q => (
+    <StatCard key={q.quarter} title={`Q${q.quarter}`} subtitle={`${q.totalPlays} plays`}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}><StatBig value={q.offPlays} label="OFF" /><StatBig value={q.defPlays} label="DEF" /><StatBig value={q.avgYds} label="AVG YDS" /><StatBig value={q.totalYards} label="TOTAL YDS" /></div>
+      {q.offPlays > 0 && (<><BarRow label="RUN" value={q.runs} total={q.offPlays} color="var(--color-accent)" /><BarRow label="PASS" value={q.passes} total={q.offPlays} color="#3b82f6" /></>)}
+    </StatCard>
+  ))}</>);
 }
 
 function AskAITab({ plays }) {
@@ -207,57 +150,27 @@ function AskAITab({ plays }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
-
   useEffect(() => { scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight); }, [messages]);
-
   async function handleSend() {
     if (!input.trim() || loading) return;
-    const q = input.trim();
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: q }]);
-    setLoading(true);
+    const q = input.trim(); setInput('');
+    setMessages(prev => [...prev, { role: 'user', text: q }]); setLoading(true);
     try {
       const filled = plays.filter(p => p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0);
-      const playJson = JSON.stringify(filled.slice(0, 200));
-      const resp = await fetch(`${HUDL_API}/api/claude`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system: `You are an expert football analytics assistant. The coach has ${filled.length} plays of data. Answer questions about tendencies, efficiency, and strategy. Be concise — use numbers and percentages. Here is the play data (JSON array, keys: odk, qtr, dn, dist, yardLn, hash, playType, result, gainLoss, offForm):\n${playJson}`,
-          messages: [
-            ...messages.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text })),
-            { role: 'user', content: q },
-          ],
-        }),
-      });
+      const resp = await fetch(`${HUDL_API}/api/claude`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+          system: `You are an expert football analytics assistant. The coach has ${filled.length} plays of data. Answer questions about tendencies, efficiency, and strategy. Be concise. Here is the play data (JSON, keys: odk, qtr, dn, dist, yardLn, hash, playType, result, gainLoss, offForm):\n${JSON.stringify(filled.slice(0, 200))}`,
+          messages: [...messages.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text })), { role: 'user', content: q }] }) });
       const data = await resp.json();
-      const answer = data.content?.map(c => c.text || '').join('\n') || 'No response';
-      setMessages(prev => [...prev, { role: 'assistant', text: answer }]);
-    } catch (err) {
-      setMessages(prev => [...prev, { role: 'assistant', text: 'Error: ' + err.message }]);
-    }
+      setMessages(prev => [...prev, { role: 'assistant', text: data.content?.map(c => c.text || '').join('\n') || 'No response' }]);
+    } catch (err) { setMessages(prev => [...prev, { role: 'assistant', text: 'Error: ' + err.message }]); }
     setLoading(false);
   }
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 14, WebkitOverflowScrolling: 'touch' }}>
-        {messages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--color-muted)', fontSize: 12, lineHeight: 2 }}>
-            Ask about your play data:<br />"What's our 3rd down conversion rate?"<br />"Which formation gains the most yards?"<br />"How did we do in the red zone?"
-          </div>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} style={{
-            marginBottom: 10, padding: '10px 14px', borderRadius: 12, maxWidth: '85%',
-            ...(m.role === 'user'
-              ? { background: 'var(--color-accent)', color: '#fff', marginLeft: 'auto' }
-              : { background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }),
-            fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap',
-          }}>{m.text}</div>
-        ))}
+        {messages.length === 0 && <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--color-muted)', fontSize: 12, lineHeight: 2 }}>Ask about your play data:<br/>"What's our 3rd down conversion rate?"<br/>"Which formation gains the most yards?"</div>}
+        {messages.map((m, i) => (<div key={i} style={{ marginBottom: 10, padding: '10px 14px', borderRadius: 12, maxWidth: '85%', ...(m.role === 'user' ? { background: 'var(--color-accent)', color: '#fff', marginLeft: 'auto' } : { background: 'var(--color-surface)', border: '1px solid var(--color-border)' }), fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.text}</div>))}
         {loading && <div style={{ padding: '10px 14px', color: 'var(--color-muted)', fontSize: 12 }}>Thinking…</div>}
       </div>
       <div style={{ padding: '10px 14px 16px', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -268,126 +181,57 @@ function AskAITab({ plays }) {
   );
 }
 
-// ─── MAIN ──────────────────────────────────────────────────
 export default function StatsPage() {
   const navigate = useNavigate();
   const { coach } = useAuth();
   const showToast = useToast();
-
-  const [pickerOpen, setPickerOpen] = useState(true); // Open immediately
+  const [pickerOpen, setPickerOpen] = useState(true);
   const [plays, setPlays] = useState([]);
   const [stats, setStats] = useState(null);
-  const [label, setLabel] = useState('');
-  const [tab, setTab] = useState('STATS');
   const [subTab, setSubTab] = useState('OVERVIEW');
-  const [loadingData, setLoadingData] = useState(false);
-  const [trackedGames, setTrackedGames] = useState([]);
-
-  useEffect(() => {
-    if (coach?.team_id) {
-      fetchGames(coach.team_id).then(setTrackedGames).catch(console.error);
-    }
-  }, [coach?.team_id]);
+  const [loadingClips, setLoadingClips] = useState(false);
+  const [label, setLabel] = useState('');
 
   async function handlePickerLoad(selectedItems) {
-    setPickerOpen(false);
-    setLoadingData(true);
+    setPickerOpen(false); setLoadingClips(true);
+    setLabel(selectedItems.length === 1 ? selectedItems[0].title : `${selectedItems.length} cutups`);
     showToast(`Loading ${selectedItems.length} cutup${selectedItems.length > 1 ? 's' : ''}…`);
-
     try {
       let allPlays = [];
       for (const item of selectedItems) {
         const clips = await fetchHudlClips(item.id, coach);
-        const mapped = hudlClipsToPlays(clips);
-        allPlays = allPlays.concat(mapped);
+        allPlays = allPlays.concat(hudlClipsToPlays(clips));
       }
-
-      setPlays(allPlays);
-      setStats(calcStats(allPlays));
-      const filledCount = allPlays.filter(p => Object.keys(p).filter(k => !k.startsWith('_')).length > 0).length;
-      setLabel(`${filledCount} plays from ${selectedItems.length} cutup${selectedItems.length > 1 ? 's' : ''}`);
-      showToast(`Loaded ${filledCount} plays`);
-    } catch (err) {
-      showToast('Load failed: ' + err.message);
-    }
-    setLoadingData(false);
+      setPlays(allPlays); setStats(calcStats(allPlays));
+      showToast(`Loaded ${allPlays.length} plays`);
+    } catch (err) { showToast('Load failed: ' + err.message); }
+    setLoadingClips(false);
   }
-
-  const TABS = ['STATS', 'ASK AI'];
 
   return (
     <div className="view">
       <div className="hdr">
         <button className="hdr-btn" onClick={() => navigate('/')}>← Back</button>
         <div className="hdr-title">Stats</div>
-        <button className="hdr-btn" onClick={() => setPickerOpen(true)} style={{ color: 'var(--color-accent)' }}>
-          FILTER
-        </button>
+        <button className="hdr-btn" onClick={() => setPickerOpen(true)} style={{ color: 'var(--color-accent)' }}>Filter</button>
       </div>
-
-      {/* Data label */}
-      {label && (
-        <div style={{
-          padding: '8px 16px', fontSize: 11, color: 'var(--color-muted)',
-          borderBottom: '1px solid var(--color-border)', textAlign: 'center',
-        }}>
-          {label}
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
-        {TABS.map(t => (
-          <div key={t} onClick={() => setTab(t)} style={{
-            flex: 1, textAlign: 'center', padding: '10px 0', fontSize: 11, fontWeight: 700,
-            letterSpacing: '0.08em', cursor: 'pointer',
-            color: tab === t ? 'var(--color-accent)' : 'var(--color-muted)',
-            borderBottom: tab === t ? '2px solid var(--color-accent)' : '2px solid transparent',
-          }}>{t}</div>
-        ))}
+      <div style={{ display: 'flex', overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
+        {SUB_TABS.map(st => (<div key={st} onClick={() => setSubTab(st)} style={{ padding: '10px 14px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', letterSpacing: '0.06em', cursor: 'pointer', color: subTab === st ? 'var(--color-accent)' : 'var(--color-muted)', borderBottom: subTab === st ? '2px solid var(--color-accent)' : '2px solid transparent' }}>{st}</div>))}
       </div>
-
-      {/* Sub-tabs */}
-      {tab === 'STATS' && (
-        <div style={{ display: 'flex', overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
-          {SUB_TABS.map(st => (
-            <div key={st} onClick={() => setSubTab(st)} style={{
-              padding: '8px 14px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
-              letterSpacing: '0.06em', cursor: 'pointer',
-              color: subTab === st ? 'var(--color-accent)' : 'var(--color-muted)',
-              borderBottom: subTab === st ? '2px solid var(--color-accent)' : '2px solid transparent',
-            }}>{st}</div>
-          ))}
-        </div>
-      )}
-
-      {/* Content */}
+      {label && !pickerOpen && <div style={{ padding: '8px 16px', fontSize: 11, color: 'var(--color-muted)', borderBottom: '1px solid var(--color-border)' }}>{label} · {plays.filter(p => p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0).length} plays</div>}
       <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        {loadingData ? (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>Loading play data…</div>
-        ) : tab === 'ASK AI' ? (
-          <AskAITab plays={plays} />
-        ) : !stats ? (
-          <div className="empty-msg">
-            Tap <strong>FILTER</strong> to select cutups and load data.
-          </div>
-        ) : (
-          <div style={{ padding: 14 }}>
+        {loadingClips ? <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>Loading play data…</div>
+        : subTab === 'ASK AI' ? <AskAITab plays={plays} />
+        : !stats ? <div className="empty-msg">Tap <strong>Filter</strong> to select cutups and load data.</div>
+        : <div style={{ padding: 14 }}>
             {subTab === 'OVERVIEW' && <OverviewTab s={stats} />}
             {subTab === 'OFFENSE' && <OffenseTab s={stats} />}
             {subTab === 'DEFENSE' && <DefenseTab s={stats} />}
             {subTab === 'FIELD' && <FieldTab s={stats} />}
             {subTab === 'BY QTR' && <ByQtrTab s={stats} />}
-          </div>
-        )}
+          </div>}
       </div>
-
-      <HudlPickerModal
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        onLoad={handlePickerLoad}
-        trackedGames={trackedGames}
-      />
+      {pickerOpen && <HudlCutupPicker onLoad={handlePickerLoad} onClose={() => setPickerOpen(false)} />}
     </div>
   );
 }
