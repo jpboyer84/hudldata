@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchGames, createGame, fetchTemplates, createTemplate } from '../lib/supaData';
@@ -10,6 +10,7 @@ import HudlLibraryModal from '../components/HudlLibraryModal';
 
 export default function TrackersHubPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { coach } = useAuth();
   const showToast = useToast();
   const [games, setGames] = useState([]);
@@ -21,7 +22,28 @@ export default function TrackersHubPage() {
   useEffect(() => {
     if (coach?.team_id) {
       fetchGames(coach.team_id).then(setGames).catch(console.error);
-      fetchTemplates(coach.team_id).then(setTemplates).catch(console.error);
+      fetchTemplates(coach.team_id).then(t => {
+        setTemplates(t);
+        // Auto-open new game modal if ?new=1
+        if (searchParams.get('new') === '1') {
+          searchParams.delete('new');
+          setSearchParams(searchParams, { replace: true });
+          if (t.length === 0) {
+            // Create default template first
+            createTemplate({
+              team_id: coach.team_id,
+              name: 'ODK',
+              col_ids: DEFAULT_COLUMNS.map(c => c.id),
+              sort_order: 0,
+            }).then(tmpl => {
+              setTemplates([tmpl]);
+              setNewGameOpen(true);
+            }).catch(console.error);
+          } else {
+            setNewGameOpen(true);
+          }
+        }
+      }).catch(console.error);
     }
   }, [coach?.team_id]);
 
