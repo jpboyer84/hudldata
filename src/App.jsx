@@ -20,6 +20,7 @@ import TemplateBuilderPage from './pages/TemplateBuilderPage';
 import ColumnsPage from './pages/ColumnsPage';
 import ColumnBuilderPage from './pages/ColumnBuilderPage';
 import StatsPage from './pages/StatsPage';
+import HelpPage from './pages/HelpPage';
 import { useAuth } from './hooks/useAuth';
 
 // Placeholder for future phases
@@ -83,7 +84,7 @@ function AppRoutes() {
 
       {/* Phase 3: Stats & Help */}
       <Route path="/stats" element={<StatsPage />} />
-      <Route path="/help" element={<Navigate to="/settings" replace />} />
+      <Route path="/help" element={<HelpPage />} />
 
       {/* Future */}
       <Route path="/playbook" element={<PlaceholderPage title="Playbook" />} />

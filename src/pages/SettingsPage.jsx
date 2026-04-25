@@ -7,44 +7,12 @@ import Header from '../components/Header';
 import HudlLoginModal from '../components/HudlLoginModal';
 import ConfirmModal from '../components/ConfirmModal';
 
-const FAQ = [
-  { q: 'How do I track a game?', a: 'Tap "Tag a game" → "+ New" to start fresh, or "Load from Hudl" to pull in a cutup. Tag each play with the column buttons, then tap "Next play →" to advance.' },
-  { q: 'How do I load data from Hudl?', a: 'Connect to Hudl below, then tap "Tag a game" → "Load from Hudl". Browse your cutups, tap one, and all play data maps to your columns automatically.' },
-  { q: 'How do I send data back to Hudl?', a: 'When viewing a Hudl-loaded game, tap the green "▲ Send" button in the header or find it in the ⋯ menu.' },
-  { q: 'How do I use the AI assistant?', a: 'Go to Stats → ASK AI tab with a game selected. Ask questions like "What\'s our 3rd down conversion rate?" or "Which formation gains the most yards?"' },
-  { q: 'How do I export my data?', a: 'From the tracker: ⋯ → Export XLSX. From Archive: Select mode → pick games → EXPORT. Or use the backup section above for a full JSON export.' },
-  { q: 'How do I invite other coaches?', a: 'Share your 6-character invite code (shown above). They sign up, choose "Join a team", and enter the code.' },
-  { q: 'How do templates work?', a: 'Templates define which columns appear in the tracker. Go to Templates above to create or edit them. Pick your template when starting a new game.' },
-];
-
-function FAQItem({ q, a, openFaq, setOpenFaq, idx }) {
-  const isOpen = openFaq === idx;
-  return (
-    <div style={{
-      background: 'var(--color-bg)', border: '1px solid var(--color-border)',
-      borderRadius: 10, marginBottom: 6, overflow: 'hidden',
-    }}>
-      <div
-        onClick={() => setOpenFaq(isOpen ? null : idx)}
-        style={{ padding: '12px 14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 600 }}>{q}</div>
-        <div style={{ fontSize: 12, color: 'var(--color-muted)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }}>▾</div>
-      </div>
-      {isOpen && (
-        <div style={{ padding: '0 14px 12px', fontSize: 12, color: 'var(--color-muted2)', lineHeight: 1.7 }}>{a}</div>
-      )}
-    </div>
-  );
-}
-
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { coach, signOut, disconnectHudl } = useAuth();
   const showToast = useToast();
   const [hudlModalOpen, setHudlModalOpen] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
-  const [openFaq, setOpenFaq] = useState(null);
   const fileRef = useRef(null);
 
   const hudlConnected = !!coach?.hudl_cookie;
@@ -289,9 +257,13 @@ export default function SettingsPage() {
         {/* Help / FAQ */}
         <div className="settings-group">
           <div className="settings-group-title">❓ Help</div>
-          {FAQ.map((f, i) => (
-            <FAQItem key={i} q={f.q} a={f.a} openFaq={openFaq} setOpenFaq={setOpenFaq} idx={i} />
-          ))}
+          <div className="settings-row">
+            <div className="settings-btn" onClick={() => navigate('/help')}>
+              <span className="settings-btn-icon">📖</span>
+              Help & FAQ
+              <span className="settings-btn-label">How-to guides & Ask AI</span>
+            </div>
+          </div>
         </div>
       </div>
 
