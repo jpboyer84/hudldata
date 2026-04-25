@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
+import { fetchGames, fetchTemplates, fetchColumns, createGame, createTemplate, createColumn } from '../lib/supaData';
 import Header from '../components/Header';
 import HudlLoginModal from '../components/HudlLoginModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { coach, signOut, disconnectHudl } = useAuth();
   const showToast = useToast();
   const [hudlModalOpen, setHudlModalOpen] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const fileRef = useRef(null);
 
   const hudlConnected = !!coach?.hudl_cookie;
 
@@ -21,6 +25,95 @@ export default function SettingsPage() {
   async function handleSignOut() {
     await signOut();
     navigate('/login');
+  }
+
+  // ─── EXPORT BACKUP ───
+  async function handleExportJSON() {
+    if (!coach?.team_id) { showToast('No team found'); return; }
+    try {
+      showToast('Building backup…');
+      const [games, templates, columns] = await Promise.all([
+        fetchGames(coach.team_id),
+        fetchTemplates(coach.team_id),
+        fetchColumns(coach.team_id),
+      ]);
+      const backup = {
+        version: 2,
+        exported_at: new Date().toISOString(),
+        team: coach.teams || {},
+        games,
+        templates,
+        columns,
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `assistant-coach-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${games.length} games, ${templates.length} templates, ${columns.length} columns`);
+    } catch (err) {
+      showToast('Export failed: ' + err.message);
+    }
+  }
+
+  // ─── IMPORT BACKUP ───
+  function handleImportClick() {
+    fileRef.current?.click();
+  }
+
+  async function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = ''; // Reset so same file can be re-selected
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data.games && !data.templates && !data.columns) {
+        showToast('Invalid backup file');
+        return;
+      }
+
+      let imported = { games: 0, templates: 0, columns: 0 };
+
+      if (data.columns && Array.isArray(data.columns)) {
+        for (const col of data.columns) {
+          try {
+            await createColumn({ ...col, id: undefined, team_id: coach.team_id });
+            imported.columns++;
+          } catch {}
+        }
+      }
+
+      if (data.templates && Array.isArray(data.templates)) {
+        for (const tmpl of data.templates) {
+          try {
+            await createTemplate({ ...tmpl, id: undefined, team_id: coach.team_id });
+            imported.templates++;
+          } catch {}
+        }
+      }
+
+      if (data.games && Array.isArray(data.games)) {
+        for (const game of data.games) {
+          try {
+            await createGame({
+              ...game,
+              id: undefined,
+              team_id: coach.team_id,
+              created_by: coach.id,
+            });
+            imported.games++;
+          } catch {}
+        }
+      }
+
+      showToast(`Imported ${imported.games} games, ${imported.templates} templates, ${imported.columns} columns`);
+    } catch (err) {
+      showToast('Import failed: ' + err.message);
+    }
   }
 
   return (
@@ -55,43 +148,42 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
+
+        {/* Backup */}
         <div className="settings-group">
           <div className="settings-group-title">💾 Save Full Backup</div>
           <div className="settings-group-sub">
-            Save all your games, templates, and columns to a safe location. Useful for backing up or moving to another device.
+            Save all your games, templates, and columns as a JSON file.
           </div>
           <div className="settings-row">
-            <div className="settings-btn" onClick={() => showToast('Coming in Phase 4')}>
+            <div className="settings-btn" onClick={handleExportJSON}>
               <span className="settings-btn-icon">📁</span>
               SAVE TO DEVICE
               <span className="settings-btn-label">Download JSON file</span>
             </div>
-            <div className="settings-btn" onClick={() => showToast('Coming in Phase 4')}>
-              <span className="settings-btn-icon">☁️</span>
-              SAVE TO DRIVE
-              <span className="settings-btn-label">Google Drive</span>
-            </div>
           </div>
         </div>
 
-        {/* Restore Full Backup */}
+        {/* Restore */}
         <div className="settings-group">
           <div className="settings-group-title">📥 Restore Full Backup</div>
           <div className="settings-group-sub">
-            Load a previously saved backup to restore all your data (games, templates, columns).
+            Load a previously saved backup to import games, templates, and columns.
           </div>
           <div className="settings-row">
-            <div className="settings-btn" onClick={() => showToast('Coming in Phase 4')}>
+            <div className="settings-btn" onClick={handleImportClick}>
               <span className="settings-btn-icon">📁</span>
               FROM DEVICE
               <span className="settings-btn-label">Choose JSON file</span>
             </div>
-            <div className="settings-btn" onClick={() => showToast('Coming in Phase 4')}>
-              <span className="settings-btn-icon">☁️</span>
-              FROM DRIVE
-              <span className="settings-btn-label">Google Drive</span>
-            </div>
           </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
         </div>
 
         {/* Templates & columns */}
@@ -144,20 +236,6 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Hudl cache */}
-        <div className="settings-group">
-          <div className="settings-group-title">Hudl cache</div>
-          <div className="settings-group-sub">
-            Cutup lists are cached for 24 hours. Clear if new cutups aren't showing up.
-          </div>
-          <div className="settings-row">
-            <div className="settings-btn" onClick={() => showToast('Cache cleared')}>
-              <span className="settings-btn-icon">↺</span>
-              Clear cache
-            </div>
-          </div>
-        </div>
-
         {/* Account */}
         <div className="settings-group">
           <div className="settings-group-title">Account</div>
@@ -167,7 +245,7 @@ export default function SettingsPage() {
           <div className="settings-row">
             <div
               className="settings-btn"
-              onClick={handleSignOut}
+              onClick={() => setConfirmSignOut(true)}
               style={{ borderColor: '#e74c3c', color: '#e74c3c' }}
             >
               <span className="settings-btn-icon">🚪</span>
@@ -178,6 +256,15 @@ export default function SettingsPage() {
       </div>
 
       <HudlLoginModal open={hudlModalOpen} onClose={() => setHudlModalOpen(false)} />
+      <ConfirmModal
+        open={confirmSignOut}
+        title="Sign out"
+        message="Are you sure you want to sign out?"
+        confirmLabel="Sign out"
+        danger
+        onConfirm={handleSignOut}
+        onCancel={() => setConfirmSignOut(false)}
+      />
     </div>
   );
 }

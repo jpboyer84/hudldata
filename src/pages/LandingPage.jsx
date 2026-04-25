@@ -111,8 +111,8 @@ export default function LandingPage() {
               <ChevronRight />
             </div>
 
-            {/* Small cards row */}
-            <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
+            {/* Small cards grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 2 }}>
               {/* Hudl — requires auth */}
               <div className="lcard-sm" onClick={() => {
                 if (!isLoggedIn) { requireAuth('/settings'); return; }
@@ -126,10 +126,22 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Settings & Help combined */}
+              {/* Settings */}
               <div className="lcard-sm" onClick={() => navigate('/settings')}>
                 <SettingsHelpIcon />
-                <div className="lcard-sm-label">Settings & Help</div>
+                <div className="lcard-sm-label">Settings</div>
+              </div>
+
+              {/* Help */}
+              <div className="lcard-sm" onClick={() => navigate('/help')}>
+                <div style={{ marginBottom: 8 }}>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="7" stroke="#555" strokeWidth="1.5"/>
+                    <path d="M8 8C8 6.9 8.9 6 10 6C11.1 6 12 6.9 12 8C12 9 10.5 9.3 10.5 10.5" stroke="#555" strokeWidth="1.5" strokeLinecap="round"/>
+                    <circle cx="10.5" cy="13" r="0.5" fill="#555"/>
+                  </svg>
+                </div>
+                <div className="lcard-sm-label">Help</div>
               </div>
 
               {/* Sign in / Account */}

@@ -19,9 +19,11 @@ import TemplatesPage from './pages/TemplatesPage';
 import TemplateBuilderPage from './pages/TemplateBuilderPage';
 import ColumnsPage from './pages/ColumnsPage';
 import ColumnBuilderPage from './pages/ColumnBuilderPage';
+import StatsPage from './pages/StatsPage';
+import HelpPage from './pages/HelpPage';
 import { useAuth } from './hooks/useAuth';
 
-// Placeholder pages for future phases
+// Placeholder for future phases
 function PlaceholderPage({ title }) {
   return (
     <div className="view">
@@ -80,10 +82,12 @@ function AppRoutes() {
       <Route path="/columns/new" element={<ColumnBuilderPage />} />
       <Route path="/columns/edit/:id" element={<ColumnBuilderPage />} />
 
-      {/* Phase 3 placeholders */}
-      <Route path="/stats" element={<PlaceholderPage title="Stats & Analysis" />} />
+      {/* Phase 3: Stats & Help */}
+      <Route path="/stats" element={<StatsPage />} />
+      <Route path="/help" element={<HelpPage />} />
+
+      {/* Future */}
       <Route path="/playbook" element={<PlaceholderPage title="Playbook" />} />
-      <Route path="/help" element={<PlaceholderPage title="Help" />} />
       <Route path="/import" element={<PlaceholderPage title="Import" />} />
 
       {/* Auth pages */}
