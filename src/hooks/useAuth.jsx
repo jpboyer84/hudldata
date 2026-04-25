@@ -114,7 +114,8 @@ export function AuthProvider({ children }) {
   }
 
   async function updateHudlConnection({ cookie, teamId, teamName }) {
-    if (!coach) return;
+    const id = coach?.id || user?.id;
+    if (!id) return;
     const { error } = await supabase
       .from('coaches')
       .update({
@@ -123,7 +124,7 @@ export function AuthProvider({ children }) {
         hudl_team_name: teamName,
         hudl_connected_at: new Date().toISOString(),
       })
-      .eq('id', coach.id);
+      .eq('id', id);
 
     if (!error) {
       setCoach(prev => ({

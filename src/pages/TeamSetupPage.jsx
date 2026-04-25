@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { LogoIcon } from '../icons/Icons';
+import { useToast } from '../hooks/useToast';
+import { LogoIcon, HudlConnectIcon } from '../icons/Icons';
+import { HUDL_API } from '../lib/constants';
 
 export default function TeamSetupPage() {
-  const [mode, setMode] = useState('choose'); // choose | create | join
+  const [mode, setMode] = useState('choose'); // choose | hudl | create | join
+  const [hudlEmail, setHudlEmail] = useState('');
+  const [hudlPassword, setHudlPassword] = useState('');
   const [teamName, setTeamName] = useState('');
   const [school, setSchool] = useState('');
   const [city, setCity] = useState('');
@@ -11,7 +15,46 @@ export default function TeamSetupPage() {
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { createTeamAndProfile, joinTeam, user } = useAuth();
+  const { createTeamAndProfile, joinTeam, updateHudlConnection, user } = useAuth();
+  const showToast = useToast();
+
+  async function handleHudlConnect() {
+    if (!hudlEmail || !hudlPassword) { setError('Enter your Hudl email and password'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      // 1. Login to Hudl
+      const resp = await fetch(`${HUDL_API}/api/hudl/auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: hudlEmail, password: hudlPassword }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Hudl login failed');
+
+      // 2. Create team + coach profile using Hudl team info
+      const displayName = user?.user_metadata?.display_name || user?.email;
+      await createTeamAndProfile({
+        teamName: data.teamName || 'My Team',
+        school: '',
+        city: '',
+        state: '',
+        displayName,
+      });
+
+      // 3. Save Hudl connection to the new coach record
+      await updateHudlConnection({
+        cookie: data.cookie,
+        teamId: data.teamId,
+        teamName: data.teamName,
+      });
+
+      showToast(`Connected — ${data.teamName || 'Team'}`);
+    } catch (err) {
+      setError(err.message);
+    }
+    setLoading(false);
+  }
 
   async function handleCreate() {
     if (!teamName.trim()) { setError('Team name is required'); return; }
@@ -46,6 +89,7 @@ export default function TeamSetupPage() {
     setLoading(false);
   }
 
+  // ─── CHOOSE MODE ───
   if (mode === 'choose') {
     return (
       <div style={{
@@ -59,15 +103,29 @@ export default function TeamSetupPage() {
             <div className="landing-logo-sub" style={{ marginTop: 6 }}>SET UP YOUR TEAM</div>
           </div>
 
-          <div className="lcard" onClick={() => setMode('create')} style={{ marginBottom: 12 }}>
+          {/* Primary: Connect with Hudl */}
+          <div className="lcard" onClick={() => setMode('hudl')} style={{ marginBottom: 12, borderColor: 'rgba(232,89,12,0.4)' }}>
             <div className="lcard-icon" style={{ background: 'rgba(232,89,12,0.12)' }}>
+              <HudlConnectIcon />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="lcard-title">Connect with Hudl</div>
+              <div className="lcard-sub">Auto-setup from your Hudl account</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M6 4L10 8L6 12" stroke="#444" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+
+          <div className="lcard" onClick={() => setMode('create')} style={{ marginBottom: 12 }}>
+            <div className="lcard-icon" style={{ background: 'rgba(255,255,255,0.06)' }}>
               <svg viewBox="0 0 20 20" fill="none" style={{ width: 22, height: 22 }}>
-                <path d="M10 4V16M4 10H16" stroke="#e8590c" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M10 4V16M4 10H16" stroke="#555" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="lcard-title">Create a team</div>
-              <div className="lcard-sub">Start a new coaching staff</div>
+              <div className="lcard-title">Create manually</div>
+              <div className="lcard-sub">Set up without Hudl</div>
             </div>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M6 4L10 8L6 12" stroke="#444" strokeWidth="1.5" strokeLinecap="round"/>
@@ -94,6 +152,57 @@ export default function TeamSetupPage() {
     );
   }
 
+  // ─── HUDL CONNECT ───
+  if (mode === 'hudl') {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', height: '100dvh', padding: 24
+      }}>
+        <div style={{ width: '100%', maxWidth: 400 }}>
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <div className="landing-logo-title" style={{ fontSize: 18 }}>Connect with Hudl</div>
+            <div className="landing-logo-sub" style={{ marginTop: 4 }}>YOUR TEAM WILL BE SET UP AUTOMATICALLY</div>
+          </div>
+
+          <div style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 16, lineHeight: 1.5, textAlign: 'center' }}>
+            Enter your Hudl credentials to create a session. Your password is never stored.
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <label className="fl">HUDL EMAIL</label>
+            <input className="fi" type="email" placeholder="coach@school.edu" value={hudlEmail} onChange={e => setHudlEmail(e.target.value)} />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label className="fl">HUDL PASSWORD</label>
+            <input className="fi" type="password" placeholder="••••••••" value={hudlPassword} onChange={e => setHudlPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleHudlConnect()} />
+          </div>
+
+          {error && <div className="auth-error">{error}</div>}
+
+          <button
+            className="btn btn-primary"
+            onClick={handleHudlConnect}
+            disabled={loading}
+            style={{ width: '100%', padding: 14, fontSize: 14 }}
+          >
+            {loading ? 'CONNECTING…' : 'CONNECT & SET UP'}
+          </button>
+
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            <span
+              onClick={() => { setMode('choose'); setError(''); }}
+              style={{ color: 'var(--color-accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              ← Back
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── CREATE MANUALLY ───
   if (mode === 'create') {
     return (
       <div style={{
@@ -149,7 +258,7 @@ export default function TeamSetupPage() {
     );
   }
 
-  // mode === 'join'
+  // ─── JOIN TEAM ───
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
