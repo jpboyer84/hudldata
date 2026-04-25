@@ -4,7 +4,9 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchGames, createGame, fetchTemplates, createTemplate } from '../lib/supaData';
 import { DEFAULT_COLUMNS } from '../columns';
+import { fetchHudlClips, hudlClipsToPlays } from '../lib/hudlData';
 import NewGameModal from '../components/NewGameModal';
+import HudlLibraryModal from '../components/HudlLibraryModal';
 
 export default function TrackersHubPage() {
   const navigate = useNavigate();
@@ -12,6 +14,8 @@ export default function TrackersHubPage() {
   const showToast = useToast();
   const [games, setGames] = useState([]);
   const [newGameOpen, setNewGameOpen] = useState(false);
+  const [hudlOpen, setHudlOpen] = useState(false);
+  const [loadingCutup, setLoadingCutup] = useState(false);
   const [templates, setTemplates] = useState([]);
 
   useEffect(() => {
@@ -52,6 +56,35 @@ export default function TrackersHubPage() {
     } catch (err) {
       showToast('Failed to create game: ' + err.message);
     }
+  }
+
+  async function handleLoadHudlCutup(item) {
+    if (!coach?.team_id) return;
+    setLoadingCutup(true);
+    setHudlOpen(false);
+    showToast(`Loading ${item.title}…`);
+    try {
+      const clips = await fetchHudlClips(item.id, coach);
+      const plays = hudlClipsToPlays(clips);
+      // Pad to at least 200 rows
+      while (plays.length < 200) plays.push({});
+
+      const game = await createGame({
+        team_id: coach.team_id,
+        created_by: coach.id,
+        home: null,
+        away: null,
+        game_type: 'Game',
+        hudl_cutup_id: item.internalId || item.id,
+        hudl_source: item.title,
+        plays,
+      });
+
+      navigate(`/tracker/${game.id}`);
+    } catch (err) {
+      showToast('Failed to load cutup: ' + err.message);
+    }
+    setLoadingCutup(false);
   }
 
   // No auth required — but need team for Supabase storage
@@ -120,7 +153,36 @@ export default function TrackersHubPage() {
       </div>
 
       <div className="abody">
-        {recentGames.length === 0 ? (
+        {/* Load from Hudl card — show if connected */}
+        {coach?.hudl_cookie && (
+          <div
+            className="arch-card"
+            onClick={() => setHudlOpen(true)}
+            style={{ borderColor: 'rgba(232,89,12,0.3)', background: 'rgba(232,89,12,0.04)' }}
+          >
+            <div style={{
+              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+              background: 'rgba(232,89,12,0.12)', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, fontWeight: 700, color: 'var(--color-accent)',
+            }}>H</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="arch-title" style={{ color: 'var(--color-accent)' }}>Load from Hudl</div>
+              <div className="arch-meta">Browse cutups &amp; playlists</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+              <path d="M6 4L10 8L6 12" stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+        )}
+
+        {loadingCutup && (
+          <div style={{ padding: 20, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
+            Loading cutup from Hudl…
+          </div>
+        )}
+
+        {recentGames.length === 0 && !loadingCutup ? (
           <div className="empty-msg">
             No games yet.<br />
             Tap <strong>+ New</strong> to start tracking plays.
@@ -162,6 +224,11 @@ export default function TrackersHubPage() {
         open={newGameOpen}
         onClose={() => setNewGameOpen(false)}
         onStart={handleStartGame}
+      />
+      <HudlLibraryModal
+        open={hudlOpen}
+        onClose={() => setHudlOpen(false)}
+        onSelect={handleLoadHudlCutup}
       />
     </div>
   );

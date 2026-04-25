@@ -8,6 +8,7 @@ import ColumnCard from '../components/ColumnCard';
 import ConfirmModal from '../components/ConfirmModal';
 import { DropdownModal, PlayNavModal, EditGameModal } from '../components/Modals';
 import { exportGameXLSX } from '../utils/xlsxExport';
+import { sendToHudl } from '../lib/hudlData';
 import { HUDL_API } from '../lib/constants';
 
 const INITIAL_PLAYS = 200;
@@ -167,17 +168,34 @@ export default function TrackerPage() {
   // Send to Hudl
   async function handleSendToHudl() {
     setMenuOpen(false);
-    if (!coach?.hudl_cookie || !game?.hudl_cutup_id) {
-      showToast('Connect to Hudl and load a cutup first');
+    if (!coach?.hudl_cookie) {
+      showToast('Connect to Hudl first (Settings)');
       return;
     }
-    showToast('Sending to Hudl…');
-    // TODO: implement Hudl write-back
+    if (!game?.hudl_cutup_id) {
+      showToast('This game was not loaded from Hudl');
+      return;
+    }
+
+    const filledPlays = plays.filter(p => p && Object.keys(p).length > 0 && p._clipId);
+    if (filledPlays.length === 0) {
+      showToast('No Hudl-linked plays to send');
+      return;
+    }
+
+    showToast(`Sending ${filledPlays.length} plays to Hudl…`);
+    try {
+      const result = await sendToHudl(plays, game.hudl_cutup_id, coach);
+      showToast(`Sent to Hudl — ${result.successCount || filledPlays.length} plays updated`);
+    } catch (err) {
+      showToast('Hudl write failed: ' + err.message);
+    }
   }
 
   // Title
   const gameTitle = game
-    ? (game.home && game.away ? `${game.home} vs ${game.away}` : game.home || game.away || 'Game')
+    ? (game.home && game.away ? `${game.home} vs ${game.away}`
+      : game.home || game.away || game.hudl_source || 'Game')
     : 'Loading…';
 
   if (!game) {

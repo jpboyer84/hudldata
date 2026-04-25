@@ -1,0 +1,120 @@
+import { HUDL_API } from './constants';
+
+// Map from Hudl normalized clip fields → our column IDs
+const HUDL_TO_COL = {
+  odk: 'odk',
+  quarter: 'qtr',
+  down: 'dn',
+  distance: 'dist',
+  yard_line: 'yardLn',
+  hash: 'hash',
+  play_type: 'playType',
+  result: 'result',
+  gain_loss: 'gainLoss',
+  off_form: 'offForm',
+};
+
+// Map from our column IDs → Hudl column names (for write-back)
+const COL_TO_HUDL_NAME = {
+  odk: 'ODK',
+  qtr: 'QTR',
+  dn: 'DN',
+  dist: 'DIST',
+  yardLn: 'YARD LN',
+  hash: 'HASH',
+  playType: 'PLAY TYPE',
+  result: 'RESULT',
+  gainLoss: 'GN/LS',
+  offForm: 'OFF FORM',
+};
+
+// Known Hudl column IDs (from the HTML app's HAR capture)
+const HUDL_COLUMN_IDS = {
+  'ODK': 2626912,
+  'QTR': 2626932,
+  'DN': 2626907,
+  'YARD LN': 2626913,
+  'HASH': 2626914,
+  'PLAY TYPE': 2626909,
+  'RESULT': 2626910,
+  'GN/LS': 2626911,
+  'SERIES': 2626915,
+  'OFF FORM': 2626917,
+  'OFF PLAY': 2626918,
+};
+
+// Convert Hudl clip array → our play array
+export function hudlClipsToPlays(clips) {
+  return clips.map(clip => {
+    const play = {};
+    // Map each Hudl field to our column ID
+    for (const [hudlKey, colId] of Object.entries(HUDL_TO_COL)) {
+      const val = clip[hudlKey];
+      if (val != null && val !== '' && val !== 'null') {
+        play[colId] = String(val);
+      }
+    }
+    // Store Hudl metadata for write-back
+    play._clipId = String(clip.id);
+    return play;
+  });
+}
+
+// Convert our plays → Hudl write-bulk format
+export function playsToHudlBulk(plays, cutupId) {
+  const columnMap = {};
+  const hudlPlays = [];
+
+  for (const play of plays) {
+    if (!play._clipId) continue; // Skip plays without Hudl clip IDs
+    const clipId = play._clipId;
+    const fields = {};
+
+    for (const [colId, hudlName] of Object.entries(COL_TO_HUDL_NAME)) {
+      if (play[colId] != null && play[colId] !== '') {
+        fields[hudlName] = String(play[colId]);
+        // Ensure column ID is in the map
+        if (HUDL_COLUMN_IDS[hudlName]) {
+          columnMap[hudlName] = HUDL_COLUMN_IDS[hudlName];
+        }
+      }
+    }
+
+    if (Object.keys(fields).length > 0) {
+      hudlPlays.push({ clipId, ...fields });
+    }
+  }
+
+  return { cutupId, columnMap, plays: hudlPlays };
+}
+
+// Fetch clips from a Hudl cutup
+export async function fetchHudlClips(cutupId, coach) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (coach?.hudl_cookie) headers['X-Hudl-Cookie'] = coach.hudl_cookie;
+  if (coach?.hudl_team_id) headers['X-Hudl-Team'] = coach.hudl_team_id;
+
+  const resp = await fetch(`${HUDL_API}/api/clips/${cutupId}?count=1000`, { headers });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || 'Failed to load clips');
+  return data.clips || [];
+}
+
+// Send plays back to Hudl
+export async function sendToHudl(plays, cutupId, coach) {
+  const bulk = playsToHudlBulk(plays, cutupId);
+  if (bulk.plays.length === 0) throw new Error('No plays with Hudl clip IDs to send');
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (coach?.hudl_cookie) headers['X-Hudl-Cookie'] = coach.hudl_cookie;
+  if (coach?.hudl_team_id) headers['X-Hudl-Team'] = coach.hudl_team_id;
+
+  const resp = await fetch(`${HUDL_API}/api/hudl/write-bulk`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(bulk),
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || 'Failed to write to Hudl');
+  return data;
+}
