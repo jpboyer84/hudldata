@@ -18,9 +18,14 @@ export function AuthProvider({ children }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        if (event === 'PASSWORD_RECOVERY') {
+          // Redirect to reset password page
+          window.location.replace('/reset-password');
+          return;
+        }
         if (session?.user) fetchCoach(session.user.id);
         else {
           setCoach(null);
@@ -74,7 +79,9 @@ export function AuthProvider({ children }) {
   }
 
   async function resetPassword(email) {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/reset-password',
+    });
     return { data, error };
   }
 
@@ -155,6 +162,11 @@ export function AuthProvider({ children }) {
     return { error };
   }
 
+  async function updatePassword(newPassword) {
+    const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+    return { data, error };
+  }
+
   const value = {
     session,
     user,
@@ -164,6 +176,7 @@ export function AuthProvider({ children }) {
     signIn,
     signOut,
     resetPassword,
+    updatePassword,
     createTeamAndProfile,
     joinTeam,
     updateHudlConnection,
