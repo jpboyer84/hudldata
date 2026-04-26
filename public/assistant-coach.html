@@ -5031,7 +5031,8 @@ async function confirmPickerStats() {
     odk: String(c.odk||''), qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
     yardln: String(c.yard_line||''), hash: String(c.hash||''), playtype: String(c.play_type||''),
     result: String(c.result||''), gainloss: String(c.gain_loss||''), offform: String(c.off_form||''),
-    offplay: String(c.off_play||''),
+    offplay: String(c.off_play||''), passer: String(c.passer||''), rusher: String(c.rusher||''),
+    receiver: String(c.receiver||''), series: String(c.series||''),
   });
 
   const hudlResults = await Promise.all(hudlChecked.map(async chk => {
@@ -5087,7 +5088,8 @@ async function confirmPickerTracker() {
     odk: String(c.odk||''), qtr: String(c.quarter||''), dn: String(c.down||''), dist: String(c.distance||''),
     yardln: String(c.yard_line||''), hash: String(c.hash||''), playtype: String(c.play_type||''),
     result: String(c.result||''), gainloss: String(c.gain_loss||''), offform: String(c.off_form||''),
-    offplay: String(c.off_play||''),
+    offplay: String(c.off_play||''), passer: String(c.passer||''), rusher: String(c.rusher||''),
+    receiver: String(c.receiver||''), series: String(c.series||''),
   });
 
   try {
@@ -6081,11 +6083,11 @@ function buildDataSummary() {
   const active = (statsGameData || []).filter(p => Object.keys(p).length > 0 && p.ignore !== 'SKIP');
   if (active.length === 0) return 'No play data available.';
   // Compact CSV-style format to minimize tokens
-  const header = 'game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
+  const header = 'game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form,passer,rusher,receiver';
   const rows = active.map(p => {
     const form = p.offform ? (p.offform.includes('|') ? p.offform.split('|')[1] : p.offform) : '';
     const game = (p._gameTitle || '').replace(/,/g, ' ');
-    return [game,p.odk||'',p.qtr||'',p.dn||'',p.dist||'',p.yardln||'',p.hash||'',p.playtype||'',p.result||'',p.gainloss||'',form].join(',');
+    return [game,p.odk||'',p.qtr||'',p.dn||'',p.dist||'',p.yardln||'',p.hash||'',p.playtype||'',p.result||'',p.gainloss||'',form,p.passer||'',p.rusher||'',p.receiver||''].join(',');
   });
   return `${getStatsLabel()} | ${active.length} plays\n${header}\n${rows.join('\n')}`;
 }
@@ -6109,6 +6111,11 @@ async function sendChat() {
   }
 
   if (!Array.isArray(chatHistory)) chatHistory = [];
+  // Sliding window: keep only the last Q&A pair to avoid compounding tokens
+  // This prevents rate limiting while still allowing basic follow-ups
+  if (chatHistory.length > 2) {
+    chatHistory = chatHistory.slice(-2); // keep last user + assistant
+  }
   chatHistory.push({ role: 'user', content: msg });
   appendMsg('user', msg);
   const thinkingDiv = appendMsg('assistant thinking', 'Analyzing your data…');
@@ -6138,6 +6145,9 @@ ${getPlaybookContext()}
 - result: outcome — e.g. "Rush", "Complete", "Incomplete", "Sack", "1st DN", "Rush TD", "Complete TD", "Interception", "Fumble", "Penalty", "Rush Safety", "Sack Safety", etc.
 - gainLoss: exact yards gained (positive) or lost (negative)
 - formation: offensive formation name
+- passer: jersey number of the passer on this play (e.g. "14", "7"). Use to filter stats by specific QB.
+- rusher: jersey number of the ball carrier on run plays
+- receiver: jersey number of the targeted receiver on pass plays
 
 ## HOW TO CALCULATE COMMON STATS
 
@@ -6198,7 +6208,7 @@ ${getPlaybookContext()}
 Current dataset: ${label}
 Game location: ${gameLocation}
 Season: ${season}
-Play data (CSV format — columns: odk,qtr,dn,dist,ydln,hash,type,result,gl,form):
+Play data (CSV format — columns: odk,qtr,dn,dist,ydln,hash,type,result,gl,form,passer,rusher,receiver):
 ${buildDataSummary()}
 
 REMINDER: Your response MUST be under 100 words. Start with the answer. No play-by-play. No showing work.`;
