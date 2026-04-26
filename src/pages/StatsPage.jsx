@@ -95,7 +95,7 @@ function ByQtrTab({ s }) {
 // ═══════════════════════════════════════
 // SPOTLIGHT TAB
 // ═══════════════════════════════════════
-function SpotlightTab({ plays, playbook }) {
+function SpotlightTab({ plays, playbook, label }) {
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(false);
   const [methodology, setMethodology] = useState(null);
@@ -191,7 +191,7 @@ CRITICAL RULES:
     setMethodology({ insight: ins, explanation: null });
     setMethLoading(true);
     try {
-      const csv = buildPlaysCsv(plays);
+      const csv = buildPlaysCsv(plays, label);
       const resp = await fetch(`${HUDL_API}/api/claude`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -414,8 +414,9 @@ export default function StatsPage() {
     try {
       let allPlays = [];
       for (const item of selectedItems) {
-        const clips = await fetchHudlClips(item.id, coach);
-        allPlays = allPlays.concat(hudlClipsToPlays(clips));
+        const clips = await fetchHudlClips(item.id, coach, item.title);
+        const mapped = hudlClipsToPlays(clips).map(p => ({ ...p, _gameTitle: item.title }));
+        allPlays = allPlays.concat(mapped);
       }
       setPlays(allPlays); setStats(calcStats(allPlays));
       showToast(`Loaded ${allPlays.length} plays`);
@@ -464,7 +465,7 @@ export default function StatsPage() {
         {loadingClips ? (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>Loading play data…</div>
         ) : mainTab === 'SPOTLIGHT' ? (
-          plays.length > 0 ? <SpotlightTab plays={plays} playbook={playbook} /> : <div className="empty-msg">Tap <strong>Filter</strong> to select cutups and load data.</div>
+          plays.length > 0 ? <SpotlightTab plays={plays} playbook={playbook} label={label} /> : <div className="empty-msg">Tap <strong>Filter</strong> to select cutups and load data.</div>
         ) : mainTab === 'ASK AI' ? (
           <AskAITab plays={plays} playbook={playbook} label={label} savedList={saved} onSave={handleSaveAI} />
         ) : mainTab === 'SAVED' ? (

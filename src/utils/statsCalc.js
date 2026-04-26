@@ -233,7 +233,11 @@ export function calcStats(plays) {
 
 // ─── BUILD CSV for AI prompt ───
 export function buildPlaysCsv(plays, label) {
-  const active = (plays || []).filter(p => p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0);
+  const active = (plays || []).filter(p => {
+    if (!p) return false;
+    if (p.ignore === 'SKIP') return false;
+    return Object.keys(p).filter(k => !k.startsWith('_')).length > 0;
+  });
   if (active.length === 0) return 'No play data available.';
   const header = 'game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
   const rows = active.map(p => {
