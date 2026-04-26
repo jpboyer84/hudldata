@@ -6,6 +6,16 @@ function getFilledPlays(plays) {
   return plays.filter(p => p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0);
 }
 
+// Dedup columns by name (#25) — matches HTML exportGameToXlsx
+function dedupColumns(columns) {
+  const seen = new Set();
+  return columns.filter(c => {
+    if (seen.has(c.name)) return false;
+    seen.add(c.name);
+    return true;
+  });
+}
+
 function buildHeaders(columns) {
   return ['#', ...columns.map(c => c.name)];
 }
@@ -18,7 +28,7 @@ export function exportGameXLSX(game, plays, columns) {
   const filled = getFilledPlays(plays);
   if (filled.length === 0) throw new Error('No plays to export');
 
-  const cols = columns || resolveTemplateColumns(defaultTemplate());
+  const cols = dedupColumns(columns || resolveTemplateColumns(defaultTemplate()));
   const headers = buildHeaders(cols);
   const data = [headers, ...filled.map((p, i) => buildRow(p, i, cols))];
 
@@ -44,7 +54,7 @@ export function exportMultiGameXLSX(games) {
   if (!games || games.length === 0) throw new Error('No games to export');
 
   const wb = XLSX.utils.book_new();
-  const cols = resolveTemplateColumns(defaultTemplate());
+  const cols = dedupColumns(resolveTemplateColumns(defaultTemplate()));
 
   games.forEach((game, gi) => {
     const filled = getFilledPlays(game.plays);

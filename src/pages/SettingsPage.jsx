@@ -6,6 +6,7 @@ import { fetchGames, fetchTemplates, fetchColumns, createGame, createTemplate, c
 import Header from '../components/Header';
 import HudlLoginModal from '../components/HudlLoginModal';
 import ConfirmModal from '../components/ConfirmModal';
+import { getCacheStats, clearHudlCache } from '../lib/hudlCache';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -246,6 +247,26 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Hudl cache (#22-23) */}
+        <div className="settings-group">
+          <div className="settings-group-title">Hudl cache</div>
+          <div className="settings-group-sub">
+            {(() => {
+              const stats = getCacheStats();
+              return stats.count > 0
+                ? `${stats.count} cutups cached (${stats.totalClips} clips, ${(stats.totalSize / 1024).toFixed(0)} KB)`
+                : 'No cached data';
+            })()}
+          </div>
+          <div className="settings-row">
+            <div className="settings-btn" onClick={() => { clearHudlCache(); showToast('Cache cleared'); }}>
+              <span className="settings-btn-icon">🗑</span>
+              Clear cache
+              <span className="settings-btn-label">Force fresh data from Hudl</span>
+            </div>
+          </div>
         </div>
 
         {/* Account */}

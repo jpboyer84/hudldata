@@ -36,6 +36,9 @@ export default function TrackerPage() {
   const [saveAsName, setSaveAsName] = useState('');
   // Hudl push
   const [hudlPushOpen, setHudlPushOpen] = useState(false);
+  // Column button editor (#9)
+  const [btnEditorCol, setBtnEditorCol] = useState(null);
+  const [btnEditorInput, setBtnEditorInput] = useState('');
   // Templates for switcher
   const [allTemplates, setAllTemplates] = useState([]);
 
@@ -160,6 +163,46 @@ export default function TrackerPage() {
   function addRows() {
     setPlays(prev => [...prev, ...emptyPlays(25)]);
     showToast('25 rows added');
+  }
+
+  // ─── COLUMN BUTTON EDITOR (#9) ───
+  function openBtnEditor(colId) {
+    const col = columns.find(c => c.id === colId);
+    if (col) { setBtnEditorCol({ ...col }); setBtnEditorInput(''); }
+  }
+
+  function addBtnToCol() {
+    const label = btnEditorInput.trim();
+    if (!label || !btnEditorCol) return;
+    setBtnEditorInput('');
+    const col = { ...btnEditorCol };
+    if (col.type === 'btn_dds') {
+      if (!col.btns.some(b => b.l.toLowerCase() === label.toLowerCase())) {
+        col.btns = [...col.btns, { l: label, opts: [label] }];
+      }
+    } else if (col.btns) {
+      if (!col.btns.some(b => b.l.toLowerCase() === label.toUpperCase().toLowerCase())) {
+        col.btns = [...col.btns, { l: label.toUpperCase(), v: label }];
+      }
+    } else if (col.dd) {
+      if (!col.dd.some(d => d.toLowerCase() === label.toLowerCase())) {
+        col.dd = [...col.dd, label];
+      }
+    }
+    setBtnEditorCol(col);
+    setColumns(prev => prev.map(c => c.id === col.id ? col : c));
+  }
+
+  function removeBtnFromCol(idx) {
+    if (!btnEditorCol) return;
+    const col = { ...btnEditorCol };
+    if (col.btns) {
+      col.btns = col.btns.filter((_, i) => i !== idx);
+    } else if (col.dd) {
+      col.dd = col.dd.filter((_, i) => i !== idx);
+    }
+    setBtnEditorCol(col);
+    setColumns(prev => prev.map(c => c.id === col.id ? col : c));
   }
 
   // ─── LEAVE TRACKER (#4) ───
@@ -362,7 +405,7 @@ export default function TrackerPage() {
       <div className="tracker-body">
         <div className="col-grid" style={{ gridTemplateColumns: layoutCols === 1 ? '1fr' : '1fr 1fr' }}>
           {columns.map(col => (
-            <ColumnCard key={col.id} col={col} value={currentPlay[col.dataKey || col.id] ?? null} onSetValue={setVal} onOpenModal={setModal} />
+            <ColumnCard key={col.id} col={col} value={currentPlay[col.dataKey || col.id] ?? null} onSetValue={setVal} onOpenModal={setModal} onEditButtons={openBtnEditor} />
           ))}
         </div>
       </div>
@@ -418,6 +461,41 @@ export default function TrackerPage() {
                   <span style={{ color: 'var(--color-green)', fontWeight: 700, fontSize: 16 }}>+</span>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Column button editor (#9) */}
+      {btnEditorCol && (
+        <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) setBtnEditorCol(null); }}>
+          <div className="modal" style={{ maxHeight: '75dvh' }}>
+            <div className="modal-hdr">
+              <div className="modal-title">{btnEditorCol.name}</div>
+              <div className="modal-x" onClick={() => setBtnEditorCol(null)}>✕</div>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              {(btnEditorCol.btns || []).map((b, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--color-border)' }}>
+                  <span style={{ fontSize: 14, fontWeight: 500 }}>{b.l || b}</span>
+                  <button onClick={() => removeBtnFromCol(i)} style={{ background: 'none', border: '1px solid var(--color-red)', color: 'var(--color-red)', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>✕</button>
+                </div>
+              ))}
+              {btnEditorCol.dd && !btnEditorCol.btns && btnEditorCol.dd.map((d, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--color-border)' }}>
+                  <span style={{ fontSize: 14, fontWeight: 500 }}>{d}</span>
+                  <button onClick={() => removeBtnFromCol(i)} style={{ background: 'none', border: '1px solid var(--color-red)', color: 'var(--color-red)', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>✕</button>
+                </div>
+              ))}
+              {(!btnEditorCol.btns || btnEditorCol.btns.length === 0) && (!btnEditorCol.dd || btnEditorCol.dd.length === 0) && (
+                <div style={{ padding: 16, fontSize: 12, color: 'var(--color-muted)', textAlign: 'center' }}>No buttons</div>
+              )}
+            </div>
+            <div style={{ padding: '10px 14px', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, flexShrink: 0 }}>
+              <input className="fi" value={btnEditorInput} onChange={e => setBtnEditorInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addBtnToCol()}
+                placeholder="New button label…" style={{ flex: 1, fontSize: 13, padding: '10px 12px' }} autoFocus />
+              <button className="btn btn-primary" onClick={addBtnToCol} style={{ padding: '10px 16px', fontSize: 13, flexShrink: 0 }}>Add</button>
             </div>
           </div>
         </div>

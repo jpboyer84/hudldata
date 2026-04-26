@@ -1,4 +1,5 @@
 import { HUDL_API } from './constants';
+import { getCachedClips, setCachedClips } from './hudlCache';
 
 // Map from Hudl normalized clip fields → our column IDs (matches HTML)
 const HUDL_TO_COL = {
@@ -89,8 +90,12 @@ export function playsToHudlBulk(plays, cutupId) {
   return { cutupId, columnMap, plays: hudlPlays };
 }
 
-// Fetch clips from a Hudl cutup
-export async function fetchHudlClips(cutupId, coach) {
+// Fetch clips from a Hudl cutup (with localStorage cache)
+export async function fetchHudlClips(cutupId, coach, label) {
+  // Check cache first (#19)
+  const cached = getCachedClips(cutupId);
+  if (cached) return cached;
+
   const headers = { 'Content-Type': 'application/json' };
   if (coach?.hudl_cookie) headers['X-Hudl-Cookie'] = coach.hudl_cookie;
   if (coach?.hudl_team_id) headers['X-Hudl-Team'] = coach.hudl_team_id;
@@ -98,7 +103,12 @@ export async function fetchHudlClips(cutupId, coach) {
   const resp = await fetch(`${HUDL_API}/api/clips/${cutupId}?count=1000`, { headers });
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.error || 'Failed to load clips');
-  return data.clips || [];
+  const clips = data.clips || [];
+
+  // Cache for next time
+  setCachedClips(cutupId, clips, label || cutupId);
+
+  return clips;
 }
 
 // Send plays back to Hudl

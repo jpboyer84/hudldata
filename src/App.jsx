@@ -22,6 +22,7 @@ import ColumnBuilderPage from './pages/ColumnBuilderPage';
 import StatsPage from './pages/StatsPage';
 import HelpPage from './pages/HelpPage';
 import PlaybookPage from './pages/PlaybookPage';
+import XlsxImportPage from './pages/XlsxImportPage';
 import { useAuth } from './hooks/useAuth';
 
 // Placeholder for future phases
@@ -89,7 +90,7 @@ function AppRoutes() {
 
       {/* Future */}
       <Route path="/playbook" element={<PlaybookPage />} />
-      <Route path="/import" element={<PlaceholderPage title="Import" />} />
+      <Route path="/import" element={<XlsxImportPage />} />
 
       {/* Auth pages */}
       <Route path="/login" element={<LoginPage />} />

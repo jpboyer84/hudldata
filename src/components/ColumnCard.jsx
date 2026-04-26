@@ -1,7 +1,7 @@
 // ColumnCard — handles all column types: buttons, btns_dd, btn_dds, numpad
 // Matches HTML renderColumn + renderColInner exactly
 
-export default function ColumnCard({ col, value, onSetValue, onOpenModal }) {
+export default function ColumnCard({ col, value, onSetValue, onOpenModal, onEditButtons }) {
   const v = value ?? '';
   const colKey = col.dataKey || col.id;
 
@@ -136,6 +136,10 @@ export default function ColumnCard({ col, value, onSetValue, onOpenModal }) {
     <div className="col-card">
       <div className="col-card-hdr">
         <div className="col-card-name">{col.name}</div>
+        {onEditButtons && (col.btns || col.dd) && (
+          <div onClick={(e) => { e.stopPropagation(); onEditButtons(col.id); }}
+            style={{ fontSize: 12, color: 'var(--color-muted)', cursor: 'pointer', padding: '2px 6px', WebkitTapHighlightColor: 'transparent' }}>⚙</div>
+        )}
       </div>
       <div className="col-card-body" style={{ padding: 8 }}>
         {renderInner()}

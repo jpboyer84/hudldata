@@ -55,7 +55,7 @@ export default function NewGameModal({ open, onClose, onStart, onNavigate }) {
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
             {[
               { label: 'Archive', path: '/archive' },
-              { label: 'Import', path: '/settings' },
+              { label: 'Import', path: '/import' },
               { label: 'Load Hudl', path: 'hudl' },
             ].map(item => (
               <div

@@ -98,6 +98,8 @@ function ByQtrTab({ s }) {
 function SpotlightTab({ plays, playbook }) {
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [methodology, setMethodology] = useState(null);
+  const [methLoading, setMethLoading] = useState(false);
   const [feedback, setFeedback] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hd_spotlight_feedback') || '{"liked":[],"disliked":[]}'); }
     catch { return { liked: [], disliked: [] }; }
@@ -181,6 +183,27 @@ CRITICAL RULES:
 
   const offInsights = insights.filter(i => i.tag === 'O');
   const defInsights = insights.filter(i => i.tag === 'D');
+  async function explainMethodology(ins) {
+    setMethodology({ insight: ins, explanation: null });
+    setMethLoading(true);
+    try {
+      const csv = buildPlaysCsv(plays);
+      const resp = await fetch(`${HUDL_API}/api/claude`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 600,
+          system: `You are a football analytics assistant. Explain in 2-3 sentences exactly how the following insight was calculated from the play data. Be specific about which plays were counted and which were excluded. Use coaching language.`,
+          messages: [{ role: 'user', content: `Insight: "${ins.stat}" — "${ins.headline}" (${ins.why})\n\nThe coach wants to understand how this was calculated. Here is the play data:\n${csv.substring(0, 3000)}` }],
+        }),
+      });
+      const data = await resp.json();
+      setMethodology({ insight: ins, explanation: data.content?.[0]?.text || 'Could not generate explanation.' });
+    } catch { setMethodology({ insight: ins, explanation: 'Error loading explanation.' }); }
+    setMethLoading(false);
+  }
+
   const priorityOrder = { high: 0, medium: 1, low: 2 };
   const sorted = arr => [...arr].sort((a, b) => (priorityOrder[a.priority] || 1) - (priorityOrder[b.priority] || 1));
 
@@ -191,6 +214,7 @@ CRITICAL RULES:
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <span style={{ fontSize: 11, color: sideColor, fontWeight: 600 }}>{tagLabel}</span>
           <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+            <button onClick={() => explainMethodology(ins)} style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', padding: '2px 4px', opacity: 0.4 }} title="How was this calculated?">❓</button>
             <button onClick={() => rate(ins, true)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', padding: '2px 4px', opacity: 0.4 }}>👍</button>
             <button onClick={() => rate(ins, false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', padding: '2px 4px', opacity: 0.4 }}>👎</button>
           </div>
@@ -223,6 +247,29 @@ CRITICAL RULES:
         <button className="btn btn-secondary" onClick={() => runAnalysis(true)} style={{ width: '100%', marginTop: 10, fontSize: 12 }}>
           {loading ? 'Finding more…' : 'GENERATE MORE'}
         </button>
+      )}
+      {/* Methodology modal (#16) */}
+      {methodology && (
+        <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) setMethodology(null); }} style={{ position: 'fixed' }}>
+          <div className="modal" style={{ maxWidth: 380 }}>
+            <div className="modal-hdr">
+              <div className="modal-title">METHODOLOGY</div>
+              <div className="modal-x" onClick={() => setMethodology(null)}>✕</div>
+            </div>
+            <div className="modal-body" style={{ fontSize: 13, lineHeight: 1.6 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{methodology.insight?.stat}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--color-muted2)' }}>{methodology.insight?.headline}</div>
+              {methLoading ? (
+                <div style={{ color: 'var(--color-muted)', fontSize: 12 }}>Generating explanation…</div>
+              ) : (
+                <div style={{ whiteSpace: 'pre-wrap' }}>{methodology.explanation}</div>
+              )}
+            </div>
+            <div className="modal-foot">
+              <button className="btn btn-secondary" onClick={() => setMethodology(null)} style={{ flex: 1 }}>Close</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
