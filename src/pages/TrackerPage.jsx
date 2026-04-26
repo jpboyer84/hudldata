@@ -39,6 +39,8 @@ export default function TrackerPage() {
   // Column button editor (#9)
   const [btnEditorCol, setBtnEditorCol] = useState(null);
   const [btnEditorInput, setBtnEditorInput] = useState('');
+  // Spreadsheet view
+  const [sheetViewOpen, setSheetViewOpen] = useState(false);
   // Templates for switcher
   const [allTemplates, setAllTemplates] = useState([]);
 
@@ -219,15 +221,9 @@ export default function TrackerPage() {
 
   // ─── CLEAR ───
   function clearRow() {
-    setConfirmModal({
-      title: 'Clear Play?',
-      message: `Clear all data for play #${playIdx + 1}?`,
-      onConfirm: () => {
-        setPlays(prev => { const n = [...prev]; n[playIdx] = {}; return n; });
-        persist();
-        setConfirmModal(null);
-      },
-    });
+    setPlays(prev => { const n = [...prev]; n[playIdx] = {}; return n; });
+    persist();
+    showToast(`Play #${playIdx + 1} cleared`);
   }
 
   // Clear all with undo (#5)
@@ -368,21 +364,26 @@ export default function TrackerPage() {
         </div>
       </div>
 
-      {/* Dropdown menu */}
+      {/* Center-screen menu overlay */}
       {menuOpen && (
-        <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 149 }} onClick={() => setMenuOpen(false)} />
-          <div style={{ position: 'absolute', top: 52, right: 12, zIndex: 150, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, minWidth: 180, overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.5)' }}>
-            <div className="tracker-menu-item" onClick={() => { navigate('/stats'); setMenuOpen(false); }} style={{ color: 'var(--color-blue)' }}>📊 Stats</div>
-            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setColPickerOpen(true); }}>➕ Add / remove columns</div>
-            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setSaveAsOpen(true); setSaveAsName(''); }}>💾 Save as template</div>
-            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setTmplSwitcherOpen(true); }}>📋 Switch template</div>
-            <div className="tracker-menu-item" onClick={handleExport}>📥 Export XLSX</div>
-            <div style={{ height: 1, background: 'var(--color-border)', margin: '2px 0' }} />
-            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); clearRow(); }} style={{ color: 'var(--color-yellow)' }}>✕ Clear row</div>
-            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); clearAll(); }} style={{ color: 'var(--color-red)' }}>🗑 Clear all</div>
+        <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) setMenuOpen(false); }}>
+          <div className="modal" style={{ maxWidth: 320 }}>
+            <div className="modal-hdr">
+              <div className="modal-title">MENU</div>
+              <div className="modal-x" onClick={() => setMenuOpen(false)}>✕</div>
+            </div>
+            <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setSheetViewOpen(true); }}>📊 Open Spreadsheet</div>
+              <div className="tracker-menu-item" onClick={() => { navigate('/stats'); setMenuOpen(false); }} style={{ color: 'var(--color-blue)' }}>📈 Stats & Analysis</div>
+              <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setColPickerOpen(true); }}>➕ Add / remove columns</div>
+              <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setSaveAsOpen(true); setSaveAsName(''); }}>💾 Save as template</div>
+              <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setTmplSwitcherOpen(true); }}>📋 Switch template</div>
+              <div className="tracker-menu-item" onClick={handleExport}>📥 Export XLSX</div>
+              <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); clearRow(); }} style={{ color: 'var(--color-yellow)' }}>✕ Clear row</div>
+              <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); clearAll(); }} style={{ color: 'var(--color-red)' }}>🗑 Clear all</div>
+            </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Sheet bar */}
@@ -546,6 +547,80 @@ export default function TrackerPage() {
       )}
 
       {/* Hudl push with field selection (#18) */}
+      {/* Spreadsheet view */}
+      {sheetViewOpen && (
+        <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) setSheetViewOpen(false); }}>
+          <div style={{
+            background: 'var(--color-bg)', borderRadius: 16, width: '96%', maxWidth: 900,
+            height: '90dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            border: '1px solid var(--color-border)',
+          }}>
+            <div className="modal-hdr">
+              <div className="modal-title">SPREADSHEET</div>
+              <div className="modal-x" onClick={() => setSheetViewOpen(false)}>✕</div>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <table style={{ borderCollapse: 'collapse', fontSize: 12, fontFamily: 'var(--font-ui)', minWidth: '100%' }}>
+                <thead>
+                  <tr style={{ position: 'sticky', top: 0, zIndex: 2, background: 'var(--color-surface)' }}>
+                    <th style={{ padding: '10px 8px', borderBottom: '2px solid var(--color-border)', color: 'var(--color-accent)', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap', textAlign: 'center', minWidth: 36 }}>#</th>
+                    {columns.map(col => (
+                      <th key={col.id} style={{ padding: '10px 8px', borderBottom: '2px solid var(--color-border)', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap', textAlign: 'center', minWidth: 50, color: 'var(--color-muted2)' }}>{col.name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {plays.slice(0, Math.max(filledCount + 5, 20)).map((play, i) => {
+                    const filled = play && Object.keys(play).filter(k => !k.startsWith('_')).length > 0;
+                    const isCurrent = i === playIdx;
+                    return (
+                      <tr key={i} onClick={() => { setPlayIdx(i); setSheetViewOpen(false); }}
+                        style={{
+                          cursor: 'pointer', background: isCurrent ? 'rgba(232,89,12,0.1)' : filled ? 'var(--color-surface)' : 'transparent',
+                          borderBottom: '1px solid var(--color-border)',
+                        }}>
+                        <td style={{ padding: '8px 6px', textAlign: 'center', fontWeight: 700, color: isCurrent ? 'var(--color-accent)' : 'var(--color-muted)', fontSize: 11 }}>{i + 1}</td>
+                        {columns.map(col => {
+                          const key = col.dataKey || col.id;
+                          const val = play?.[key] || '';
+                          return (
+                            <td key={col.id} style={{ padding: '6px 4px', textAlign: 'center', fontSize: 12, minWidth: 40 }}>
+                              <input
+                                type="text"
+                                value={val}
+                                onChange={e => {
+                                  const newVal = e.target.value;
+                                  setPlays(prev => {
+                                    const next = [...prev];
+                                    if (!next[i]) next[i] = {};
+                                    next[i] = { ...next[i], [key]: newVal || undefined };
+                                    if (!newVal) delete next[i][key];
+                                    return next;
+                                  });
+                                  persist();
+                                }}
+                                style={{
+                                  width: '100%', minWidth: 40, padding: '4px 3px', fontSize: 12, fontFamily: 'var(--font-ui)',
+                                  background: 'transparent', border: '1px solid transparent', borderRadius: 4, textAlign: 'center',
+                                  color: 'var(--color-text)', outline: 'none',
+                                }}
+                                onFocus={e => { e.target.style.borderColor = 'var(--color-accent)'; e.target.style.background = 'var(--color-surface)'; }}
+                                onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'transparent'; }}
+                                onClick={e => e.stopPropagation()}
+                              />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {hudlPushOpen && (
         <HudlPushModal
           plays={plays}

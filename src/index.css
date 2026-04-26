@@ -562,11 +562,13 @@ body {
 
 /* TRACKER DROPDOWN MENU */
 .tracker-menu-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 18px; font-family: var(--font-ui); font-weight: 600;
-  font-size: 14px; color: var(--color-text); cursor: pointer;
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 22px; font-family: var(--font-ui); font-weight: 600;
+  font-size: 16px; color: var(--color-text); cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  border-bottom: 1px solid var(--color-border);
 }
+.tracker-menu-item:last-child { border-bottom: none; }
 .tracker-menu-item:active { background: var(--color-surface2); }
 
 /* ══════════════════════════════════════
@@ -672,8 +674,9 @@ body {
 .list-item.sel { background: var(--color-sel-bg); color: var(--color-sel-text); }
 
 .dd-item {
-  padding: 13px 18px; font-family: var(--font-ui); font-weight: 600; font-size: 14px;
+  padding: 18px 20px; font-family: var(--font-ui); font-weight: 500; font-size: 16px;
   color: var(--color-text); cursor: pointer; border-bottom: 1px solid var(--color-border);
+  -webkit-tap-highlight-color: transparent;
 }
 .dd-item:active { background: var(--color-surface2); }
 .dd-item.sel { background: var(--color-sel-bg); color: var(--color-sel-text); }

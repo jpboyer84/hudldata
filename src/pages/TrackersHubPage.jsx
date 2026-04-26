@@ -6,7 +6,7 @@ import { fetchGames, createGame, fetchTemplates, createTemplate } from '../lib/s
 import { DEFAULT_COLUMNS } from '../columns';
 import { fetchHudlClips, hudlClipsToPlays } from '../lib/hudlData';
 import NewGameModal from '../components/NewGameModal';
-import HudlLibraryModal from '../components/HudlLibraryModal';
+import HudlCutupPicker from '../components/HudlCutupPicker';
 
 export default function TrackersHubPage() {
   const navigate = useNavigate();
@@ -74,13 +74,14 @@ export default function TrackersHubPage() {
     }
   }
 
-  async function handleLoadHudlCutup(item) {
-    if (!coach?.team_id) return;
+  async function handleLoadHudlCutup(selectedItems) {
+    if (!coach?.team_id || !selectedItems.length) return;
     setLoadingCutup(true);
     setHudlOpen(false);
+    const item = selectedItems[0]; // Load first selected cutup as a new game
     showToast(`Loading ${item.title}…`);
     try {
-      const clips = await fetchHudlClips(item.id, coach);
+      const clips = await fetchHudlClips(item.id, coach, item.title);
       const plays = hudlClipsToPlays(clips);
       // Pad to at least 200 rows
       while (plays.length < 200) plays.push({});
@@ -245,11 +246,12 @@ export default function TrackersHubPage() {
           else navigate(path);
         }}
       />
-      <HudlLibraryModal
-        open={hudlOpen}
-        onClose={() => setHudlOpen(false)}
-        onSelect={handleLoadHudlCutup}
-      />
+      {hudlOpen && (
+        <HudlCutupPicker
+          onLoad={handleLoadHudlCutup}
+          onClose={() => setHudlOpen(false)}
+        />
+      )}
     </div>
   );
 }
