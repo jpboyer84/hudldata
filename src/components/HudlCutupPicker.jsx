@@ -31,8 +31,8 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
   const [items, setItems] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('ALL');
-  const [yearFilter, setYearFilter] = useState(null);
+  const [typeFilter, setTypeFilter] = useState(new Set()); // empty = ALL
+  const [yearFilter, setYearFilter] = useState(new Set()); // empty = all years
   const [homeAway, setHomeAway] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [loading, setLoading] = useState(true);
@@ -40,24 +40,45 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
 
   useEffect(() => { loadLibrary(); }, []);
 
+  function toggleType(t) {
+    if (t === 'ALL') { setTypeFilter(new Set()); return; }
+    setTypeFilter(prev => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t); else next.add(t);
+      return next;
+    });
+  }
+
+  function toggleYear(y) {
+    setYearFilter(prev => {
+      const next = new Set(prev);
+      if (next.has(y)) next.delete(y); else next.add(y);
+      return next;
+    });
+  }
+
   useEffect(() => {
     let f = items;
 
-    // Type filter
-    if (typeFilter === 'Tracked') {
-      // Tracked filter: requires local game storage integration (future feature)
-      f = [];
-    } else if (typeFilter !== 'ALL') {
-      const cat = typeFilter.toLowerCase();
-      f = f.filter(i => i._category === cat);
+    // Type filter (multi-select)
+    if (typeFilter.size > 0) {
+      const cats = new Set([...typeFilter].map(t => t.toLowerCase()));
+      if (cats.has('tracked')) {
+        f = [];
+      } else {
+        f = f.filter(i => cats.has(i._category));
+      }
     }
 
-    // Year filter
-    if (yearFilter) {
-      const yShort = "'" + yearFilter.slice(2);
+    // Year filter (multi-select)
+    if (yearFilter.size > 0) {
       f = f.filter(i => {
         const title = i.title || '';
-        return title.includes(yearFilter) || title.includes(yShort);
+        for (const y of yearFilter) {
+          const yShort = "'" + y.slice(2);
+          if (title.includes(y) || title.includes(yShort)) return true;
+        }
+        return false;
       });
     }
 
@@ -173,26 +194,30 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
           />
         </div>
 
-        {/* Type filters */}
+        {/* Type filters (multi-select) */}
         <div style={{ padding: '8px 14px 0', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {TYPE_FILTERS.map(t => (
+          <div
+            className={`sf-btn${typeFilter.size === 0 ? ' on' : ''}`}
+            onClick={() => toggleType('ALL')}
+          >ALL</div>
+          {TYPE_FILTERS.filter(t => t !== 'ALL').map(t => (
             <div
               key={t}
-              className={`sf-btn${typeFilter === t ? ' on' : ''}`}
-              onClick={() => setTypeFilter(typeFilter === t ? 'ALL' : t)}
+              className={`sf-btn${typeFilter.has(t) ? ' on' : ''}`}
+              onClick={() => toggleType(t)}
             >
               {t}
             </div>
           ))}
         </div>
 
-        {/* Year + Home/Away filters */}
+        {/* Year + Home/Away filters (years are multi-select) */}
         <div style={{ padding: '6px 14px 8px', display: 'flex', gap: 6, flexWrap: 'wrap', borderBottom: '1px solid var(--color-border)' }}>
           {YEAR_FILTERS.map(y => (
             <div
               key={y}
-              className={`sf-btn${yearFilter === y ? ' on' : ''}`}
-              onClick={() => setYearFilter(yearFilter === y ? null : y)}
+              className={`sf-btn${yearFilter.has(y) ? ' on' : ''}`}
+              onClick={() => toggleYear(y)}
             >
               {y}
             </div>
