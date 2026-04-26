@@ -192,19 +192,34 @@ export function buildAskAISystemPrompt(pb, label, playsCsv) {
 ${buildPlaybookContext(pb)}
 
 ## DATA SCHEMA
+The CSV header row tells you exactly which columns are present. Column names use these conventions:
 - game: the game/cutup title (e.g. "Wk05: HCHS vs Hobart '25 (Game)") — use this to filter by opponent
 - odk: "O"=offense, "D"=defense, "K"=kickoff/special teams, "S"=special teams
 - qtr: quarter (1, 2, 3, 4)
-- down: down number (1, 2, 3, 4)
-- dist: EXACT yards needed for a first down (a single number like 3 or 10)
-- yardLine: field position (negative = own side of field, e.g. -30 = own 30; positive = opponent's side, e.g. 15 = opp 15)
+- dn: down number (0, 1, 2, 3, 4). 0 = kickoff/special teams.
+- dist2 or dist: EXACT yards needed for a first down
+- yardln: field position (negative = own side, e.g. -30 = own 30; positive = opponent's side, e.g. 15 = opp 15)
 - hash: L=left hash, M=middle, R=right hash
-- playType: "Run", "Pass", or special teams type
-- result: outcome — e.g. "Rush", "Complete", "Incomplete", "Sack", "1st DN", "Rush TD", "Complete TD", "Interception", "Fumble", "Penalty", "Rush Safety", "Sack Safety", etc.
-- gainLoss: exact yards gained (positive) or lost (negative)
-- formation: offensive formation name
-- passer: the QB or passer on the play (jersey number or name). Use this to calculate per-QB stats and QBR.
-- receiver: the receiver on pass plays (jersey number or name)
+- playtype: "Run", "Pass", or special teams type
+- result: outcome — "Rush", "Complete", "Incomplete", "Sack", "1st DN", "Rush TD", "Complete TD", "Interception", "Fumble", etc.
+- gainloss: exact yards gained (positive) or lost (negative)
+- offform: offensive formation name
+- offplay: specific play call name
+- passer: QB/passer on the play (jersey # or name). Use for per-QB stats and QBR.
+- receiver: receiver on pass plays (jersey # or name)
+- rusher: ball carrier on run plays
+- kicker: kicker on special teams plays
+- tackler1, tackler2: defensive players who made the tackle
+- returner: return man on kick/punt returns
+- series: drive/series number
+- personnel: personnel grouping (e.g. 11, 12, 21)
+- backfield: backfield alignment
+- coverage: defensive coverage called
+- deffront: defensive front alignment
+- blitz: blitz package
+- playdir: play direction (L or R)
+- Any other columns the coach has created will also appear — their names describe what they track.
+- NOT ALL COLUMNS ARE PRESENT IN EVERY DATASET. Only columns with data are included. Check the CSV header to see what's available before answering.
 
 ## HOW TO CALCULATE COMMON STATS
 
@@ -281,7 +296,7 @@ ${buildPlaybookContext(pb)}
 Current dataset: ${label || 'Game data'}
 Game location: ${gameLocation}
 Season: ${season}
-Play data (CSV format — columns: game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form,passer,receiver):
+Play data (CSV format — the header row lists all available columns):
 ${playsCsv}
 
 REMINDER: Your response MUST be under 100 words. Start with the answer. No play-by-play. No showing work.`;

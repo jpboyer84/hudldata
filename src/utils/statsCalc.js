@@ -231,7 +231,7 @@ export function calcStats(plays) {
   return { overview, offense, defense, field, quarters, all, off, def };
 }
 
-// ─── BUILD CSV for AI prompt ───
+// ─── BUILD CSV for AI prompt — DYNAMIC: includes every column with data ───
 export function buildPlaysCsv(plays, label) {
   const active = (plays || []).filter(p => {
     if (!p) return false;
@@ -239,15 +239,35 @@ export function buildPlaysCsv(plays, label) {
     return Object.keys(p).filter(k => !k.startsWith('_')).length > 0;
   });
   if (active.length === 0) return 'No play data available.';
-  const header = 'game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form,passer,receiver';
-  const rows = active.map(p => {
-    const game = (p._gameTitle || label || '').replace(/,/g, ' ');
-    const form = getForm(p) || '';
-    const passer = p.passer || '';
-    const receiver = p.receiver || '';
-    return [game, getOdk(p)||'', getQtr(p)||'', getDn(p)||'', getDist(p)||'', getYardLn(p)||'', getHash(p)||'', getPlayType(p)||'', getResult(p)||'', getGL(p)??'', form, passer, receiver].join(',');
+
+  // Discover all unique keys across all plays (skip internal _ keys)
+  const allKeys = new Set();
+  active.forEach(p => {
+    Object.keys(p).forEach(k => {
+      if (!k.startsWith('_') && k !== 'ignore') allKeys.add(k);
+    });
   });
-  return `${label || 'Game data'} | ${active.length} plays\n${header}\n${rows.join('\n')}`;
+
+  // Put common columns first in a logical order, then any extras alphabetically
+  const priority = ['odk','qtr','dn','dist2','dist','yardln','hash','playtype','result','gainloss','offform','offplay','passer','receiver','series','personnel','backfield','playdir','coverage','deffront','blitz','rusher','kicker','tackler1','tackler2','returner','recoveredby','keyplayer','motion','blocking','slant','covshell','covtype','passzone','offstr','motiondir','penalty','penyds','eff','gap','kickland','kickyds','retspot','retyds'];
+  const ordered = [];
+  priority.forEach(k => { if (allKeys.has(k)) { ordered.push(k); allKeys.delete(k); } });
+  // Add _gameTitle as 'game' column at the front
+  const hasGameTitle = active.some(p => p._gameTitle);
+  // Add any remaining keys alphabetically
+  [...allKeys].sort().forEach(k => ordered.push(k));
+
+  const header = (hasGameTitle ? 'game,' : '') + ordered.join(',');
+  const rows = active.map(p => {
+    const gameCol = hasGameTitle ? (p._gameTitle || '').replace(/,/g, ' ') + ',' : '';
+    return gameCol + ordered.map(k => {
+      const val = p[k];
+      if (val == null || val === '') return '';
+      return String(val).replace(/,/g, ' ');
+    }).join(',');
+  });
+
+  return `${label || 'Game data'} | ${active.length} plays | ${ordered.length} columns\n${header}\n${rows.join('\n')}`;
 }
 
 // ─── BUILD SUMMARY OBJECT for Spotlight — matches HTML buildDataSummary exactly ───
