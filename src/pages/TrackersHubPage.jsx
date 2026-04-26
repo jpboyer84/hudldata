@@ -169,7 +169,7 @@ export default function TrackersHubPage() {
     <div className="view">
       <div className="hdr">
         <button className="hdr-btn" onClick={() => navigate('/')}>← Back</button>
-        <div className="hdr-title">Tag a game</div>
+        <div className="hdr-title">Tag Game Film</div>
         <div style={{ display: 'flex', gap: 5 }}>
           <button className="hdr-btn" onClick={() => navigate('/archive')}>Archive</button>
           <button
@@ -269,3 +269,4 @@ export default function TrackersHubPage() {
     </div>
   );
 }
+
