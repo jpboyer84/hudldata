@@ -124,32 +124,38 @@ export default function TrackerPage() {
   function nextPlay() {
     if (!plays[playIdx]) return;
     const cur = plays[playIdx] || {};
+    const nextData = plays[playIdx + 1] || {};
 
-    // Auto-fill next play's DN and DIST (#2)
+    // Always carry forward: ODK, QTR (coach only changes these when they actually change)
+    if (!nextData.odk && cur.odk) nextData.odk = cur.odk;
+    if (!nextData.qtr && cur.qtr) nextData.qtr = cur.qtr;
+
+    // Auto-fill next play's DN and DIST based on current gain/loss
     if (cur.odk !== 'K' && cur.odk !== 'S') {
       const curDn = parseInt(cur.dn);
       const curDist = parseFloat(cur.dist2);
       const curGL = parseFloat(cur.gainloss);
-      const next = plays[playIdx + 1] || {};
 
-      if (!isNaN(curDn) && !isNaN(curDist) && !isNaN(curGL) && !next.dn && !next.dist2) {
+      if (!isNaN(curDn) && !isNaN(curDist) && !isNaN(curGL) && !nextData.dn && !nextData.dist2) {
         if (curGL >= curDist) {
-          next.dn = '1';
-          next.dist2 = '10';
+          nextData.dn = '1';
+          nextData.dist2 = '10';
         } else if (curDn < 4) {
-          next.dn = String(curDn + 1);
-          next.dist2 = String(Math.round(curDist - curGL));
+          nextData.dn = String(curDn + 1);
+          nextData.dist2 = String(Math.round(curDist - curGL));
         }
-        if (!next.odk && cur.odk) next.odk = cur.odk;
-
-        setPlays(prev => {
-          const arr = [...prev];
-          if (!arr[playIdx + 1]) arr[playIdx + 1] = {};
-          arr[playIdx + 1] = { ...arr[playIdx + 1], ...next };
-          return arr;
-        });
-        persist();
       }
+    }
+
+    // Apply carry-forward data
+    if (Object.keys(nextData).length > 0) {
+      setPlays(prev => {
+        const arr = [...prev];
+        if (!arr[playIdx + 1]) arr[playIdx + 1] = {};
+        arr[playIdx + 1] = { ...arr[playIdx + 1], ...nextData };
+        return arr;
+      });
+      persist();
     }
 
     let next = playIdx + 1;
