@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
-import { calcStats, buildPlaysCsv } from '../utils/statsCalc';
+import { calcStats, buildPlaysCsv, buildSummaryObj } from '../utils/statsCalc';
 import { fetchHudlClips, hudlClipsToPlays } from '../lib/hudlData';
 import { fetchPlaybook, buildPlaybookContext, buildAskAISystemPrompt } from '../lib/playbook';
 import { HUDL_API } from '../lib/constants';
@@ -136,26 +136,30 @@ function SpotlightTab({ plays, playbook }) {
 
     const pbContext = buildPlaybookContext(playbook);
     let feedbackCtx = '';
-    if (feedback.liked.length > 0) feedbackCtx += '\n\nThe coach rated these USEFUL (generate more like these):\n' + feedback.liked.slice(-10).map(x => `- [${x.tag}] "${x.headline}" (${x.stat})`).join('\n');
-    if (feedback.disliked.length > 0) feedbackCtx += '\n\nThe coach rated these NOT USEFUL (avoid similar):\n' + feedback.disliked.slice(-10).map(x => `- [${x.tag}] "${x.headline}" (${x.stat})`).join('\n');
+    if (feedback.liked.length > 0) feedbackCtx += '\n\nThe coach has rated these types of insights as USEFUL (generate more like these):\n' + feedback.liked.slice(-10).map(x => `- [${x.tag}] "${x.headline}" (${x.stat})`).join('\n');
+    if (feedback.disliked.length > 0) feedbackCtx += '\n\nThe coach has rated these types of insights as NOT USEFUL (avoid similar ones):\n' + feedback.disliked.slice(-10).map(x => `- [${x.tag}] "${x.headline}" (${x.stat})`).join('\n');
 
+    // System prompt — exact match to HTML
     const systemPrompt = `You are an elite football analytics assistant for a high school coach. Analyze play data and surface the most important, actionable findings for BOTH offense and defense.
 ${pbContext}
 
-Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 OFF insights (tag "O") and 2-5 DEF insights (tag "D"). Each object must have:
-- "stat": The key data point. Max 6 words. Use coaching shorthand.
-- "headline": Coaching recommendation. Max 8 words.
+Return ONLY a valid JSON array (no markdown, no preamble). Include 2-5 OFF insights (tag "O") and 2-5 DEF insights (tag "D"). Only include genuinely useful findings. Quality over quantity. Each object must have:
+- "stat": The key data point. Max 6 words. Use coaching shorthand: Q1/Q2/Q3/Q4 (never spell out quarter), 1st DN/2nd DN/3rd DN/4th DN, OFF/DEF, conv, avg, R Hash/L Hash/M, neg, comp, inc, STK, INT. Examples: "23% 3rd DN conv", "72% run on 1st DN", "81% of runs gain 3+", "DEF 40% of passes gain 5+"
+- "headline": Coaching recommendation. Max 8 words. Same shorthand.
 - "why": Ultra-brief context. Max 6 words.
 - "tag": "O" or "D"
 - "priority": "high" if exploitable/alarming, "medium" if notable, "low" if interesting
 
 CRITICAL RULES:
-- Analyze BOTH offense and defense. Do NOT skip defense.
-- DEF analysis: yards allowed, opp run/pass tendencies, 3rd DN stop rate, sacks, TFLs, INTs.
+- Analyze BOTH "offense" and "defense" sections. Do not skip defense.
+- DEF analysis: yards allowed, opp run/pass tendencies, 3rd DN stop rate, sacks, TFLs, INTs, down-by-down.
+- Check "playsWithYardage" and "missingYardage". If fewer than 10 plays with yardage, do NOT make avg claims.
 - Be specific with numbers. Use shorthand everywhere.
-- STAT PRIORITY: Prefer EFFICIENCY RATES over averages. Use "% of runs gaining 3+ yds", "% of passes gaining 5+ yds", "% of plays going negative" rather than YPC/YPP.${feedbackCtx}`;
+- Do NOT repeat prior insights (listed below if follow-up).
+- STAT PRIORITY: Prefer EFFICIENCY RATES over averages. Averages (YPC, YPP) are easily skewed by one big play. Instead use "% of runs gaining 3+ yds", "% of runs gaining <3 yds" (stuff rate — how often the run game gets stopped), "% of passes gaining 5+ yds", "% of pass plays gaining 0 yds" (combines incompletions, sacks, and throwaways into one stat — better than completion % alone), "% of plays gaining 10+ yds" (explosive rate), "% of plays going negative". These are more honest and actionable. Only use YPC/YPP if there's no better way to express the finding.${feedbackCtx}`;
 
-    const csv = buildPlaysCsv(plays);
+    // Build pre-computed summary object (token-efficient, matches HTML)
+    const summaryObj = buildSummaryObj(plays);
     const existingNote = append && insights.length > 0 ? '\n\nYou have ALREADY provided these insights — do NOT repeat them, find NEW patterns:\n' + insights.map(i => `- ${i.headline} (${i.stat})`).join('\n') : '';
 
     try {
@@ -166,7 +170,7 @@ CRITICAL RULES:
           model: 'claude-sonnet-4-6',
           max_tokens: 1600,
           system: systemPrompt,
-          messages: [{ role: 'user', content: `Analyze this football play data and return insights as JSON:\n${csv}${existingNote}` }],
+          messages: [{ role: 'user', content: `Analyze this football play data and return insights as JSON:\n${JSON.stringify(summaryObj, null, 2)}${existingNote}` }],
         }),
       });
       const data = await resp.json();

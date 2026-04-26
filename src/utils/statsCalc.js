@@ -231,11 +231,123 @@ export function calcStats(plays) {
   return { overview, offense, defense, field, quarters, all, off, def };
 }
 
-// ─── BUILD CSV for AI prompt (matches HTML buildDataSummary) ───
+// ─── BUILD CSV for AI prompt ───
 export function buildPlaysCsv(plays) {
   const active = (plays || []).filter(p => p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0);
   const rows = active.map(p =>
     [getOdk(p), getQtr(p), getDn(p), getDist(p), getYardLn(p), getHash(p), getPlayType(p), getResult(p), getGL(p) ?? '', getForm(p) || ''].join(',')
   );
   return 'odk,qtr,dn,dist,ydln,hash,type,result,gl,form\n' + rows.join('\n');
+}
+
+// ─── BUILD SUMMARY OBJECT for Spotlight — matches HTML buildDataSummary exactly ───
+export function buildSummaryObj(plays, label) {
+  const active = (plays || []).filter(p => p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0);
+  if (active.length === 0) return null;
+
+  const off = active.filter(p => getOdk(p) === 'O');
+  const def = active.filter(p => getOdk(p) === 'D');
+  const runs = off.filter(isRun);
+  const passes = off.filter(isPass);
+  const offGL = off.map(getGL).filter(v => v !== null);
+  const negPlays = offGL.filter(v => v < 0).length;
+  const bigPlays = offGL.filter(v => v >= 10).length;
+
+  // 3rd down
+  const third = off.filter(p => String(getDn(p)) === '3');
+  const thirdConv = third.filter(p => {
+    const r = (getResult(p) || '').toLowerCase();
+    if (r.includes('td')) return true;
+    const gl = getGL(p); const dist = num(getDist(p));
+    if (gl !== null && dist !== null && gl >= dist) return true;
+    return r.includes('first') || r.includes('1st') || r.includes('conv');
+  });
+
+  // Down tendencies
+  const dnStats = ['1','2','3','4'].map(d => {
+    const dnOff = off.filter(p => String(getDn(p)) === d);
+    if (!dnOff.length) return null;
+    const gl = dnOff.map(getGL).filter(v => v !== null);
+    return { down: d, plays: dnOff.length, runPct: dnOff.length ? Math.round(dnOff.filter(isRun).length/dnOff.length*100) : 0, passPct: dnOff.length ? Math.round(dnOff.filter(isPass).length/dnOff.length*100) : 0, avg: avg(gl) };
+  }).filter(Boolean);
+
+  // Formation stats
+  const formMap = {};
+  off.forEach(p => { const f = getForm(p); if (f) { if (!formMap[f]) formMap[f] = { plays: 0, gl: [], runs: 0, passes: 0 }; formMap[f].plays++; const g = getGL(p); if (g !== null) formMap[f].gl.push(g); if (isRun(p)) formMap[f].runs++; if (isPass(p)) formMap[f].passes++; } });
+  const formStats = Object.entries(formMap).sort((a, b) => b[1].plays - a[1].plays).slice(0, 8).map(([f, d]) => ({
+    formation: f, plays: d.plays, playsWithYardage: d.gl.length, pct: off.length ? Math.round(d.plays/off.length*100) : 0,
+    runPct: d.plays ? Math.round(d.runs/d.plays*100) : 0, passPct: d.plays ? Math.round(d.passes/d.plays*100) : 0, avg: avg(d.gl),
+  }));
+
+  // Hash tendencies
+  const hashMap = {};
+  off.forEach(p => { const h = getHash(p); if (h) { if (!hashMap[h]) hashMap[h] = { plays: 0, runs: 0, passes: 0, gl: [] }; hashMap[h].plays++; const g = getGL(p); if (g !== null) hashMap[h].gl.push(g); if (isRun(p)) hashMap[h].runs++; if (isPass(p)) hashMap[h].passes++; } });
+
+  // Quarter tendencies
+  const qtrMap = {};
+  active.forEach(p => { const q = getQtr(p); if (q) { if (!qtrMap[q]) qtrMap[q] = { off: 0, def: 0, gl: [] }; if (getOdk(p) === 'O') { qtrMap[q].off++; const g = getGL(p); if (g !== null) qtrMap[q].gl.push(g); } if (getOdk(p) === 'D') qtrMap[q].def++; } });
+
+  // Defense stats
+  const defGL = def.map(getGL).filter(v => v !== null);
+  const defRuns = def.filter(isRun);
+  const defPasses = def.filter(isPass);
+  const defResults = {};
+  def.forEach(p => { const r = getResult(p); if (r) defResults[r] = (defResults[r] || 0) + 1; });
+  const sacks = def.filter(p => (getResult(p) || '').toLowerCase().includes('sack')).length;
+  const tfl = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('tfl') || r.includes('for loss'); }).length;
+  const ints = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('int') || r.includes('interception'); }).length;
+  const defThird = def.filter(p => String(getDn(p)) === '3');
+  const defThirdStop = defThird.filter(p => {
+    const r = (getResult(p) || '').toLowerCase();
+    if (r.includes('td')) return false;
+    const gl = getGL(p); const dist = num(getDist(p));
+    if (gl !== null && dist !== null && gl >= dist) return false;
+    if (r.includes('first') || r.includes('1st') || r.includes('conv')) return false;
+    return true;
+  });
+  const defNegPlays = defGL.filter(v => v < 0).length;
+  const defDnStats = ['1','2','3','4'].map(d => {
+    const dnDef = def.filter(p => String(getDn(p)) === d);
+    if (!dnDef.length) return null;
+    const gl = dnDef.map(getGL).filter(v => v !== null);
+    return { down: d, plays: dnDef.length, runPct: dnDef.length ? Math.round(dnDef.filter(isRun).length/dnDef.length*100) : 0, passPct: dnDef.length ? Math.round(dnDef.filter(isPass).length/dnDef.length*100) : 0, avgAllowed: avg(gl) };
+  }).filter(Boolean);
+
+  return {
+    totalPlays: active.length,
+    offense: {
+      plays: off.length, playsWithYardage: offGL.length, missingYardage: off.length - offGL.length,
+      avgYPP: avg(offGL), runPlays: runs.length, passPlays: passes.length,
+      runPct: off.length ? Math.round(runs.length/off.length*100) : 0,
+      passPct: off.length ? Math.round(passes.length/off.length*100) : 0,
+      negPlayPct: offGL.length ? Math.round(negPlays/offGL.length*100) : 0,
+      bigPlayPct: offGL.length ? Math.round(bigPlays/offGL.length*100) : 0,
+      avgRunYds: avg(runs.map(getGL).filter(v => v !== null)),
+      avgPassYds: avg(passes.map(getGL).filter(v => v !== null)),
+      thirdDowns: third.length, thirdConversions: thirdConv.length,
+      thirdConvPct: third.length ? Math.round(thirdConv.length/third.length*100) : 0,
+    },
+    defense: {
+      plays: def.length, playsWithYardage: defGL.length, missingYardage: def.length - defGL.length,
+      avgYdsAllowed: avg(defGL), oppRunPlays: defRuns.length, oppPassPlays: defPasses.length,
+      oppRunPct: def.length ? Math.round(defRuns.length/def.length*100) : 0,
+      oppPassPct: def.length ? Math.round(defPasses.length/def.length*100) : 0,
+      sacks, tfl, interceptions: ints,
+      negativePlaysPct: defGL.length ? Math.round(defNegPlays/defGL.length*100) : 0,
+      thirdDownFaced: defThird.length, thirdDownStops: defThirdStop.length,
+      thirdDownStopPct: defThird.length ? Math.round(defThirdStop.length/defThird.length*100) : 0,
+      topResults: Object.entries(defResults).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([r, c]) => ({ result: r, count: c })),
+    },
+    defenseDownTendencies: defDnStats,
+    downTendencies: dnStats,
+    formations: formStats,
+    hashTendencies: Object.entries(hashMap).map(([h, d]) => ({
+      hash: h, plays: d.plays, playsWithYardage: d.gl.length, missingYardage: d.plays - d.gl.length,
+      runPct: d.plays ? Math.round(d.runs/d.plays*100) : 0, avg: avg(d.gl),
+    })),
+    quarterTrends: Object.entries(qtrMap).sort((a, b) => a[0] - b[0]).map(([q, d]) => ({
+      qtr: q, offPlays: d.off, defPlays: d.def, avgYds: avg(d.gl),
+    })),
+    dataLabel: label || '',
+  };
 }
