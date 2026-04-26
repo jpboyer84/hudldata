@@ -17,6 +17,7 @@ export default function TrackersHubPage() {
   const [newGameOpen, setNewGameOpen] = useState(false);
   const [hudlOpen, setHudlOpen] = useState(false);
   const [loadingCutup, setLoadingCutup] = useState(false);
+  const [pendingHudlCutup, setPendingHudlCutup] = useState(null);
   const [templates, setTemplates] = useState([]);
 
   useEffect(() => {
@@ -63,6 +64,7 @@ export default function TrackersHubPage() {
         week: opts.week || null,
         date: opts.date || null,
         game_type: opts.game_type || 'Game',
+        hudl_source: opts._title || null,
         template_id: opts.template_id || null,
         plays: Array.from({ length: 200 }, () => ({})),
       });
@@ -74,29 +76,40 @@ export default function TrackersHubPage() {
     }
   }
 
-  async function handleLoadHudlCutup(selectedItems) {
-    if (!coach?.team_id || !selectedItems.length) return;
-    setLoadingCutup(true);
+  // Step 1: Cutup selected from picker → show game setup form
+  function handleCutupSelected(selectedItems) {
+    if (!selectedItems.length) return;
     setHudlOpen(false);
-    const item = selectedItems[0]; // Load first selected cutup as a new game
+    setPendingHudlCutup(selectedItems[0]);
+    setNewGameOpen(true); // Opens NewGameModal with hudlSource
+  }
+
+  // Step 2: START GAME clicked → load clips and create game
+  async function handleHudlGameStart(opts) {
+    if (!coach?.team_id || !pendingHudlCutup) return;
+    setNewGameOpen(false);
+    setLoadingCutup(true);
+    const item = pendingHudlCutup;
     showToast(`Loading ${item.title}…`);
     try {
       const clips = await fetchHudlClips(item.id, coach, item.title);
       const plays = hudlClipsToPlays(clips);
-      // Pad to at least 200 rows
       while (plays.length < 200) plays.push({});
 
       const game = await createGame({
         team_id: coach.team_id,
         created_by: coach.id,
-        home: null,
-        away: null,
-        game_type: 'Game',
+        home: opts.home || null,
+        away: opts.away || null,
+        week: opts.week || null,
+        date: opts.date || null,
+        game_type: opts.game_type || 'Game',
         hudl_cutup_id: item.internalId || item.id,
-        hudl_source: item.title,
+        hudl_source: opts._title || opts.hudl_source || item.title,
         plays,
       });
 
+      setPendingHudlCutup(null);
       navigate(`/tracker/${game.id}`);
     } catch (err) {
       showToast('Failed to load cutup: ' + err.message);
@@ -239,16 +252,17 @@ export default function TrackersHubPage() {
 
       <NewGameModal
         open={newGameOpen}
-        onClose={() => setNewGameOpen(false)}
-        onStart={handleStartGame}
+        onClose={() => { setNewGameOpen(false); setPendingHudlCutup(null); }}
+        onStart={pendingHudlCutup ? handleHudlGameStart : handleStartGame}
         onNavigate={(path) => {
           if (path === 'hudl') setHudlOpen(true);
           else navigate(path);
         }}
+        hudlSource={pendingHudlCutup?.title || null}
       />
       {hudlOpen && (
         <HudlCutupPicker
-          onLoad={handleLoadHudlCutup}
+          onLoad={handleCutupSelected}
           onClose={() => setHudlOpen(false)}
         />
       )}
