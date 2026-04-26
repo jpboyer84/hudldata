@@ -199,6 +199,9 @@ export function calcStats(plays) {
       hash: h, count: hashCounts[h] || 0,
       pct: pct(hashCounts[h] || 0, off.length),
       avgYds: avg(hashYards[h] || []),
+      runs: off.filter(p => getHash(p) === h && isRun(p)).length,
+      passes: off.filter(p => getHash(p) === h && isPass(p)).length,
+      total: off.filter(p => getHash(p) === h).length,
     })),
     redZonePlays: redZone.length,
     redZoneTD: rzTD.length,
@@ -480,3 +483,4 @@ export function buildSlimCsv(plays, label) {
 
   return `${label || 'data'} | ${active.length} plays\n${header}\n${rows.join('\n')}`;
 }
+
