@@ -5,6 +5,16 @@ import { HUDL_API } from '../lib/constants';
 const TYPE_FILTERS = ['ALL', 'Game', 'Scout', 'JV', 'Other', 'Tracked'];
 const YEAR_FILTERS = ['2024', '2025', '2026'];
 
+// Matches HTML parseSeason / parseWeekSort exactly
+function parseWeekSort(title) {
+  const m = (title || '').match(/[Ww][Kk]\s*0*(\d+)/);
+  return m ? parseInt(m[1], 10) : -1;
+}
+function parseSeason(title) {
+  const m = (title || '').match(/'(\d{2})/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
 // Matches HTML getCutupCategory exactly — only tagged cutups are shown
 function getCutupCategory(title) {
   const t = (title || '').trim().toLowerCase();
@@ -66,6 +76,18 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
       const q = search.toLowerCase();
       f = f.filter(i => (i.title || '').toLowerCase().includes(q));
     }
+
+    // Sort: season descending, then week descending, then alphabetical (matches HTML exactly)
+    f.sort((a, b) => {
+      const sA = parseSeason(a.title), sB = parseSeason(b.title);
+      if (sA !== sB) return sB - sA;
+      const wA = parseWeekSort(a.title), wB = parseWeekSort(b.title);
+      if (wA === -1 && wB === -1) return (a.title || '').localeCompare(b.title || '');
+      if (wA === -1) return 1;
+      if (wB === -1) return -1;
+      if (wA !== wB) return wB - wA;
+      return (a.title || '').localeCompare(b.title || '');
+    });
 
     setFiltered(f);
   }, [items, search, typeFilter, yearFilter, homeAway]);

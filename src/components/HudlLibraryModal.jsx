@@ -14,6 +14,15 @@ function getCutupCategory(title) {
   return 'untagged';
 }
 
+function parseWeekSort(title) {
+  const m = (title || '').match(/[Ww][Kk]\s*0*(\d+)/);
+  return m ? parseInt(m[1], 10) : -1;
+}
+function parseSeason(title) {
+  const m = (title || '').match(/'(\d{2})/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
 export default function HudlLibraryModal({ open, onClose, onSelect }) {
   const { coach } = useAuth();
   const [items, setItems] = useState([]);
@@ -41,6 +50,17 @@ export default function HudlLibraryModal({ open, onClose, onSelect }) {
       const q = search.toLowerCase();
       f = f.filter(i => i.title?.toLowerCase().includes(q));
     }
+    // Sort: season desc, week desc, alphabetical (matches HTML)
+    f.sort((a, b) => {
+      const sA = parseSeason(a.title), sB = parseSeason(b.title);
+      if (sA !== sB) return sB - sA;
+      const wA = parseWeekSort(a.title), wB = parseWeekSort(b.title);
+      if (wA === -1 && wB === -1) return (a.title || '').localeCompare(b.title || '');
+      if (wA === -1) return 1;
+      if (wB === -1) return -1;
+      if (wA !== wB) return wB - wA;
+      return (a.title || '').localeCompare(b.title || '');
+    });
     setFiltered(f);
   }, [items, search, typeFilter]);
 
