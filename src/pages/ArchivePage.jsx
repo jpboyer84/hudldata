@@ -101,7 +101,7 @@ export default function ArchivePage() {
         {games.length === 0 ? (
           <div className="empty-msg">
             No games yet.<br />
-            Tap "Tag a game" to start tracking.
+            Tap "Tag Game Film" to start tracking.
           </div>
         ) : (
           games.map(g => (
