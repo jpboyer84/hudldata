@@ -203,6 +203,8 @@ ${buildPlaybookContext(pb)}
 - result: outcome — e.g. "Rush", "Complete", "Incomplete", "Sack", "1st DN", "Rush TD", "Complete TD", "Interception", "Fumble", "Penalty", "Rush Safety", "Sack Safety", etc.
 - gainLoss: exact yards gained (positive) or lost (negative)
 - formation: offensive formation name
+- passer: the QB or passer on the play (jersey number or name). Use this to calculate per-QB stats and QBR.
+- receiver: the receiver on pass plays (jersey number or name)
 
 ## HOW TO CALCULATE COMMON STATS
 
@@ -242,6 +244,19 @@ ${buildPlaybookContext(pb)}
 
 **Defensive Stats:** When odk="D", gainLoss represents yards allowed. Track sacks (result contains "Sack"), TFLs (gainLoss < 0), interceptions (result contains "Interception"), pass breakups (result contains "Batted" or "Tipped" or "Dropped").
 
+**NFL Passer Rating (QBR):** Calculate from pass plays (playType="Pass") for all passers collectively or per-passer if the passer field is populated. Formula:
+  - a = ((completions / attempts) - 0.3) * 5
+  - b = ((pass_yards / attempts) - 3) * 0.25
+  - c = (pass_TDs / attempts) * 20
+  - d = 2.375 - ((interceptions / attempts) * 25)
+  - Clamp each of a, b, c, d to range [0, 2.375]
+  - Rating = ((a + b + c + d) / 6) * 100
+  - Range: 0 to 158.3
+  - completions = count where result contains "Complete"; attempts = all Pass plays; pass_yards = sum of gainLoss for Pass plays; pass_TDs = count where result contains "TD" AND playType="Pass"; interceptions = count where result contains "Interception".
+  - If passer field is available, group by passer to give per-QB ratings. If not, calculate the collective team QBR across all pass plays.
+
+**Per-QB Stats:** When the passer column has data, group pass plays by passer to calculate individual completion rate, yards per attempt, TD count, INT count, and passer rating.
+
 **Pass/Run Tendencies by Down:** For each down (1-4), what % of offensive plays were runs vs passes.
 
 **Formation Efficiency:** Group plays by formation, calculate yards per play and first down rate for each.
@@ -266,7 +281,7 @@ ${buildPlaybookContext(pb)}
 Current dataset: ${label || 'Game data'}
 Game location: ${gameLocation}
 Season: ${season}
-Play data (CSV format — columns: odk,qtr,dn,dist,ydln,hash,type,result,gl,form):
+Play data (CSV format — columns: game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form,passer,receiver):
 ${playsCsv}
 
 REMINDER: Your response MUST be under 100 words. Start with the answer. No play-by-play. No showing work.`;
