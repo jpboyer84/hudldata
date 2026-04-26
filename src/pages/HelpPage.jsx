@@ -42,14 +42,14 @@ const FAQ_SECTIONS = [
       { q: 'What is the Spotlight tab?', a: 'Spotlight auto-generates AI insight cards when you load data — things like "You run 72% of the time on 1st down" or "3rd down conversion rate drops to 18% in Q4". It\'s designed to surface tendencies you might not notice in the raw numbers.' },
       { q: 'How do I ask the AI a question about my plays?', a: 'Go to Stats → ASK AI tab. Type your question the same way you\'d ask an assistant coach — "What\'s our 3rd down conversion rate?", "Which formation gains the most yards?", or "How did we do in the red zone?". The AI sees all your play data and gives you a direct answer.' },
       { q: 'What are the different Stats sub-tabs?', a: 'OVERVIEW — total plays, yards per play, run vs pass split.\nOFFENSE — down & distance breakdowns, formation efficiency, 3rd down conversions, play type tendencies.\nDEFENSE — yards allowed, opponent run/pass tendencies, sacks, INTs, stop rate.\nFIELD — hash mark tendencies, red zone efficiency, field position data.\nBY QTR — quarter-by-quarter performance for both offense and defense.' },
-      { q: 'Can I save an AI response for later?', a: 'Not yet — but it\'s on the roadmap. For now, you can screenshot the response or copy the text. Saved insights are coming in a future update.' },
+      { q: 'Can I save an AI response for later?', a: 'Yes — tap the 📌 button underneath any AI answer. It gets stored in the SAVED tab so you can reference it later — during halftime adjustments, post-game meetings, or weekly prep.' },
     ],
   },
   {
     title: '⚙️ SETUP & SETTINGS',
     isSection: true,
     items: [
-      { q: 'How do I teach the AI my play names?', a: 'This is coming in the Playbook feature. You\'ll be able to define your formations, plays, and terminology so the AI uses your language when analyzing your data.' },
+      { q: 'How do I teach the AI my play names?', a: 'Go to Playbook from the home screen. Tap any section — Run Plays, Pass Plays, Formations, Tags & Motion, Defensive Terms, or Stat Rules — and type your terminology. For example, under Run Plays: "Bolt = Counter Left". Now when you ask the AI about "Bolt," it knows exactly what play you\'re talking about. Everything you enter is shared with your staff and injected into every AI prompt.' },
       { q: 'How do I set up my team info?', a: 'When you first sign up, you\'ll be taken to the team setup screen. Connect with Hudl to auto-create your team, or set it up manually with your team name, school, city, and state.' },
       { q: 'How do I back up my data?', a: 'Settings & Help → Save Full Backup → SAVE TO DEVICE. This downloads a JSON file with all your games, templates, and columns. Keep it somewhere safe.' },
       { q: 'How do I move data to a new phone or tablet?', a: 'Export a backup from your old device (Settings → Save Full Backup). On your new device, sign in with the same account — your data is already in the cloud. If you need to restore from a backup, use Settings → Restore Full Backup.' },
@@ -237,7 +237,7 @@ Assistant Coach has four main sections accessible from the home screen:
           disabled={loading || !input.trim()}
           style={{ padding: '10px 18px', fontSize: 14, flexShrink: 0 }}
         >
-          Send
+          Ask →
         </button>
       </div>
     </div>
@@ -248,6 +248,11 @@ export default function HelpPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState('faq');
   const [openItem, setOpenItem] = useState(null);
+  const [openSections, setOpenSections] = useState(() => FAQ_SECTIONS.map((_, i) => i)); // all open by default
+
+  function toggleSection(idx) {
+    setOpenSections(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]);
+  }
 
   return (
     <div className="view">
@@ -283,14 +288,19 @@ export default function HelpPage() {
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px', WebkitOverflowScrolling: 'touch' }}>
           {FAQ_SECTIONS.map((section, si) => (
             <div key={si}>
-              <div style={{
-                padding: '18px 0 6px', fontSize: 14, fontWeight: 600,
-                color: section.isSection ? 'var(--color-text)' : 'var(--color-text)',
-                letterSpacing: section.isSection ? '0.02em' : 0,
-              }}>
-                {section.title}
+              <div
+                onClick={() => toggleSection(si)}
+                style={{
+                  padding: '18px 0 6px', fontSize: 14, fontWeight: 600,
+                  color: 'var(--color-text)',
+                  letterSpacing: section.isSection ? '0.02em' : 0,
+                  cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                }}
+              >
+                <span>{section.title}</span>
+                <span style={{ fontSize: 14, color: 'var(--color-muted)', transform: openSections.includes(si) ? 'rotate(180deg)' : 'none', transition: '0.2s' }}>▾</span>
               </div>
-              {section.items.map((item, ii) => {
+              {openSections.includes(si) && section.items.map((item, ii) => {
                 const key = `${si}-${ii}`;
                 return (
                   <FAQItem
@@ -312,3 +322,4 @@ export default function HelpPage() {
     </div>
   );
 }
+
