@@ -75,13 +75,13 @@ export default function LandingPage() {
             maxWidth: 500, margin: '0 auto', width: '100%'
           }}>
 
-            {/* Tag a game — open to everyone */}
+            {/* Tag Game Film — open to everyone */}
             <div className="lcard" onClick={() => navigate('/trackers?new=1')}>
               <div className="lcard-icon">
                 <TagGameIcon />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="lcard-title">Tag a game</div>
+                <div className="lcard-title">Tag Game Film</div>
                 <div className="lcard-sub">Tag, archive & manage</div>
               </div>
               <ChevronRight />
