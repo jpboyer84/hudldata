@@ -314,10 +314,29 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
         body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 500, system: systemPrompt, messages: history }),
       });
       const data = await resp.json();
-      // Handle API errors properly
+      // Handle API errors — retry once on rate limit
       if (data.error) {
         const errMsg = typeof data.error === 'string' ? data.error : data.error.message || JSON.stringify(data.error);
-        setMessages(prev => [...prev, { role: 'assistant', text: 'API error: ' + errMsg }]);
+        if (errMsg.includes('rate limit')) {
+          setMessages(prev => [...prev, { role: 'assistant', text: 'Rate limited — retrying in 5 seconds…' }]);
+          await new Promise(r => setTimeout(r, 5000));
+          setMessages(prev => prev.filter(m => m.text !== 'Rate limited — retrying in 5 seconds…'));
+          const resp2 = await fetch(`${HUDL_API}/api/claude`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 500, system: systemPrompt, messages: history }),
+          });
+          const data2 = await resp2.json();
+          if (data2.error) {
+            const errMsg2 = typeof data2.error === 'string' ? data2.error : data2.error.message || '';
+            setMessages(prev => [...prev, { role: 'assistant', text: 'Still rate limited. Wait a moment and try again.' }]);
+          } else {
+            const reply = data2.content?.map(c => c.text || '').filter(Boolean).join('\n') || 'No response.';
+            setMessages(prev => [...prev, { role: 'assistant', text: reply }]);
+          }
+        } else {
+          setMessages(prev => [...prev, { role: 'assistant', text: 'API error: ' + errMsg }]);
+        }
       } else {
         const reply = data.content?.map(c => c.text || '').filter(Boolean).join('\n') || 'No response received from AI.';
         setMessages(prev => [...prev, { role: 'assistant', text: reply }]);

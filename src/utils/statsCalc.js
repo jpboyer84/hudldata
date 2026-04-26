@@ -231,7 +231,7 @@ export function calcStats(plays) {
   return { overview, offense, defense, field, quarters, all, off, def };
 }
 
-// ─── BUILD CSV for AI prompt — DYNAMIC: includes every column with data ───
+// ─── BUILD CSV for AI prompt — only populated columns, capped for token limits ───
 export function buildPlaysCsv(plays, label) {
   const active = (plays || []).filter(p => {
     if (!p) return false;
@@ -240,24 +240,25 @@ export function buildPlaysCsv(plays, label) {
   });
   if (active.length === 0) return 'No play data available.';
 
-  // Discover all unique keys across all plays (skip internal _ keys)
-  const allKeys = new Set();
+  // Only include columns that actually have data in at least 1 play
+  const colCounts = {};
   active.forEach(p => {
     Object.keys(p).forEach(k => {
-      if (!k.startsWith('_') && k !== 'ignore') allKeys.add(k);
+      if (!k.startsWith('_') && k !== 'ignore' && p[k] != null && String(p[k]).trim()) {
+        colCounts[k] = (colCounts[k] || 0) + 1;
+      }
     });
   });
 
-  // Put common columns first in a logical order, then any extras alphabetically
+  // Order: priority columns first, then remaining by frequency
   const priority = ['odk','qtr','dn','dist2','dist','yardln','hash','playtype','result','gainloss','offform','offplay','passer','receiver','series','personnel','backfield','playdir','coverage','deffront','blitz','rusher','kicker','tackler1','tackler2','returner','recoveredby','keyplayer','motion','blocking','slant','covshell','covtype','passzone','offstr','motiondir','penalty','penyds','eff','gap','kickland','kickyds','retspot','retyds'];
   const ordered = [];
-  priority.forEach(k => { if (allKeys.has(k)) { ordered.push(k); allKeys.delete(k); } });
-  // Add _gameTitle as 'game' column at the front
-  const hasGameTitle = active.some(p => p._gameTitle);
-  // Add any remaining keys alphabetically
-  [...allKeys].sort().forEach(k => ordered.push(k));
+  const used = new Set();
+  priority.forEach(k => { if (colCounts[k]) { ordered.push(k); used.add(k); } });
+  Object.entries(colCounts).filter(([k]) => !used.has(k)).sort((a, b) => b[1] - a[1]).forEach(([k]) => ordered.push(k));
 
-  const header = (hasGameTitle ? 'game,' : '') + ordered.join(',');
+  const hasGameTitle = active.some(p => p._gameTitle);
+  const headerLine = (hasGameTitle ? 'game,' : '') + ordered.join(',');
   const rows = active.map(p => {
     const gameCol = hasGameTitle ? (p._gameTitle || '').replace(/,/g, ' ') + ',' : '';
     return gameCol + ordered.map(k => {
@@ -267,7 +268,22 @@ export function buildPlaysCsv(plays, label) {
     }).join(',');
   });
 
-  return `${label || 'Game data'} | ${active.length} plays | ${ordered.length} columns\n${header}\n${rows.join('\n')}`;
+  const labelLine = `${label || 'Game data'} | ${active.length} plays | ${ordered.length} columns`;
+  let csv = labelLine + '\n' + headerLine + '\n' + rows.join('\n');
+
+  // Hard cap at ~80K chars (~20K tokens) to stay under API rate limits
+  if (csv.length > 80000) {
+    const kept = [];
+    let size = labelLine.length + 1 + headerLine.length + 1;
+    for (const row of rows) {
+      if (size + row.length + 1 > 78000) break;
+      kept.push(row);
+      size += row.length + 1;
+    }
+    csv = labelLine + '\n' + headerLine + '\n' + kept.join('\n') + `\n[${rows.length - kept.length} of ${rows.length} plays truncated for token budget]`;
+  }
+
+  return csv;
 }
 
 // ─── BUILD SUMMARY OBJECT for Spotlight — matches HTML buildDataSummary exactly ───
