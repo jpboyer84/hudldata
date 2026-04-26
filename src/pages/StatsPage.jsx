@@ -295,12 +295,18 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
     setMessages(prev => [...prev, { role: 'user', text: q }]);
     setLoading(true);
     try {
-      const csv = buildPlaysCsv(plays, label);
+      let csv = buildPlaysCsv(plays, label);
+      // Guard: truncate CSV if too large for token limits (~100K chars ≈ 25K tokens)
+      if (csv.length > 100000) {
+        const lines = csv.split('\n');
+        const header = lines[0] + '\n' + lines[1]; // label line + header row
+        const dataLines = lines.slice(2);
+        const truncated = dataLines.slice(0, Math.floor(100000 / (dataLines[0]?.length || 80)));
+        csv = header + '\n' + truncated.join('\n') + `\n[...truncated from ${dataLines.length} to ${truncated.length} plays for token limit]`;
+      }
       const systemPrompt = buildAskAISystemPrompt(playbook, label, csv);
       const history = messages.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
       history.push({ role: 'user', content: q });
-      // Safety guard: ensure history ends with user message (matches HTML)
-      while (history.length > 0 && history[history.length - 1].role !== 'user') history.pop();
 
       const resp = await fetch(`${HUDL_API}/api/claude`, {
         method: 'POST',
@@ -308,8 +314,14 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
         body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 500, system: systemPrompt, messages: history }),
       });
       const data = await resp.json();
-      const reply = data.content?.[0]?.text || 'No response';
-      setMessages(prev => [...prev, { role: 'assistant', text: reply }]);
+      // Handle API errors properly
+      if (data.error) {
+        const errMsg = typeof data.error === 'string' ? data.error : data.error.message || JSON.stringify(data.error);
+        setMessages(prev => [...prev, { role: 'assistant', text: 'API error: ' + errMsg }]);
+      } else {
+        const reply = data.content?.map(c => c.text || '').filter(Boolean).join('\n') || 'No response received from AI.';
+        setMessages(prev => [...prev, { role: 'assistant', text: reply }]);
+      }
     } catch (err) {
       setMessages(prev => [...prev, { role: 'assistant', text: 'Error: ' + err.message }]);
     }
