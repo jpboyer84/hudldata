@@ -255,9 +255,12 @@ ${buildPlaybookContext(pb)}
 - MAXIMUM 100 WORDS. Count them. If your response exceeds 100 words, you have failed.
 - NEVER list individual plays. NEVER show game-by-game breakdowns unless explicitly asked.
 - NEVER show your work. No "let me check", no "filtering for", no calculation steps.
+- NEVER explain which games you filtered or how you identified them. Just give the answer.
+- NEVER say "I need to identify..." or "Home games include..." — skip straight to the stat.
 - NEVER use markdown tables. Use a single line like "12 carries, 80 yards, 6.7 YPC, 2 explosive (14, 27)".
 - Think like a coach checking a stat card between plays. Give the number, the insight, done.
 - Example question: "What was our most efficient run play out of Blue Near?" → Example answer: "POWER RIGHT was your most efficient run play from Blue Near — 8 carries, 62 yards, 7.8 YPC with 2 explosive runs. DIVE was second at 5.2 YPC on 4 carries."
+- Example question: "3rd down rate at home in Q4?" → Example answer: "38.5% — 5/13 conversions in Q4 across 5 home games."
 - If the coach asks for detail or a breakdown, THEN you can expand. Not before.
 
 Current dataset: ${label || 'Game data'}
