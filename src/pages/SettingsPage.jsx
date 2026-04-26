@@ -28,7 +28,129 @@ export default function SettingsPage() {
     navigate('/login');
   }
 
-  // ─── EXPORT BACKUP ───
+  // ─── GOOGLE DRIVE ───
+  const DRIVE_CLIENT_ID = '84897695205-bmhd3g2etbd4i2nulei934df12tss6qd.apps.googleusercontent.com';
+  const DRIVE_API_KEY = 'AIzaSyAiYqcor_m9KpfvbNol5aWuOaJTCouxYgg';
+  const DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+  const driveTokenRef = useRef(null);
+
+  function driveEnsureAuth() {
+    return new Promise((resolve, reject) => {
+      if (driveTokenRef.current) { resolve(driveTokenRef.current); return; }
+      // Load GSI if not loaded
+      if (!window.google?.accounts?.oauth2) {
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.onload = () => {
+          const client = window.google.accounts.oauth2.initTokenClient({
+            client_id: DRIVE_CLIENT_ID,
+            scope: DRIVE_SCOPES,
+            callback: (resp) => {
+              if (resp.access_token) { driveTokenRef.current = resp.access_token; resolve(resp.access_token); }
+              else reject(new Error('Auth failed'));
+            },
+          });
+          client.requestAccessToken({ prompt: '' });
+        };
+        document.head.appendChild(script);
+      } else {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: DRIVE_CLIENT_ID,
+          scope: DRIVE_SCOPES,
+          callback: (resp) => {
+            if (resp.access_token) { driveTokenRef.current = resp.access_token; resolve(resp.access_token); }
+            else reject(new Error('Auth failed'));
+          },
+        });
+        client.requestAccessToken({ prompt: '' });
+      }
+    });
+  }
+
+  async function handleDriveSave() {
+    if (!coach?.team_id) { showToast('No team found'); return; }
+    try {
+      showToast('Connecting to Google…');
+      const token = await driveEnsureAuth();
+      showToast('Building backup…');
+      const [games, templates, columns] = await Promise.all([
+        fetchGames(coach.team_id),
+        fetchTemplates(coach.team_id),
+        fetchColumns(coach.team_id),
+      ]);
+      const backup = {
+        version: 2,
+        exported_at: new Date().toISOString(),
+        team: coach.teams || {},
+        games, templates, columns,
+      };
+      const filename = `assistant-coach-backup-${new Date().toISOString().split('T')[0]}.json`;
+      const content = JSON.stringify(backup, null, 2);
+      const metadata = { name: filename, mimeType: 'application/json' };
+      const boundary = '-------ac_boundary';
+      const body = `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n--${boundary}--`;
+      const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': `multipart/related; boundary=${boundary}` },
+        body,
+      });
+      if (!resp.ok) throw new Error('Upload failed');
+      showToast('Saved to Google Drive!');
+    } catch (err) {
+      driveTokenRef.current = null;
+      showToast('Drive save failed: ' + err.message);
+    }
+  }
+
+  async function handleDriveLoad() {
+    try {
+      showToast('Connecting to Google…');
+      const token = await driveEnsureAuth();
+      // Load Picker API
+      if (!window.gapi) {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://apis.google.com/js/api.js';
+          s.onload = () => window.gapi.load('picker', res);
+          s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      } else if (!window.google?.picker) {
+        await new Promise(res => window.gapi.load('picker', res));
+      }
+      const picker = new window.google.picker.PickerBuilder()
+        .addView(new window.google.picker.DocsView().setIncludeFolders(false).setMimeTypes('application/json'))
+        .setOAuthToken(token)
+        .setDeveloperKey(DRIVE_API_KEY)
+        .setCallback(async (data) => {
+          if (data[window.google.picker.Response.ACTION] !== window.google.picker.Action.PICKED) return;
+          const fileId = data[window.google.picker.Response.DOCUMENTS][0][window.google.picker.Document.ID];
+          try {
+            const resp = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+              headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!resp.ok) throw new Error('Download failed');
+            const backup = await resp.json();
+            let imported = { games: 0, templates: 0, columns: 0 };
+            if (backup.columns && Array.isArray(backup.columns)) {
+              for (const col of backup.columns) { try { await createColumn({ ...col, id: undefined, team_id: coach.team_id }); imported.columns++; } catch {} }
+            }
+            if (backup.templates && Array.isArray(backup.templates)) {
+              for (const tmpl of backup.templates) { try { await createTemplate({ ...tmpl, id: undefined, team_id: coach.team_id }); imported.templates++; } catch {} }
+            }
+            if (backup.games && Array.isArray(backup.games)) {
+              for (const game of backup.games) { try { await createGame({ ...game, id: undefined, team_id: coach.team_id, created_by: coach.id }); imported.games++; } catch {} }
+            }
+            showToast(`Imported ${imported.games} games, ${imported.templates} templates, ${imported.columns} columns`);
+          } catch (err) { showToast('Restore failed: ' + err.message); }
+        })
+        .build();
+      picker.setVisible(true);
+    } catch (err) {
+      driveTokenRef.current = null;
+      showToast('Drive load failed: ' + err.message);
+    }
+  }
   async function handleExportJSON() {
     if (!coach?.team_id) { showToast('No team found'); return; }
     try {
@@ -174,6 +296,11 @@ export default function SettingsPage() {
               SAVE TO DEVICE
               <span className="settings-btn-label">Download JSON file</span>
             </div>
+            <div className="settings-btn" onClick={handleDriveSave}>
+              <span className="settings-btn-icon">☁️</span>
+              SAVE TO DRIVE
+              <span className="settings-btn-label">Google Drive</span>
+            </div>
           </div>
         </div>
 
@@ -188,6 +315,11 @@ export default function SettingsPage() {
               <span className="settings-btn-icon">📁</span>
               FROM DEVICE
               <span className="settings-btn-label">Choose JSON file</span>
+            </div>
+            <div className="settings-btn" onClick={handleDriveLoad}>
+              <span className="settings-btn-icon">☁️</span>
+              FROM DRIVE
+              <span className="settings-btn-label">Google Drive</span>
             </div>
           </div>
           <input
@@ -301,3 +433,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+
