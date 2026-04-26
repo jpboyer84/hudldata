@@ -26,7 +26,7 @@ function getCutupCategory(title) {
   return 'untagged';
 }
 
-export default function HudlCutupPicker({ onLoad, onClose }) {
+export default function HudlCutupPicker({ onLoad, onClose, initialSelected }) {
   const { coach } = useAuth();
   const [items, setItems] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -130,8 +130,12 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
         return cat !== 'untagged' && cat !== 'practice';
       }).map(i => ({ ...i, _category: getCutupCategory(i.title) }));
       setItems(tagged);
-      // Auto-select all tagged items
-      setSelected(new Set(tagged.map(i => i.id)));
+      // If we have previously loaded IDs, use those; otherwise select none (first open)
+      if (initialSelected && initialSelected.size > 0) {
+        setSelected(new Set(initialSelected));
+      } else {
+        setSelected(new Set());
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -323,3 +327,4 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
     </div>
   );
 }
+
