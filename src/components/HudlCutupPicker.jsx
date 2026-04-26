@@ -26,14 +26,14 @@ function getCutupCategory(title) {
   return 'untagged';
 }
 
-export default function HudlCutupPicker({ onLoad, onClose, initialSelected }) {
+export default function HudlCutupPicker({ onLoad, onClose, initialSelected, initialFilters }) {
   const { coach } = useAuth();
   const [items, setItems] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState(new Set()); // empty = ALL
-  const [yearFilter, setYearFilter] = useState(new Set()); // empty = all years
-  const [homeAway, setHomeAway] = useState(null);
+  const [search, setSearch] = useState(initialFilters?.search || '');
+  const [typeFilter, setTypeFilter] = useState(initialFilters?.typeFilter || new Set());
+  const [yearFilter, setYearFilter] = useState(initialFilters?.yearFilter || new Set());
+  const [homeAway, setHomeAway] = useState(initialFilters?.homeAway || null);
   const [selected, setSelected] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -151,29 +151,33 @@ export default function HudlCutupPicker({ onLoad, onClose, initialSelected }) {
     });
   }
 
-  function toggleAll() {
-    if (selected.size === filtered.length) {
-      // Deselect all visible
-      setSelected(prev => {
-        const next = new Set(prev);
-        filtered.forEach(i => next.delete(i.id));
-        return next;
-      });
-    } else {
-      // Select all visible
-      setSelected(prev => {
-        const next = new Set(prev);
-        filtered.forEach(i => next.add(i.id));
-        return next;
-      });
-    }
+  function selectAllVisible() {
+    setSelected(prev => {
+      const next = new Set(prev);
+      filtered.forEach(i => next.add(i.id));
+      return next;
+    });
+  }
+
+  function selectNoneVisible() {
+    setSelected(prev => {
+      const next = new Set(prev);
+      filtered.forEach(i => next.delete(i.id));
+      return next;
+    });
   }
 
   function handleLoad() {
     // Only load items that are both selected AND in current filtered view (matches HTML)
     const visibleSelected = filtered.filter(i => selected.has(i.id));
     if (visibleSelected.length === 0) return;
-    onLoad(visibleSelected);
+    // Pass filter state back so it can be restored on reopen
+    onLoad(visibleSelected, {
+      search,
+      typeFilter: new Set(typeFilter),
+      yearFilter: new Set(yearFilter),
+      homeAway,
+    });
   }
 
   // Count of selected items visible in current filter
@@ -299,17 +303,25 @@ export default function HudlCutupPicker({ onLoad, onClose, initialSelected }) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexShrink: 0,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div
-              onClick={toggleAll}
+              onClick={selectAllVisible}
               style={{
-                width: 28, height: 28, borderRadius: 14, border: '1.5px solid var(--color-border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', fontSize: 12, color: 'var(--color-muted)',
+                padding: '5px 10px', borderRadius: 6, border: '1px solid var(--color-border)',
+                background: 'var(--color-surface2)', cursor: 'pointer',
+                fontSize: 10, fontWeight: 700, color: 'var(--color-accent)',
+                letterSpacing: '0.03em',
               }}
-            >
-              ↺
-            </div>
+            >ALL</div>
+            <div
+              onClick={selectNoneVisible}
+              style={{
+                padding: '5px 10px', borderRadius: 6, border: '1px solid var(--color-border)',
+                background: 'var(--color-surface2)', cursor: 'pointer',
+                fontSize: 10, fontWeight: 700, color: 'var(--color-muted)',
+                letterSpacing: '0.03em',
+              }}
+            >NONE</div>
             <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>
               {visibleSelectedCount} selected
             </span>
