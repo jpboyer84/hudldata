@@ -50,8 +50,16 @@ function OverviewTab({ s }) {
 function OffenseTab({ s }) {
   const { offense, overview } = s;
   return (<>
+    {/* First Downs (#11) */}
+    {offense.firstDowns > 0 && <StatCard title="FIRST DOWNS" subtitle={`${offense.firstDowns} first downs earned`}><div style={{ display: 'flex', gap: 8 }}><StatBig value={offense.firstDowns} label="1ST DOWNS" /><StatBig value={overview.offense > 0 ? Math.round(offense.firstDowns/overview.offense*100)+'%' : '—'} label="1ST DN RATE" /></div></StatCard>}
     {offense.thirdDown > 0 && <StatCard title="3RD DOWN CONVERSIONS" subtitle={`${offense.thirdDown} attempts`}><div style={{ display: 'flex', gap: 8, marginBottom: 10 }}><StatBig value={offense.thirdConv} label="CONVERTED" /><StatBig value={`${offense.thirdPct}%`} label="CONV RATE" /></div><BarRow label="CONVERTED" value={offense.thirdConv} total={offense.thirdDown} color="#22c55e" /></StatCard>}
+    {/* Drives (#12) */}
+    {offense.drives && offense.drives.count > 0 && <StatCard title="DRIVES" subtitle={`${offense.drives.count} drives`}><div style={{ display: 'flex', gap: 8, marginBottom: 10 }}><StatBig value={offense.drives.count} label="DRIVES" /><StatBig value={offense.drives.avgLen} label="AVG LEN" /><StatBig value={offense.drives.avgYds} label="AVG YDS" /></div><div style={{ display: 'flex', gap: 8 }}><StatBig value={`${offense.drives.scorePct}%`} label="SCORE %" /><StatBig value={offense.drives.turnovers} label="TURNOVERS" /></div></StatCard>}
     {offense.dnBreakdown.length > 0 && <StatCard title="DOWN BREAKDOWN" subtitle="Plays per down">{offense.dnBreakdown.map(d => (<div key={d.down} style={{ marginBottom: 10 }}><div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>{['1ST','2ND','3RD','4TH'][parseInt(d.down)-1]} DOWN — {d.total} plays · Avg {d.avgYds} yds</div><BarRow label="RUN" value={d.runs} total={d.total} color="var(--color-accent)" /><BarRow label="PASS" value={d.passes} total={d.total} color="#3b82f6" /></div>))}</StatCard>}
+    {/* Play Type Breakdown (#13) */}
+    {offense.playTypes && offense.playTypes.length > 0 && <StatCard title="PLAY TYPE BREAKDOWN" subtitle={`${overview.offense} offense plays`}>{offense.playTypes.map(([t, c]) => <BarRow key={t} label={t} value={c} total={overview.offense} color="var(--color-accent)" />)}</StatCard>}
+    {/* Top Results (#14) */}
+    {offense.topResults && offense.topResults.length > 0 && <StatCard title="TOP RESULTS" subtitle="Most common outcomes">{offense.topResults.map(([r, c]) => <BarRow key={r} label={r} value={c} total={overview.offense} color="#3b82f6" />)}</StatCard>}
     {offense.formations.length > 0 && <StatCard title="FORMATIONS" subtitle={`${offense.formations.length} formations used`}>{offense.formations.slice(0, 8).map(f => (<div key={f.name} style={{ marginBottom: 8 }}><div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, marginBottom: 2 }}><span>{f.name}</span><span style={{ color: 'var(--color-muted)' }}>{f.count} plays · {f.avgYds} yds</span></div><BarRow label="" value={f.count} total={overview.offense} color="var(--color-accent)" /></div>))}</StatCard>}
   </>);
 }
@@ -61,13 +69,21 @@ function DefenseTab({ s }) {
   return (<>
     <StatCard title="DEFENSE OVERVIEW" subtitle={`${d.totalPlays} defensive plays`}><div style={{ display: 'flex', gap: 8 }}><StatBig value={d.avgYdsAllowed} label="AVG ALLOWED" /><StatBig value={d.totalYdsAllowed} label="TOTAL YDS" /></div></StatCard>
     <StatCard title="OPPONENT TENDENCIES"><BarRow label="OPP RUN" value={d.oppRuns} total={d.totalPlays} color="var(--color-accent)" /><BarRow label="OPP PASS" value={d.oppPasses} total={d.totalPlays} color="#3b82f6" /></StatCard>
-    <StatCard title="IMPACT PLAYS"><div style={{ display: 'flex', gap: 8 }}><StatBig value={d.sacks} label="SACKS" /><StatBig value={d.interceptions} label="INTs" /><StatBig value={`${d.stopRate}%`} label="STOP RATE" /></div></StatCard>
+    <StatCard title="IMPACT PLAYS"><div style={{ display: 'flex', gap: 8 }}><StatBig value={d.sacks} label="SACKS" /><StatBig value={d.tfls || 0} label="TFLs" /><StatBig value={d.interceptions} label="INTs" /><StatBig value={`${d.stopRate}%`} label="STOP %" /></div></StatCard>
+    {d.topResults && d.topResults.length > 0 && <StatCard title="DEF TOP RESULTS">{d.topResults.map(([r, c]) => <BarRow key={r} label={r} value={c} total={d.totalPlays} color="#3b82f6" />)}</StatCard>}
   </>);
 }
 function FieldTab({ s }) {
   const f = s.field;
   return (<>
     <StatCard title="HASH MARK TENDENCIES">{f.hashBreakdown.map(h => (<div key={h.hash} style={{ marginBottom: 6 }}><BarRow label={h.hash === 'L' ? 'LEFT' : h.hash === 'M' ? 'MIDDLE' : 'RIGHT'} value={h.count} total={s.overview.offense} color={h.hash === 'L' ? '#ef4444' : h.hash === 'M' ? '#f59e0b' : '#22c55e'} /><div style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: -4, marginBottom: 4 }}>Avg {h.avgYds} yds/play</div></div>))}</StatCard>
+    {/* Field Position (#15) */}
+    {f.fieldPosition && <StatCard title="FIELD POSITION" subtitle={`${f.fieldPosition.total} plays with yard line data`}>
+      <BarRow label="OWN TERRITORY" value={f.fieldPosition.ownTerr} total={f.fieldPosition.total} color="#ef4444" />
+      <BarRow label="OPP TERRITORY" value={f.fieldPosition.oppTerr} total={f.fieldPosition.total} color="#3b82f6" />
+      <BarRow label="RED ZONE" value={f.fieldPosition.redZone} total={f.fieldPosition.total} color="#22c55e" />
+      <BarRow label="BACKED UP (own 20)" value={f.fieldPosition.backedUp} total={f.fieldPosition.total} color="#f59e0b" />
+    </StatCard>}
     <StatCard title="RED ZONE" subtitle="Plays inside the 20"><div style={{ display: 'flex', gap: 8 }}><StatBig value={f.redZonePlays} label="RZ PLAYS" /><StatBig value={f.redZoneTD} label="RZ TDs" /><StatBig value={`${f.redZonePct}%`} label="RZ TD %" /></div></StatCard>
   </>);
 }

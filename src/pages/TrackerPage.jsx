@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
-import { fetchGame, updateGame } from '../lib/supaData';
-import { DEFAULT_COLUMNS } from '../columns';
+import { fetchGame, updateGame, fetchTemplates, fetchColumns } from '../lib/supaData';
+import { DEFAULT_COLUMNS, defaultColumns, resolveTemplateColumns, getColumnById } from '../columns';
 import ColumnCard from '../components/ColumnCard';
 import ConfirmModal from '../components/ConfirmModal';
 import { DropdownModal, PlayNavModal, EditGameModal } from '../components/Modals';
@@ -11,10 +11,7 @@ import { exportGameXLSX } from '../utils/xlsxExport';
 import { sendToHudl } from '../lib/hudlData';
 
 const INITIAL_PLAYS = 200;
-
-function emptyPlays(n) {
-  return Array.from({ length: n }, () => ({}));
-}
+const emptyPlays = n => Array.from({ length: n }, () => ({}));
 
 export default function TrackerPage() {
   const { gameId } = useParams();
@@ -32,169 +29,263 @@ export default function TrackerPage() {
   const [jumpOpen, setJumpOpen] = useState(false);
   const [editGameOpen, setEditGameOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null);
+  // In-game modals
+  const [colPickerOpen, setColPickerOpen] = useState(false);
+  const [tmplSwitcherOpen, setTmplSwitcherOpen] = useState(false);
+  const [saveAsOpen, setSaveAsOpen] = useState(false);
+  const [saveAsName, setSaveAsName] = useState('');
+  // Hudl push
+  const [hudlPushOpen, setHudlPushOpen] = useState(false);
+  // Templates for switcher
+  const [allTemplates, setAllTemplates] = useState([]);
 
   const saveTimer = useRef(null);
+  const autoTimer = useRef(null);
+  const clearAllBackup = useRef(null);
   const playsRef = useRef(plays);
+  const columnsRef = useRef(columns);
   playsRef.current = plays;
+  columnsRef.current = columns;
 
-  // Load game from Supabase
+  // ─── LOAD GAME ───
   useEffect(() => {
     if (!gameId) return;
     fetchGame(gameId).then(g => {
       setGame(g);
       const p = Array.isArray(g.plays) && g.plays.length > 0 ? g.plays : emptyPlays(INITIAL_PLAYS);
       setPlays(p);
-      // Use stored columns from game or defaults
       if (g.columns_config && Array.isArray(g.columns_config) && g.columns_config.length > 0) {
         setColumns(g.columns_config);
       }
-    }).catch(err => {
-      console.error('Load game error:', err);
-      showToast('Failed to load game');
-    });
-  }, [gameId]);
+      // Restore play position (#4)
+      try {
+        const pos = JSON.parse(localStorage.getItem('hd_play_positions') || '{}');
+        if (pos[g.id] != null && pos[g.id] < p.length) setPlayIdx(pos[g.id]);
+      } catch {}
+    }).catch(err => showToast('Failed to load game'));
 
-  // Auto-save with debounce
+    if (coach?.team_id) {
+      fetchTemplates(coach.team_id).then(setAllTemplates).catch(() => {});
+    }
+  }, [gameId, coach?.team_id]);
+
+  // ─── AUTO-SAVE ───
   const persist = useCallback(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       if (!gameId) return;
-      updateGame(gameId, { plays: playsRef.current }).catch(err => {
-        console.error('Save error:', err);
-      });
+      updateGame(gameId, { plays: playsRef.current }).catch(() => {});
     }, 800);
   }, [gameId]);
 
-  // Clean up timer
-  useEffect(() => {
-    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
-  }, []);
+  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
 
   const currentPlay = plays[playIdx] || {};
 
+  // ─── SET VALUE ───
   function setVal(colId, value) {
     setPlays(prev => {
       const next = [...prev];
       if (!next[playIdx]) next[playIdx] = {};
       next[playIdx] = { ...next[playIdx], [colId]: value || undefined };
-      // Remove undefined/empty keys
       if (!value) delete next[playIdx][colId];
       return next;
     });
     persist();
+    // Check auto-advance (#1)
+    setTimeout(() => checkAutoAdvance(), 50);
   }
 
-  // Count filled rows
-  const filledCount = plays.filter(p => p && Object.keys(p).length > 0).length;
-  const filledSet = new Set(plays.map((p, i) => (p && Object.keys(p).length > 0) ? i : -1).filter(i => i >= 0));
+  // ─── AUTO-ADVANCE (#1) ───
+  function checkAutoAdvance() {
+    if (autoTimer.current) clearTimeout(autoTimer.current);
+    const play = playsRef.current[playIdx] || {};
+    const allDone = columnsRef.current.every(c => {
+      const key = c.dataKey || c.id;
+      return play[key] && play[key] !== '';
+    });
+    if (allDone) {
+      autoTimer.current = setTimeout(() => {
+        nextPlay();
+      }, 400);
+    }
+  }
 
-  // Nav
+  // ─── COUNTS ───
+  const filledCount = plays.filter(p => p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0).length;
+  const filledSet = new Set(plays.map((p, i) => (p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0) ? i : -1).filter(i => i >= 0));
+
+  // ─── NAVIGATION ───
   function nextPlay() {
-    // Find next empty row after current
+    if (!plays[playIdx]) return;
+    const cur = plays[playIdx] || {};
+
+    // Auto-fill next play's DN and DIST (#2)
+    if (cur.odk !== 'K' && cur.odk !== 'S') {
+      const curDn = parseInt(cur.dn);
+      const curDist = parseFloat(cur.dist2);
+      const curGL = parseFloat(cur.gainloss);
+      const next = plays[playIdx + 1] || {};
+
+      if (!isNaN(curDn) && !isNaN(curDist) && !isNaN(curGL) && !next.dn && !next.dist2) {
+        if (curGL >= curDist) {
+          next.dn = '1';
+          next.dist2 = '10';
+        } else if (curDn < 4) {
+          next.dn = String(curDn + 1);
+          next.dist2 = String(Math.round(curDist - curGL));
+        }
+        if (!next.odk && cur.odk) next.odk = cur.odk;
+
+        setPlays(prev => {
+          const arr = [...prev];
+          if (!arr[playIdx + 1]) arr[playIdx + 1] = {};
+          arr[playIdx + 1] = { ...arr[playIdx + 1], ...next };
+          return arr;
+        });
+        persist();
+      }
+    }
+
     let next = playIdx + 1;
-    while (next < plays.length && plays[next] && Object.keys(plays[next]).length > 0) next++;
     if (next >= plays.length) {
-      // Add more rows
       setPlays(prev => [...prev, ...emptyPlays(50)]);
       next = plays.length;
     }
     setPlayIdx(next);
   }
 
-  function prevPlay() {
-    if (playIdx > 0) setPlayIdx(playIdx - 1);
-  }
+  function prevPlay() { if (playIdx > 0) setPlayIdx(playIdx - 1); }
 
   function addRows() {
-    setPlays(prev => [...prev, ...emptyPlays(50)]);
-    showToast('Added 50 rows');
+    setPlays(prev => [...prev, ...emptyPlays(25)]);
+    showToast('25 rows added');
   }
 
-  // Clear
+  // ─── LEAVE TRACKER (#4) ───
+  function leaveTracker() {
+    if (game?.id) {
+      try {
+        const pos = JSON.parse(localStorage.getItem('hd_play_positions') || '{}');
+        pos[game.id] = playIdx;
+        localStorage.setItem('hd_play_positions', JSON.stringify(pos));
+      } catch {}
+    }
+    navigate('/');
+  }
+
+  // ─── CLEAR ───
   function clearRow() {
     setConfirmModal({
-      title: 'Clear row',
-      message: `Clear all data for play ${playIdx + 1}?`,
+      title: 'Clear Play?',
+      message: `Clear all data for play #${playIdx + 1}?`,
       onConfirm: () => {
-        setPlays(prev => {
-          const next = [...prev];
-          next[playIdx] = {};
-          return next;
-        });
+        setPlays(prev => { const n = [...prev]; n[playIdx] = {}; return n; });
         persist();
         setConfirmModal(null);
       },
     });
   }
 
+  // Clear all with undo (#5)
   function clearAll() {
     setConfirmModal({
-      title: 'Clear all plays',
-      message: `Clear all ${filledCount} plays? This cannot be undone.`,
+      title: 'Clear all plays?',
+      message: 'This will erase all play data for this game.',
       danger: true,
       onConfirm: () => {
+        clearAllBackup.current = { plays: JSON.parse(JSON.stringify(plays)), playIdx };
         setPlays(emptyPlays(INITIAL_PLAYS));
         setPlayIdx(0);
         persist();
         setConfirmModal(null);
+        showUndoToast();
       },
     });
   }
 
-  // Edit game info
+  function showUndoToast() {
+    showToast('All plays cleared — tap here to UNDO', 8000, () => {
+      if (!clearAllBackup.current) return;
+      setPlays(clearAllBackup.current.plays);
+      setPlayIdx(clearAllBackup.current.playIdx);
+      clearAllBackup.current = null;
+      persist();
+      showToast('Undo successful');
+    });
+  }
+
+  // ─── EDIT GAME INFO ───
   async function handleEditGameSave(updates) {
     try {
       const updated = await updateGame(gameId, updates);
       setGame(prev => ({ ...prev, ...updated }));
       setEditGameOpen(false);
       showToast('Game info updated');
-    } catch (err) {
-      showToast('Failed to update: ' + err.message);
-    }
+    } catch (err) { showToast('Failed to update: ' + err.message); }
   }
 
-  // Export
+  // ─── EXPORT ───
   function handleExport() {
     setMenuOpen(false);
     try {
       exportGameXLSX(game, plays, columns);
       showToast('Exported to XLSX');
-    } catch (err) {
-      showToast('Export failed: ' + err.message);
-    }
+    } catch (err) { showToast('Export failed: ' + err.message); }
   }
 
-  // Send to Hudl
-  async function handleSendToHudl() {
+  // ─── SEND TO HUDL (#18) ───
+  function openHudlPush() {
     setMenuOpen(false);
-    if (!coach?.hudl_cookie) {
-      showToast('Connect to Hudl first (Settings)');
-      return;
-    }
-    if (!game?.hudl_cutup_id) {
-      showToast('This game was not loaded from Hudl');
-      return;
-    }
+    if (!coach?.hudl_cookie) { showToast('Connect to Hudl first (Settings)'); return; }
+    if (!game?.hudl_cutup_id) { showToast('This game was not loaded from Hudl'); return; }
+    setHudlPushOpen(true);
+  }
 
-    const filledPlays = plays.filter(p => p && Object.keys(p).length > 0 && p._clipId);
-    if (filledPlays.length === 0) {
-      showToast('No Hudl-linked plays to send');
-      return;
-    }
+  // ─── SWITCH TEMPLATE (#6) ───
+  function handleSwitchTemplate(tmpl) {
+    const allCols = defaultColumns();
+    const newCols = (tmpl.col_ids || tmpl.colIds || []).map(id => allCols.find(c => c.id === id)).filter(Boolean);
+    if (newCols.length === 0) { showToast('Template has no columns'); return; }
+    setColumns(newCols);
+    setTmplSwitcherOpen(false);
+    showToast(`Switched to "${tmpl.name}"`);
+  }
 
-    showToast(`Sending ${filledPlays.length} plays to Hudl…`);
+  // ─── SAVE AS TEMPLATE (#7) ───
+  async function handleSaveAsTemplate() {
+    if (!saveAsName.trim() || !coach?.team_id) return;
     try {
-      const result = await sendToHudl(plays, game.hudl_cutup_id, coach);
-      showToast(`Sent to Hudl — ${result.successCount || filledPlays.length} plays updated`);
-    } catch (err) {
-      showToast('Hudl write failed: ' + err.message);
+      const { createTemplate } = await import('../lib/supaData');
+      await createTemplate({
+        team_id: coach.team_id,
+        name: saveAsName.trim(),
+        col_ids: columns.map(c => c.id),
+        sort_order: 0,
+      });
+      setSaveAsOpen(false);
+      setSaveAsName('');
+      showToast('Template saved');
+    } catch (err) { showToast('Save failed: ' + err.message); }
+  }
+
+  // ─── ADD/REMOVE COLUMN IN-GAME (#8) ───
+  function addTrackerCol(colId) {
+    const allCols = defaultColumns();
+    const col = allCols.find(c => c.id === colId);
+    if (col) {
+      setColumns(prev => [...prev, col]);
+      showToast(`Added ${col.name}`);
     }
   }
 
-  // Title
+  function removeTrackerCol(colId) {
+    setColumns(prev => prev.filter(c => c.id !== colId));
+  }
+
+  // ─── TITLE ───
   const gameTitle = game
-    ? (game.home && game.away ? `${game.home} vs ${game.away}`
-      : game.home || game.away || game.hudl_source || 'Game')
+    ? (game.home && game.away ? `${game.home} vs ${game.away}` : game.home || game.away || game.hudl_source || 'Game')
     : 'Loading…';
 
   if (!game) {
@@ -205,99 +296,58 @@ export default function TrackerPage() {
           <div className="hdr-title">Loading…</div>
           <div style={{ width: 60 }} />
         </div>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-muted)' }}>
-          Loading game…
-        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-muted)' }}>Loading game…</div>
       </div>
     );
   }
+
+  const allCols = defaultColumns();
+  const activeIds = new Set(columns.map(c => c.id));
+  const availableCols = allCols.filter(c => !activeIds.has(c.id));
+
+  // Hudl push data
+  const playsWithClipIds = plays.filter(p => p._clipId && Object.keys(p).some(k => k !== '_clipId' && p[k]));
 
   return (
     <div className="view" style={{ position: 'relative' }}>
       {/* Header */}
       <div className="hdr">
-        <button className="hdr-btn" onClick={() => navigate('/')}>← Back</button>
-        <div
-          className="hdr-title"
-          onClick={() => setEditGameOpen(true)}
-          style={{ cursor: 'pointer' }}
-        >
-          {gameTitle}
-        </div>
+        <button className="hdr-btn" onClick={leaveTracker}>← Back</button>
+        <div className="hdr-title" onClick={() => setEditGameOpen(true)} style={{ cursor: 'pointer' }}>{gameTitle}</div>
         <div style={{ display: 'flex', gap: 5 }}>
           {game.hudl_cutup_id && (
-            <button className="hdr-btn" style={{ color: '#27ae60' }} onClick={handleSendToHudl}>▲ Send</button>
+            <button className="hdr-btn" style={{ color: '#27ae60' }} onClick={openHudlPush}>▲ Send</button>
           )}
           <button className="hdr-btn" onClick={() => setLayoutCols(layoutCols === 1 ? 2 : 1)}>
             ▤ {layoutCols === 1 ? '1COL' : '2COL'}
           </button>
-          <button
-            className="hdr-btn"
-            onClick={() => setMenuOpen(!menuOpen)}
-            style={{ fontSize: 18, padding: '4px 10px', lineHeight: 1 }}
-          >
-            ⋯
-          </button>
+          <button className="hdr-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ fontSize: 18, padding: '4px 10px', lineHeight: 1 }}>⋯</button>
         </div>
       </div>
 
       {/* Dropdown menu */}
       {menuOpen && (
         <>
-          <div
-            style={{ position: 'fixed', inset: 0, zIndex: 149 }}
-            onClick={() => setMenuOpen(false)}
-          />
-          <div style={{
-            position: 'absolute', top: 52, right: 12, zIndex: 150,
-            background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-            borderRadius: 12, minWidth: 180, overflow: 'hidden',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
-          }}>
-            <div className="tracker-menu-item" onClick={() => { navigate('/stats'); setMenuOpen(false); }} style={{ color: 'var(--color-blue)' }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 13V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M6 13V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M9 13V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M12 13V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              Stats
-            </div>
-            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); navigate('/columns'); }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              Manage columns
-            </div>
-            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); showToast('Save as template — coming soon'); }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="3" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M3 6H13" stroke="currentColor" strokeWidth="1.5" opacity="0.5"/></svg>
-              Save as template
-            </div>
-            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); showToast('Switch template — coming soon'); }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="3" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M3 6H13M8 6V13" stroke="currentColor" strokeWidth="1.5" opacity="0.5"/></svg>
-              Switch template
-            </div>
-            <div className="tracker-menu-item" onClick={handleExport}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3V10M5 7L8 10L11 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              Export XLSX
-            </div>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 149 }} onClick={() => setMenuOpen(false)} />
+          <div style={{ position: 'absolute', top: 52, right: 12, zIndex: 150, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, minWidth: 180, overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.5)' }}>
+            <div className="tracker-menu-item" onClick={() => { navigate('/stats'); setMenuOpen(false); }} style={{ color: 'var(--color-blue)' }}>📊 Stats</div>
+            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setColPickerOpen(true); }}>➕ Add / remove columns</div>
+            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setSaveAsOpen(true); setSaveAsName(''); }}>💾 Save as template</div>
+            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setTmplSwitcherOpen(true); }}>📋 Switch template</div>
+            <div className="tracker-menu-item" onClick={handleExport}>📥 Export XLSX</div>
             <div style={{ height: 1, background: 'var(--color-border)', margin: '2px 0' }} />
-            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); clearRow(); }} style={{ color: 'var(--color-yellow)' }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              Clear row
-            </div>
-            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); clearAll(); }} style={{ color: 'var(--color-red)' }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5H13M5 5V12H11V5M7 7V10M9 7V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              Clear all
-            </div>
+            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); clearRow(); }} style={{ color: 'var(--color-yellow)' }}>✕ Clear row</div>
+            <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); clearAll(); }} style={{ color: 'var(--color-red)' }}>🗑 Clear all</div>
           </div>
         </>
       )}
 
       {/* Sheet bar */}
       <div className="sheet-bar">
-        {/* Play # cell */}
-        <div
-          className="s-cell play-cell"
-          onClick={() => setJumpOpen(true)}
-        >
+        <div className="s-cell play-cell" onClick={() => setJumpOpen(true)}>
           <span className="s-cell-lbl">Play</span>
           <span className="s-cell-val">{playIdx + 1}</span>
         </div>
-        {/* Column value cells */}
         {columns.map(col => (
           <div key={col.id} className="s-cell" onClick={() => setJumpOpen(true)}>
             <span className="s-cell-lbl">{col.name}</span>
@@ -308,17 +358,11 @@ export default function TrackerPage() {
         ))}
       </div>
 
-      {/* Tracker body — column card grid */}
+      {/* Tracker body */}
       <div className="tracker-body">
         <div className="col-grid" style={{ gridTemplateColumns: layoutCols === 1 ? '1fr' : '1fr 1fr' }}>
           {columns.map(col => (
-            <ColumnCard
-              key={col.id}
-              col={col}
-              value={currentPlay[col.dataKey || col.id] ?? null}
-              onSetValue={setVal}
-              onOpenModal={setModal}
-            />
+            <ColumnCard key={col.id} col={col} value={currentPlay[col.dataKey || col.id] ?? null} onSetValue={setVal} onOpenModal={setModal} />
           ))}
         </div>
       </div>
@@ -330,43 +374,249 @@ export default function TrackerPage() {
         <button className="nav-btn nav-new" onClick={nextPlay}>Next play →</button>
       </div>
 
-      {/* Modals */}
+      {/* ═══ MODALS ═══ */}
+
+      {/* Dropdown modal */}
       {modal?.type === 'dropdown' && (
-        <DropdownModal
-          title={modal.title}
-          options={modal.options}
-          currentValue={currentPlay[modal.columnId] ?? null}
-          onSelect={val => { setVal(modal.columnId, val); }}
-          onClose={() => setModal(null)}
-          centerOn={modal.centerOn}
-        />
+        <DropdownModal title={modal.title} options={modal.options} currentValue={currentPlay[modal.columnId] ?? null}
+          onSelect={val => setVal(modal.columnId, val)} onClose={() => setModal(null)} centerOn={modal.centerOn} />
       )}
 
+      {/* Jump to play */}
       {jumpOpen && (
-        <PlayNavModal
-          current={playIdx}
-          max={Math.min(plays.length, Math.max(filledCount + 10, 20))}
-          filledSet={filledSet}
-          onJump={setPlayIdx}
-          onClose={() => setJumpOpen(false)}
-        />
+        <PlayNavModal current={playIdx} max={Math.min(plays.length, Math.max(filledCount + 10, 20))}
+          filledSet={filledSet} onJump={setPlayIdx} onClose={() => setJumpOpen(false)} />
       )}
 
-      <EditGameModal
-        open={editGameOpen}
-        game={game}
-        onSave={handleEditGameSave}
-        onClose={() => setEditGameOpen(false)}
-      />
+      {/* Edit game info */}
+      <EditGameModal open={editGameOpen} game={game} onSave={handleEditGameSave} onClose={() => setEditGameOpen(false)} />
 
-      <ConfirmModal
-        open={!!confirmModal}
-        title={confirmModal?.title}
-        message={confirmModal?.message}
-        danger={confirmModal?.danger}
-        onConfirm={confirmModal?.onConfirm}
-        onCancel={() => setConfirmModal(null)}
-      />
+      {/* Confirm */}
+      <ConfirmModal open={!!confirmModal} title={confirmModal?.title} message={confirmModal?.message}
+        danger={confirmModal?.danger} onConfirm={confirmModal?.onConfirm} onCancel={() => setConfirmModal(null)} />
+
+      {/* Column picker (#8) */}
+      {colPickerOpen && (
+        <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) setColPickerOpen(false); }}>
+          <div className="modal" style={{ maxHeight: '80dvh' }}>
+            <div className="modal-hdr">
+              <div className="modal-title">COLUMNS</div>
+              <div className="modal-x" onClick={() => setColPickerOpen(false)}>✕</div>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: 14, WebkitOverflowScrolling: 'touch' }}>
+              <div className="sec-label">Active ({columns.length})</div>
+              {columns.map(c => (
+                <div key={c.id} className="col-pick sel" style={{ marginBottom: 6 }}>
+                  <div style={{ flex: 1 }}><div className="col-pick-name">{c.name}</div></div>
+                  <button onClick={() => removeTrackerCol(c.id)} style={{ background: 'none', border: '1px solid var(--color-red)', color: 'var(--color-red)', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>✕</button>
+                </div>
+              ))}
+              <div className="sec-label" style={{ marginTop: 10 }}>Available ({availableCols.length})</div>
+              {availableCols.map(c => (
+                <div key={c.id} className="col-pick" onClick={() => addTrackerCol(c.id)} style={{ marginBottom: 6 }}>
+                  <div style={{ flex: 1 }}><div className="col-pick-name">{c.name}</div></div>
+                  <span style={{ color: 'var(--color-green)', fontWeight: 700, fontSize: 16 }}>+</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Template switcher (#6) */}
+      {tmplSwitcherOpen && (
+        <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) setTmplSwitcherOpen(false); }}>
+          <div className="modal" style={{ maxHeight: '60dvh' }}>
+            <div className="modal-hdr">
+              <div className="modal-title">SWITCH TEMPLATE</div>
+              <div className="modal-x" onClick={() => setTmplSwitcherOpen(false)}>✕</div>
+            </div>
+            <div className="list-scroll">
+              {allTemplates.map(t => (
+                <div key={t.id} className="dd-item" onClick={() => handleSwitchTemplate(t)}>{t.name}</div>
+              ))}
+              {allTemplates.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>No templates saved yet</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save as template (#7) */}
+      {saveAsOpen && (
+        <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) setSaveAsOpen(false); }}>
+          <div className="modal" style={{ maxWidth: 340 }}>
+            <div className="modal-hdr">
+              <div className="modal-title">SAVE AS TEMPLATE</div>
+              <div className="modal-x" onClick={() => setSaveAsOpen(false)}>✕</div>
+            </div>
+            <div className="modal-body">
+              <div className="fg">
+                <label className="fl">Template name</label>
+                <input className="fi" value={saveAsName} onChange={e => setSaveAsName(e.target.value)}
+                  placeholder="e.g. ODK Defense" onKeyDown={e => e.key === 'Enter' && handleSaveAsTemplate()} autoFocus />
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                Saves the current {columns.length} columns as a reusable template.
+              </div>
+            </div>
+            <div className="modal-foot">
+              <button className="btn btn-secondary" onClick={() => setSaveAsOpen(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSaveAsTemplate}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hudl push with field selection (#18) */}
+      {hudlPushOpen && (
+        <HudlPushModal
+          plays={plays}
+          cutupId={game?.hudl_cutup_id}
+          coach={coach}
+          onClose={() => setHudlPushOpen(false)}
+          onSuccess={msg => { setHudlPushOpen(false); showToast(msg); }}
+          onError={msg => showToast(msg)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ═══ HUDL PUSH MODAL (#18) — field selection, counts, overwrite warning ═══
+function HudlPushModal({ plays, cutupId, coach, onClose, onSuccess, onError }) {
+  const [pushing, setPushing] = useState(false);
+  const [checkedKeys, setCheckedKeys] = useState(new Set());
+
+  // Column map matching HTML HUDL_COL_MAP exactly
+  const HUDL_COL_MAP = {
+    odk:      { hudlName: 'ODK',       hudlId: 2626912 },
+    qtr:      { hudlName: 'QTR',       hudlId: 2626932 },
+    dn:       { hudlName: 'DN',        hudlId: 2626907 },
+    yardln:   { hudlName: 'YARD LN',   hudlId: 2626913 },
+    hash:     { hudlName: 'HASH',      hudlId: 2626914 },
+    playtype: { hudlName: 'PLAY TYPE', hudlId: 2626909 },
+    result:   { hudlName: 'RESULT',    hudlId: 2626910 },
+    gainloss: { hudlName: 'GN/LS',     hudlId: 2626911 },
+    series:   { hudlName: 'SERIES',    hudlId: 2626915 },
+    offform:  { hudlName: 'OFF FORM',  hudlId: 2626917 },
+    offplay:  { hudlName: 'OFF PLAY',  hudlId: 2626918 },
+  };
+
+  const playsWithData = plays.filter(p => p._clipId && Object.keys(p).some(k => k !== '_clipId' && p[k]));
+
+  // Count which columns have data
+  const activeCounts = {};
+  const sampleValues = {};
+  for (const p of playsWithData) {
+    for (const key of Object.keys(HUDL_COL_MAP)) {
+      const val = p[key];
+      if (val && String(val).trim()) {
+        activeCounts[key] = (activeCounts[key] || 0) + 1;
+        if (!sampleValues[key]) sampleValues[key] = String(val);
+      }
+    }
+  }
+  const mappable = Object.entries(activeCounts).sort((a, b) => b[1] - a[1]);
+
+  // Init all checked
+  useEffect(() => { setCheckedKeys(new Set(mappable.map(([k]) => k))); }, []);
+
+  function toggleKey(key) {
+    setCheckedKeys(prev => {
+      const n = new Set(prev);
+      if (n.has(key)) n.delete(key); else n.add(key);
+      return n;
+    });
+  }
+
+  async function handlePush() {
+    if (checkedKeys.size === 0) { onError('Select at least one column'); return; }
+    setPushing(true);
+
+    const columnMap = {};
+    const selectedKeys = [...checkedKeys];
+    for (const key of selectedKeys) {
+      const m = HUDL_COL_MAP[key];
+      if (m) columnMap[m.hudlName] = m.hudlId;
+    }
+
+    const pushPlays = playsWithData.map(p => {
+      const row = { clipId: p._clipId };
+      for (const key of selectedKeys) {
+        const m = HUDL_COL_MAP[key];
+        if (m) row[m.hudlName] = (p[key] && String(p[key]).trim()) ? String(p[key]) : null;
+      }
+      return row;
+    });
+
+    try {
+      const { HUDL_API } = await import('../lib/constants');
+      const headers = { 'Content-Type': 'application/json' };
+      if (coach?.hudl_cookie) headers['X-Hudl-Cookie'] = coach.hudl_cookie;
+      if (coach?.hudl_team_id) headers['X-Hudl-Team'] = coach.hudl_team_id;
+
+      const resp = await fetch(`${HUDL_API}/api/hudl/write-bulk`, {
+        method: 'POST', headers,
+        body: JSON.stringify({ cutupId, columnMap, plays: pushPlays }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Push failed');
+      onSuccess(`Pushed ${pushPlays.length} plays × ${selectedKeys.length} columns to Hudl`);
+    } catch (err) {
+      onError('Hudl push failed: ' + err.message);
+    }
+    setPushing(false);
+  }
+
+  return (
+    <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal" style={{ maxHeight: '80dvh' }}>
+        <div className="modal-hdr">
+          <div className="modal-title">SEND TO HUDL</div>
+          <div className="modal-x" onClick={onClose}>✕</div>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 14, WebkitOverflowScrolling: 'touch' }}>
+          {playsWithData.length === 0 ? (
+            <div style={{ padding: 20, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
+              No plays with Hudl clip IDs found.<br /><br />This game needs to be loaded from Hudl to enable push.
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 12, color: 'var(--color-accent)', fontWeight: 600, marginBottom: 10 }}>
+                {playsWithData.length} plays with clip IDs
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 6 }}>COLUMNS TO PUSH:</div>
+              {mappable.length === 0 ? (
+                <div style={{ fontSize: 12, color: 'var(--color-muted)', padding: '8px 0' }}>No data to push — all columns are empty.</div>
+              ) : (
+                mappable.map(([key, count]) => {
+                  const m = HUDL_COL_MAP[key];
+                  return (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, padding: '6px 8px', background: 'var(--color-surface2)', border: '1px solid var(--color-border)', borderRadius: 6, cursor: 'pointer', marginBottom: 4 }}>
+                      <input type="checkbox" checked={checkedKeys.has(key)} onChange={() => toggleKey(key)} style={{ margin: 0 }} />
+                      <span style={{ flex: 1, fontWeight: 600 }}>{m?.hudlName || key}</span>
+                      <span style={{ color: 'var(--color-muted)', fontSize: 10 }}>
+                        {count} plays · e.g. "{(sampleValues[key] || '').substring(0, 20)}"
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+              <div style={{ fontSize: 11, color: '#e67e22', background: 'rgba(230,126,34,0.08)', border: '1px solid rgba(230,126,34,0.2)', borderRadius: 6, padding: '8px 10px', marginTop: 10, lineHeight: 1.5 }}>
+                ⚠️ This will <strong>overwrite</strong> the selected columns in Hudl for all {playsWithData.length} plays. Existing values will be replaced.
+              </div>
+            </>
+          )}
+        </div>
+        {playsWithData.length > 0 && mappable.length > 0 && (
+          <div className="modal-foot">
+            <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" onClick={handlePush} disabled={pushing || checkedKeys.size === 0}>
+              {pushing ? 'PUSHING…' : 'PUSH →'}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

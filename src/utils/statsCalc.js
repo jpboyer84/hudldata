@@ -106,13 +106,60 @@ export function calcStats(plays) {
         avgYds: avg(dnGL), runPct: pct(dnRuns.length, dnPlays.length),
       };
     }).filter(d => d.total > 0),
+    // First downs (#11)
+    firstDowns: off.filter(p => {
+      const r = (getResult(p) || '').toLowerCase();
+      if (r.includes('td') || r.includes('1st') || r.includes('first')) return true;
+      const gl = getGL(p); const dist = num(getDist(p));
+      return gl !== null && dist !== null && gl >= dist;
+    }).length,
+    // Play type breakdown (#13)
+    playTypes: (() => {
+      const t = tally(off, getPlayType);
+      return Object.entries(t).sort((a, b) => b[1] - a[1]);
+    })(),
+    // Top results (#14)
+    topResults: (() => {
+      const t = tally(off, getResult);
+      return Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    })(),
+    // Drives (#12)
+    drives: (() => {
+      const driveMap = {};
+      let driveNum = 1;
+      off.forEach((p, i) => {
+        if (i === 0 || String(getDn(p)) === '1') {
+          const prevDn = i > 0 ? getDn(off[i - 1]) : null;
+          const prevResult = i > 0 ? (getResult(off[i - 1]) || '').toLowerCase() : '';
+          if (i > 0 && (prevResult.includes('td') || prevResult.includes('punt') || prevResult.includes('fg') || prevResult.includes('int') || prevResult.includes('fumble') || prevResult.includes('safety') || String(getDn(off[i-1])) === '4')) {
+            driveNum++;
+          }
+        }
+        if (!driveMap[driveNum]) driveMap[driveNum] = [];
+        driveMap[driveNum].push(p);
+      });
+      const driveList = Object.values(driveMap);
+      const driveLens = driveList.map(d => d.length);
+      const driveGains = driveList.map(d => d.map(getGL).filter(v => v !== null).reduce((a, b) => a + b, 0));
+      const scoring = driveList.filter(d => d.some(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('td') || r.includes('fg') || r.includes('score'); }));
+      const turnovers = driveList.filter(d => d.some(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('int') || r.includes('fumble'); }));
+      return {
+        count: driveList.length,
+        avgLen: avg(driveLens),
+        avgYds: avg(driveGains),
+        scorePct: pct(scoring.length, driveList.length),
+        turnovers: turnovers.length,
+      };
+    })(),
   };
 
   // ── DEFENSE ──
   const defGL = def.map(getGL).filter(v => v !== null);
   const sacks = def.filter(p => (getResult(p) || '').toLowerCase().includes('sack'));
   const ints = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('int') || r.includes('interception'); });
+  const tfls = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return (r.includes('tfl') || r.includes('for loss') || (gl !== null && gl < 0)); });
   const stops = def.filter(p => { const gl = getGL(p); return gl !== null && gl <= 0; });
+  const defResults = (() => { const t = tally(def, getResult); return Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, 8); })();
 
   const defense = {
     totalPlays: def.length,
@@ -123,8 +170,10 @@ export function calcStats(plays) {
     oppRunPct: pct(def.filter(isRun).length, def.length),
     sacks: sacks.length,
     interceptions: ints.length,
+    tfls: tfls.length,
     stops: stops.length,
     stopRate: pct(stops.length, def.length),
+    topResults: defResults,
   };
 
   // ── FIELD ──
@@ -154,6 +203,15 @@ export function calcStats(plays) {
     redZonePlays: redZone.length,
     redZoneTD: rzTD.length,
     redZonePct: pct(rzTD.length, redZone.length),
+    // Field position breakdown (#15)
+    fieldPosition: (() => {
+      const offYL = off.filter(p => num(getYardLn(p)) !== null);
+      if (offYL.length === 0) return null;
+      const ownTerr = offYL.filter(p => num(getYardLn(p)) <= 0).length;
+      const oppTerr = offYL.filter(p => { const y = num(getYardLn(p)); return y > 0 && y <= 49; }).length;
+      const backedUp = offYL.filter(p => { const y = num(getYardLn(p)); return y >= -20 && y <= 0; }).length;
+      return { total: offYL.length, ownTerr, oppTerr, redZone: redZone.length, backedUp };
+    })(),
   };
 
   // ── BY QUARTER ──
