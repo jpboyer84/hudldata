@@ -394,6 +394,89 @@ export function buildSummaryObj(plays, label) {
     quarterTrends: Object.entries(qtrMap).sort((a, b) => a[0] - b[0]).map(([q, d]) => ({
       qtr: q, offPlays: d.off, defPlays: d.def, avgYds: avg(d.gl),
     })),
+    // Per-passer breakdown
+    perPasser: (() => {
+      const pm = {};
+      off.filter(isPass).forEach(p => {
+        const name = p.passer || 'unknown';
+        if (!pm[name]) pm[name] = { att: 0, comp: 0, yds: 0, tds: 0, ints: 0, sacks: 0 };
+        pm[name].att++;
+        const r = (getResult(p) || '').toLowerCase();
+        if (r.includes('complete')) pm[name].comp++;
+        if (r.includes('td') && !r.includes('def')) pm[name].tds++;
+        if (r.includes('interception')) pm[name].ints++;
+        if (r.includes('sack')) pm[name].sacks++;
+        const gl = getGL(p);
+        if (gl !== null) pm[name].yds += gl;
+      });
+      return Object.entries(pm).map(([name, s]) => ({
+        passer: name, ...s,
+        compPct: s.att ? Math.round(s.comp/s.att*100) : 0,
+        ypa: s.att ? (s.yds/s.att).toFixed(1) : '0',
+      })).sort((a, b) => b.att - a.att);
+    })(),
+    // Per-receiver breakdown
+    perReceiver: (() => {
+      const rm = {};
+      off.filter(isPass).forEach(p => {
+        const name = p.receiver;
+        if (!name) return;
+        if (!rm[name]) rm[name] = { targets: 0, catches: 0, yds: 0, tds: 0 };
+        rm[name].targets++;
+        const r = (getResult(p) || '').toLowerCase();
+        if (r.includes('complete')) { rm[name].catches++; const gl = getGL(p); if (gl !== null) rm[name].yds += gl; }
+        if (r.includes('td') && r.includes('complete')) rm[name].tds++;
+      });
+      return Object.entries(rm).map(([name, s]) => ({
+        receiver: name, ...s,
+        catchPct: s.targets ? Math.round(s.catches/s.targets*100) : 0,
+      })).sort((a, b) => b.targets - a.targets);
+    })(),
+    // Per-rusher breakdown
+    perRusher: (() => {
+      const rm = {};
+      off.filter(isRun).forEach(p => {
+        const name = p.rusher;
+        if (!name) return;
+        if (!rm[name]) rm[name] = { carries: 0, yds: 0, tds: 0, long: 0 };
+        rm[name].carries++;
+        const gl = getGL(p);
+        if (gl !== null) { rm[name].yds += gl; if (gl > rm[name].long) rm[name].long = gl; }
+        const r = (getResult(p) || '').toLowerCase();
+        if (r.includes('td')) rm[name].tds++;
+      });
+      return Object.entries(rm).map(([name, s]) => ({
+        rusher: name, ...s,
+        ypc: s.carries ? (s.yds/s.carries).toFixed(1) : '0',
+      })).sort((a, b) => b.carries - a.carries);
+    })(),
     dataLabel: label || '',
   };
+}
+
+// ─── BUILD SLIM CSV for Ask AI drill-down (core columns only, all plays) ───
+export function buildSlimCsv(plays, label) {
+  const active = (plays || []).filter(p => {
+    if (!p) return false;
+    if (p.ignore === 'SKIP') return false;
+    return Object.keys(p).filter(k => !k.startsWith('_')).length > 0;
+  });
+  if (active.length === 0) return 'No play data.';
+
+  // Core columns only — enough for filtering but small enough to fit in token budget
+  const cols = ['odk','qtr','dn','dist2','yardln','hash','playtype','result','gainloss','offform','passer','receiver','rusher'];
+  // Only include columns that have data
+  const activeCols = cols.filter(c => active.some(p => p[c] != null && String(p[c]).trim()));
+  const hasGame = active.some(p => p._gameTitle);
+
+  const header = (hasGame ? 'game,' : '') + activeCols.join(',');
+  const rows = active.map(p => {
+    const g = hasGame ? (p._gameTitle || '').replace(/,/g, ' ') + ',' : '';
+    return g + activeCols.map(c => {
+      const v = p[c];
+      return (v != null && String(v).trim()) ? String(v).replace(/,/g, ' ') : '';
+    }).join(',');
+  });
+
+  return `${label || 'data'} | ${active.length} plays\n${header}\n${rows.join('\n')}`;
 }

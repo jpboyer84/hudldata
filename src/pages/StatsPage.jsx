@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
-import { calcStats, buildPlaysCsv, buildSummaryObj } from '../utils/statsCalc';
+import { calcStats, buildSummaryObj, buildSlimCsv } from '../utils/statsCalc';
 import { fetchHudlClips, hudlClipsToPlays } from '../lib/hudlData';
 import { fetchPlaybook, buildPlaybookContext, buildAskAISystemPrompt } from '../lib/playbook';
 import { HUDL_API } from '../lib/constants';
@@ -191,7 +191,7 @@ CRITICAL RULES:
     setMethodology({ insight: ins, explanation: null });
     setMethLoading(true);
     try {
-      const csv = buildPlaysCsv(plays, label);
+      const csv = buildSlimCsv(plays, label);
       const resp = await fetch(`${HUDL_API}/api/claude`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -295,16 +295,10 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
     setMessages(prev => [...prev, { role: 'user', text: q }]);
     setLoading(true);
     try {
-      let csv = buildPlaysCsv(plays, label);
-      // Guard: truncate CSV if too large for token limits (~100K chars ≈ 25K tokens)
-      if (csv.length > 100000) {
-        const lines = csv.split('\n');
-        const header = lines[0] + '\n' + lines[1]; // label line + header row
-        const dataLines = lines.slice(2);
-        const truncated = dataLines.slice(0, Math.floor(100000 / (dataLines[0]?.length || 80)));
-        csv = header + '\n' + truncated.join('\n') + `\n[...truncated from ${dataLines.length} to ${truncated.length} plays for token limit]`;
-      }
-      const systemPrompt = buildAskAISystemPrompt(playbook, label, csv);
+      // Hybrid approach: pre-computed summary (accurate, all plays) + slim CSV (for drill-down)
+      const summaryObj = buildSummaryObj(plays, label);
+      const slimCsv = buildSlimCsv(plays, label);
+      const systemPrompt = buildAskAISystemPrompt(playbook, label, summaryObj, slimCsv);
       const history = messages.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
       history.push({ role: 'user', content: q });
 
