@@ -8,7 +8,7 @@ import { fetchPlaybook, buildPlaybookContext, buildAskAISystemPrompt } from '../
 import { HUDL_API } from '../lib/constants';
 import HudlCutupPicker from '../components/HudlCutupPicker';
 
-const MAIN_TABS = ['SPOTLIGHT', 'STATS', 'ASK AI', 'SAVED'];
+const MAIN_TABS = ['SPOTLIGHT', 'STATS', 'ASK', 'SAVED'];
 const STAT_SUBS = ['OVERVIEW', 'OFFENSE', 'DEFENSE', 'FIELD', 'BY QTR'];
 
 // ═══════════════════════════════════════
@@ -55,7 +55,24 @@ function OffenseTab({ s }) {
     {offense.thirdDown > 0 && <StatCard title="3RD DOWN CONVERSIONS" subtitle={`${offense.thirdDown} attempts`}><div style={{ display: 'flex', gap: 8, marginBottom: 10 }}><StatBig value={offense.thirdConv} label="CONVERTED" /><StatBig value={`${offense.thirdPct}%`} label="CONV RATE" /></div><BarRow label="CONVERTED" value={offense.thirdConv} total={offense.thirdDown} color="#22c55e" /></StatCard>}
     {/* Drives (#12) */}
     {offense.drives && offense.drives.count > 0 && <StatCard title="DRIVES" subtitle={`${offense.drives.count} drives`}><div style={{ display: 'flex', gap: 8, marginBottom: 10 }}><StatBig value={offense.drives.count} label="DRIVES" /><StatBig value={offense.drives.avgLen} label="AVG LEN" /><StatBig value={offense.drives.avgYds} label="AVG YDS" /></div><div style={{ display: 'flex', gap: 8 }}><StatBig value={`${offense.drives.scorePct}%`} label="SCORE %" /><StatBig value={offense.drives.turnovers} label="TURNOVERS" /></div></StatCard>}
-    {offense.dnBreakdown.length > 0 && <StatCard title="DOWN BREAKDOWN" subtitle="Plays per down">{offense.dnBreakdown.map(d => (<div key={d.down} style={{ marginBottom: 10 }}><div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>{['1ST','2ND','3RD','4TH'][parseInt(d.down)-1]} DOWN — {d.total} plays · Avg {d.avgYds} yds</div><BarRow label="RUN" value={d.runs} total={d.total} color="var(--color-accent)" /><BarRow label="PASS" value={d.passes} total={d.total} color="#3b82f6" /></div>))}</StatCard>}
+    {offense.dnBreakdown.length > 0 && <StatCard title="DOWN BREAKDOWN" subtitle="Plays per down">{offense.dnBreakdown.map(d => (<div key={d.down} style={{ marginBottom: 10 }}><div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>{['1ST','2ND','3RD','4TH'][parseInt(d.down)-1]} DOWN — {d.total} plays · Avg {d.avgYds} yds</div><BarRow label="RUN" value={d.runs} total={d.total} color="var(--color-accent)" /><BarRow label="PASS" value={d.passes} total={d.total} color="#3b82f6" /></div>))}
+      {/* Run/Pass/Avg table like HTML version */}
+      <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6, letterSpacing: '0.04em' }}>RUN / PASS / AVG BY DOWN</div>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <tbody>
+            {offense.dnBreakdown.map(d => (
+              <tr key={d.down}>
+                <td style={{ padding: '5px 8px', fontSize: 11, color: 'var(--color-muted)' }}>{['1ST DOWN','2ND DOWN','3RD DOWN','4TH DOWN'][parseInt(d.down)-1]}</td>
+                <td style={{ padding: '5px 8px', fontSize: 11 }}>{d.total > 0 ? Math.round(d.runs/d.total*100) : 0}% RUN</td>
+                <td style={{ padding: '5px 8px', fontSize: 11 }}>{d.total > 0 ? Math.round(d.passes/d.total*100) : 0}% PASS</td>
+                <td style={{ padding: '5px 8px', fontSize: 11, color: 'var(--color-muted)' }}>{d.avgYds} avg</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </StatCard>}
     {/* Play Type Breakdown (#13) */}
     {offense.playTypes && offense.playTypes.length > 0 && <StatCard title="PLAY TYPE BREAKDOWN" subtitle={`${overview.offense} offense plays`}>{offense.playTypes.map(([t, c]) => <BarRow key={t} label={t} value={c} total={overview.offense} color="var(--color-accent)" />)}</StatCard>}
     {/* Top Results (#14) */}
@@ -85,6 +102,22 @@ function FieldTab({ s }) {
       <BarRow label="BACKED UP (own 20)" value={f.fieldPosition.backedUp} total={f.fieldPosition.total} color="#f59e0b" />
     </StatCard>}
     <StatCard title="RED ZONE" subtitle="Plays inside the 20"><div style={{ display: 'flex', gap: 8 }}><StatBig value={f.redZonePlays} label="RZ PLAYS" /><StatBig value={f.redZoneTD} label="RZ TDs" /><StatBig value={`${f.redZonePct}%`} label="RZ TD %" /></div></StatCard>
+    {/* Hash run/pass tendency table — matches HTML */}
+    {f.hashBreakdown.some(h => h.total > 0) && (
+      <StatCard title="HASH: RUN/PASS TENDENCY">
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <tbody>
+            {f.hashBreakdown.filter(h => h.total > 0).map(h => (
+              <tr key={h.hash}>
+                <td style={{ padding: '5px 8px', fontSize: 11, color: 'var(--color-muted)' }}>{h.hash === 'L' ? 'LEFT HASH' : h.hash === 'M' ? 'MIDDLE' : 'RIGHT HASH'}</td>
+                <td style={{ padding: '5px 8px', fontSize: 11 }}>{h.total > 0 ? Math.round(h.runs/h.total*100) : 0}% R / {h.total > 0 ? Math.round(h.passes/h.total*100) : 0}% P</td>
+                <td style={{ padding: '5px 8px', fontSize: 11, color: 'var(--color-muted)' }}>{h.avgYds} avg</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </StatCard>
+    )}
   </>);
 }
 function ByQtrTab({ s }) {
@@ -286,12 +319,15 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef(null);
   const scrollRef = useRef(null);
   useEffect(() => { scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight); }, [messages]);
 
-  async function handleSend() {
-    if (!input.trim() || loading) return;
-    const q = input.trim(); setInput('');
+  async function handleSend(overrideInput) {
+    const q = (overrideInput || input).trim();
+    if (!q || loading) return;
+    setInput('');
     setMessages(prev => [...prev, { role: 'user', text: q }]);
     setLoading(true);
     try {
@@ -299,8 +335,8 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
       const summaryObj = buildSummaryObj(plays, label);
       const slimCsv = buildSlimCsv(plays, label);
       const systemPrompt = buildAskAISystemPrompt(playbook, label, summaryObj, slimCsv);
-      const history = messages.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
-      history.push({ role: 'user', content: q });
+      // Stateless: each question gets full data context but no prior Q&A history
+      const history = [{ role: 'user', content: q }];
 
       const resp = await fetch(`${HUDL_API}/api/claude`, {
         method: 'POST',
@@ -322,7 +358,6 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
           });
           const data2 = await resp2.json();
           if (data2.error) {
-            const errMsg2 = typeof data2.error === 'string' ? data2.error : data2.error.message || '';
             setMessages(prev => [...prev, { role: 'assistant', text: 'Still rate limited. Wait a moment and try again.' }]);
           } else {
             const reply = data2.content?.map(c => c.text || '').filter(Boolean).join('\n') || 'No response.';
@@ -339,6 +374,32 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
       setMessages(prev => [...prev, { role: 'assistant', text: 'Error: ' + err.message }]);
     }
     setLoading(false);
+  }
+
+  function toggleVoice() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+    recognition.onstart = () => setIsRecording(true);
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setIsRecording(false);
+      // Auto-send after voice input
+      setTimeout(() => handleSend(transcript), 100);
+    };
+    recognition.onerror = () => setIsRecording(false);
+    recognition.onend = () => setIsRecording(false);
+    recognitionRef.current = recognition;
+    recognition.start();
   }
 
   function pinMessage(msg) {
@@ -364,8 +425,11 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
         {loading && <div style={{ padding: '10px 14px', color: 'var(--color-muted)', fontSize: 12 }}>Thinking…</div>}
       </div>
       <div style={{ padding: '10px 14px 16px', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, flexShrink: 0 }}>
-        <input className="fi" placeholder="Ask about your plays…" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} style={{ flex: 1, fontSize: 13, padding: '10px 12px' }} />
-        <button className="btn btn-primary" onClick={handleSend} disabled={loading || !input.trim()} style={{ padding: '10px 16px', fontSize: 13, flexShrink: 0 }}>Send</button>
+        <input className="fi" placeholder="Ask about your play data…" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} style={{ flex: 1, fontSize: 13, padding: '10px 12px' }} />
+        {('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) && (
+          <button onClick={toggleVoice} style={{ background: isRecording ? '#ef4444' : 'var(--color-surface2)', border: '1px solid var(--color-border)', borderRadius: 8, padding: '10px 12px', fontSize: 16, cursor: 'pointer', flexShrink: 0 }} title="Voice input">{isRecording ? '⏹' : '🎤'}</button>
+        )}
+        <button className="btn btn-primary" onClick={() => handleSend()} disabled={loading || !input.trim()} style={{ padding: '10px 16px', fontSize: 13, flexShrink: 0 }}>Ask →</button>
       </div>
     </div>
   );
@@ -453,10 +517,13 @@ export default function StatsPage() {
     <div className="view">
       <div className="hdr">
         <button className="hdr-btn" onClick={() => navigate('/')}>← Back</button>
-        <div className="hdr-title">Stats</div>
-        <button className="hdr-btn" onClick={() => setPickerOpen(true)} style={{ color: 'var(--color-accent)' }}>
-          {label ? (label.length > 18 ? label.substring(0, 16) + '…' : label) : 'Filter'}
-        </button>
+        <div className="hdr-title">Stats & analysis</div>
+        <div style={{ display: 'flex', gap: 5 }}>
+          <button className="hdr-btn" onClick={() => setPickerOpen(true)} style={{ color: 'var(--color-accent)' }}>
+            {label ? (label.length > 18 ? label.substring(0, 16) + '…' : label) : 'FILTER ▼'}
+          </button>
+          <button className="hdr-btn" onClick={() => { if (plays.length > 0) { setStats(calcStats(plays)); showToast('Refreshed'); } }}>↺</button>
+        </div>
       </div>
 
       {/* Main tabs */}
@@ -473,10 +540,21 @@ export default function StatsPage() {
 
       {/* Stats sub-tabs */}
       {mainTab === 'STATS' && (
-        <div style={{ display: 'flex', overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
-          {STAT_SUBS.map(st => (
-            <div key={st} onClick={() => setSubTab(st)} style={{ padding: '8px 14px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', letterSpacing: '0.06em', cursor: 'pointer', color: subTab === st ? 'var(--color-accent)' : 'var(--color-muted)', borderBottom: subTab === st ? '2px solid var(--color-accent)' : '2px solid transparent' }}>{st}</div>
-          ))}
+        <div style={{ display: 'flex', gap: 8, padding: '12px 14px', flexShrink: 0, borderBottom: '1px solid var(--color-border)' }}>
+          {STAT_SUBS.map((st, i) => {
+            const colors = [null, 'var(--color-green)', 'var(--color-blue)', null, null];
+            const borderColors = [null, 'rgba(34,197,94,0.3)', 'rgba(59,130,246,0.3)', null, null];
+            const isActive = subTab === st;
+            return (
+              <div key={st} onClick={() => setSubTab(st)} style={{
+                flex: 1, textAlign: 'center', padding: 12, fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', borderRadius: 8,
+                color: isActive ? (colors[i] || 'var(--color-text)') : (colors[i] || 'var(--color-muted)'),
+                background: isActive ? 'var(--color-accent-bg, rgba(232,89,12,0.12))' : 'var(--color-surface2)',
+                border: `1px solid ${isActive ? 'var(--color-accent)' : (borderColors[i] || 'var(--color-border)')}`,
+              }}>{st}</div>
+            );
+          })}
         </div>
       )}
 
@@ -493,7 +571,7 @@ export default function StatsPage() {
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>Loading play data…</div>
         ) : mainTab === 'SPOTLIGHT' ? (
           plays.length > 0 ? <SpotlightTab plays={plays} playbook={playbook} label={label} /> : <div className="empty-msg">Tap <strong>Filter</strong> to select cutups and load data.</div>
-        ) : mainTab === 'ASK AI' ? (
+        ) : mainTab === 'ASK' ? (
           <AskAITab plays={plays} playbook={playbook} label={label} savedList={saved} onSave={handleSaveAI} />
         ) : mainTab === 'SAVED' ? (
           <SavedTab saved={saved} onDelete={handleDeleteSaved} />
