@@ -472,6 +472,7 @@ export default function StatsPage() {
   const [subTab, setSubTab] = useState('OVERVIEW');
   const [loadingClips, setLoadingClips] = useState(false);
   const [label, setLabel] = useState('');
+  const [loadedIds, setLoadedIds] = useState(new Set()); // IDs of currently loaded cutups
   const [saved, setSaved] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hd_saved_ai') || '[]'); } catch { return []; }
   });
@@ -499,6 +500,7 @@ export default function StatsPage() {
   async function handlePickerLoad(selectedItems) {
     setPickerOpen(false); setLoadingClips(true);
     setLabel(selectedItems.length === 1 ? selectedItems[0].title : `${selectedItems.length} cutups`);
+    setLoadedIds(new Set(selectedItems.map(i => i.id)));
     showToast(`Loading ${selectedItems.length} cutup${selectedItems.length > 1 ? 's' : ''}…`);
     try {
       let allPlays = [];
@@ -588,7 +590,7 @@ export default function StatsPage() {
         )}
       </div>
 
-      {pickerOpen && <HudlCutupPicker onLoad={handlePickerLoad} onClose={() => setPickerOpen(false)} />}
+      {pickerOpen && <HudlCutupPicker onLoad={handlePickerLoad} onClose={() => setPickerOpen(false)} initialSelected={loadedIds} />}
     </div>
   );
 }
