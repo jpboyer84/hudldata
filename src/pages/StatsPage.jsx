@@ -454,7 +454,9 @@ export default function StatsPage() {
       <div className="hdr">
         <button className="hdr-btn" onClick={() => navigate('/')}>← Back</button>
         <div className="hdr-title">Stats</div>
-        <button className="hdr-btn" onClick={() => setPickerOpen(true)} style={{ color: 'var(--color-accent)' }}>Filter</button>
+        <button className="hdr-btn" onClick={() => setPickerOpen(true)} style={{ color: 'var(--color-accent)' }}>
+          {label ? (label.length > 18 ? label.substring(0, 16) + '…' : label) : 'Filter'}
+        </button>
       </div>
 
       {/* Main tabs */}
@@ -512,3 +514,4 @@ export default function StatsPage() {
     </div>
   );
 }
+
