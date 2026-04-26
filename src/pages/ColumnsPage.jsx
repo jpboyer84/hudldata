@@ -136,11 +136,22 @@ export default function ColumnsPage() {
                 </div>
               </div>
               <div style={{
-                fontSize: 9, fontWeight: 700, color: 'var(--color-muted)',
-                background: 'var(--color-bg)', padding: '3px 8px',
-                borderRadius: 4, letterSpacing: '0.05em',
+                display: 'flex', gap: 6, alignItems: 'center',
               }}>
-                BUILT-IN
+                <button
+                  className="hdr-btn"
+                  style={{ background: 'var(--color-accent)', color: '#fff', borderColor: 'var(--color-accent)', fontSize: 10, padding: '5px 10px' }}
+                  onClick={() => navigate(`/columns/edit/${col.id}?builtin=1`)}
+                >
+                  EDIT
+                </button>
+                <div style={{
+                  fontSize: 9, fontWeight: 700, color: 'var(--color-muted)',
+                  background: 'var(--color-bg)', padding: '3px 8px',
+                  borderRadius: 4, letterSpacing: '0.05em',
+                }}>
+                  BUILT-IN
+                </div>
               </div>
             </div>
           ))}
