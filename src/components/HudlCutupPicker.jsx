@@ -145,10 +145,14 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
   }
 
   function handleLoad() {
-    const selectedItems = items.filter(i => selected.has(i.id));
-    if (selectedItems.length === 0) return;
-    onLoad(selectedItems);
+    // Only load items that are both selected AND in current filtered view (matches HTML)
+    const visibleSelected = filtered.filter(i => selected.has(i.id));
+    if (visibleSelected.length === 0) return;
+    onLoad(visibleSelected);
   }
+
+  // Count of selected items visible in current filter
+  const visibleSelectedCount = filtered.filter(i => selected.has(i.id)).length;
 
   return (
     <div className="overlay open" onClick={e => { if (e.target === e.currentTarget) onClose?.(); }}>
@@ -278,13 +282,13 @@ export default function HudlCutupPicker({ onLoad, onClose }) {
               ↺
             </div>
             <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>
-              {selected.size} selected
+              {visibleSelectedCount} selected
             </span>
           </div>
           <button
             className="btn btn-primary"
             onClick={handleLoad}
-            disabled={selected.size === 0}
+            disabled={visibleSelectedCount === 0}
             style={{ padding: '10px 24px', fontSize: 14, fontWeight: 700 }}
           >
             LOAD →
