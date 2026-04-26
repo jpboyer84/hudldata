@@ -1,11 +1,26 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchColumns, createColumn, updateColumn } from '../lib/supaData';
+import { defaultColumns } from '../columns';
+
+// Extract button labels from a built-in column's btns array
+function extractButtons(col) {
+  if (!col) return [];
+  // Built-in columns: btns is [{l, v}, ...] — use the label (l)
+  if (Array.isArray(col.btns)) return col.btns.map(b => b.l || b.v || '');
+  // Dropdown values
+  if (Array.isArray(col.dd)) return col.dd;
+  // Custom columns: known_values is [string, ...]
+  if (Array.isArray(col.known_values)) return col.known_values;
+  return [];
+}
 
 export default function ColumnBuilderPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const isBuiltIn = searchParams.get('builtin') === '1';
   const navigate = useNavigate();
   const { coach } = useAuth();
   const showToast = useToast();
@@ -13,9 +28,32 @@ export default function ColumnBuilderPage() {
   const [name, setName] = useState('');
   const [buttons, setButtons] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [overrideId, setOverrideId] = useState(null); // Supabase row ID if override exists
 
   useEffect(() => {
-    if (id && coach?.team_id) {
+    if (!id) return;
+
+    if (isBuiltIn) {
+      // Load from built-in defaults
+      const builtIn = defaultColumns().find(c => c.id === id);
+      if (builtIn) {
+        setName(builtIn.name);
+        setButtons(extractButtons(builtIn));
+      }
+      // Also check if there's already a custom override in Supabase
+      if (coach?.team_id) {
+        fetchColumns(coach.team_id).then(cols => {
+          const existing = cols.find(c => c.data_key === id || c.name === builtIn?.name);
+          if (existing) {
+            // Load the override's values instead
+            setName(existing.name);
+            setButtons(existing.known_values || extractButtons(builtIn));
+            setOverrideId(existing.id);
+          }
+        }).catch(console.error);
+      }
+    } else if (coach?.team_id) {
+      // Load custom column from Supabase
       fetchColumns(coach.team_id).then(cols => {
         const col = cols.find(c => c.id === id);
         if (col) {
@@ -24,7 +62,7 @@ export default function ColumnBuilderPage() {
         }
       }).catch(console.error);
     }
-  }, [id, coach?.team_id]);
+  }, [id, coach?.team_id, isBuiltIn]);
 
   function addButton() {
     setButtons(prev => [...prev, '']);
@@ -49,7 +87,25 @@ export default function ColumnBuilderPage() {
     const cleanButtons = buttons.map(b => b.trim()).filter(Boolean);
     setSaving(true);
     try {
-      if (id) {
+      if (isBuiltIn) {
+        if (overrideId) {
+          // Update existing override in Supabase
+          await updateColumn(overrideId, {
+            name: name.trim(),
+            known_values: cleanButtons,
+          });
+        } else {
+          // Create a new custom override for the built-in column
+          await createColumn({
+            team_id: coach.team_id,
+            name: name.trim(),
+            data_key: id,
+            known_values: cleanButtons,
+            sort_order: 0,
+          });
+        }
+        showToast('Column updated');
+      } else if (id) {
         await updateColumn(id, {
           name: name.trim(),
           data_key: name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_'),
@@ -96,10 +152,16 @@ export default function ColumnBuilderPage() {
             placeholder="e.g. FORMATION, COVERAGE…"
             value={name}
             onChange={e => setName(e.target.value)}
+            disabled={isBuiltIn}
           />
+          {isBuiltIn && (
+            <div style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: 4 }}>
+              Built-in column — name cannot be changed, but you can add, remove, or edit buttons.
+            </div>
+          )}
         </div>
 
-        <div className="sec-label">Buttons</div>
+        <div className="sec-label" style={{ marginTop: 16 }}>Buttons ({buttons.length})</div>
         {buttons.map((btn, idx) => (
           <div key={idx} className="btn-row">
             <input
