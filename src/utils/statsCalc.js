@@ -232,12 +232,16 @@ export function calcStats(plays) {
 }
 
 // ─── BUILD CSV for AI prompt ───
-export function buildPlaysCsv(plays) {
+export function buildPlaysCsv(plays, label) {
   const active = (plays || []).filter(p => p && Object.keys(p).filter(k => !k.startsWith('_')).length > 0);
-  const rows = active.map(p =>
-    [getOdk(p), getQtr(p), getDn(p), getDist(p), getYardLn(p), getHash(p), getPlayType(p), getResult(p), getGL(p) ?? '', getForm(p) || ''].join(',')
-  );
-  return 'odk,qtr,dn,dist,ydln,hash,type,result,gl,form\n' + rows.join('\n');
+  if (active.length === 0) return 'No play data available.';
+  const header = 'game,odk,qtr,dn,dist,ydln,hash,type,result,gl,form';
+  const rows = active.map(p => {
+    const game = (p._gameTitle || label || '').replace(/,/g, ' ');
+    const form = getForm(p) || '';
+    return [game, getOdk(p)||'', getQtr(p)||'', getDn(p)||'', getDist(p)||'', getYardLn(p)||'', getHash(p)||'', getPlayType(p)||'', getResult(p)||'', getGL(p)??'', form].join(',');
+  });
+  return `${label || 'Game data'} | ${active.length} plays\n${header}\n${rows.join('\n')}`;
 }
 
 // ─── BUILD SUMMARY OBJECT for Spotlight — matches HTML buildDataSummary exactly ───

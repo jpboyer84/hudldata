@@ -295,10 +295,12 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
     setMessages(prev => [...prev, { role: 'user', text: q }]);
     setLoading(true);
     try {
-      const csv = buildPlaysCsv(plays);
+      const csv = buildPlaysCsv(plays, label);
       const systemPrompt = buildAskAISystemPrompt(playbook, label, csv);
       const history = messages.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
       history.push({ role: 'user', content: q });
+      // Safety guard: ensure history ends with user message (matches HTML)
+      while (history.length > 0 && history[history.length - 1].role !== 'user') history.pop();
 
       const resp = await fetch(`${HUDL_API}/api/claude`, {
         method: 'POST',

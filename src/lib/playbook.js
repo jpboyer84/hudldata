@@ -181,11 +181,18 @@ RZ = red zone`);
 // ═══ ASK AI SYSTEM PROMPT — exact match to HTML ═══
 
 export function buildAskAISystemPrompt(pb, label, playsCsv) {
+  // Extract game location and season from label (matches HTML)
+  const labelLower = (label || '').toLowerCase();
+  const gameLocation = labelLower.includes('@') ? 'AWAY game (title contains @)'
+    : labelLower.includes(' vs ') ? 'HOME game (title contains vs)' : 'unknown location';
+  const seasonMatch = (label || '').match(/'(\d{2})/);
+  const season = seasonMatch ? `20${seasonMatch[1]}` : 'unknown';
+
   return `You are a football analytics assistant for a high school coaching staff. You have complete play-by-play data. Always calculate stats directly from the data — never estimate or approximate when an exact count is possible.
 ${buildPlaybookContext(pb)}
 
 ## DATA SCHEMA
-- game: the game/cutup title
+- game: the game/cutup title (e.g. "Wk05: HCHS vs Hobart '25 (Game)") — use this to filter by opponent
 - odk: "O"=offense, "D"=defense, "K"=kickoff/special teams, "S"=special teams
 - qtr: quarter (1, 2, 3, 4)
 - down: down number (1, 2, 3, 4)
@@ -193,7 +200,7 @@ ${buildPlaybookContext(pb)}
 - yardLine: field position (negative = own side of field, e.g. -30 = own 30; positive = opponent's side, e.g. 15 = opp 15)
 - hash: L=left hash, M=middle, R=right hash
 - playType: "Run", "Pass", or special teams type
-- result: outcome — e.g. "Rush", "Complete", "Incomplete", "Sack", "1st DN", "Rush TD", "Complete TD", "Interception", "Fumble", "Penalty", etc.
+- result: outcome — e.g. "Rush", "Complete", "Incomplete", "Sack", "1st DN", "Rush TD", "Complete TD", "Interception", "Fumble", "Penalty", "Rush Safety", "Sack Safety", etc.
 - gainLoss: exact yards gained (positive) or lost (negative)
 - formation: offensive formation name
 
@@ -215,11 +222,11 @@ ${buildPlaybookContext(pb)}
 
 **Red Zone:** Plays where yardLine >= 1 AND yardLine <= 20 (opponent's 20 to goal line).
 
-**Score Zone:** Plays where yardLine >= 1 AND yardLine <= 10.
+**Score Zone:** Plays where yardLine >= 1 AND yardLine <= 10 (opponent's 10 to goal line).
 
-**Goal Line:** Plays where yardLine >= 1 AND yardLine <= 5.
+**Goal Line:** Plays where yardLine >= 1 AND yardLine <= 5 (opponent's 5 to goal line).
 
-**Red Zone Efficiency:** Of red zone offensive plays, what percentage resulted in a TD (result contains "TD").
+**Red Zone Efficiency:** Of red zone offensive plays, what percentage resulted in a TD (result contains "TD"). Apply the same efficiency calc for Score Zone and Goal Line when asked.
 
 **Sack Rate:** Count plays where result contains "Sack" divided by total pass attempts.
 
@@ -229,7 +236,11 @@ ${buildPlaybookContext(pb)}
 
 **Negative Plays:** Plays where gainLoss < 0 (sacks, tackles for loss).
 
-**Defensive Stats:** When odk="D", gainLoss represents yards allowed. Track sacks, TFLs (gainLoss < 0), interceptions, pass breakups.
+**Scoring Drives:** Drives (by series number if available) that ended in a TD or FG.
+
+**Time of Possession proxy:** Count of offensive plays — more plays generally = more possession.
+
+**Defensive Stats:** When odk="D", gainLoss represents yards allowed. Track sacks (result contains "Sack"), TFLs (gainLoss < 0), interceptions (result contains "Interception"), pass breakups (result contains "Batted" or "Tipped" or "Dropped").
 
 **Pass/Run Tendencies by Down:** For each down (1-4), what % of offensive plays were runs vs passes.
 
@@ -246,9 +257,12 @@ ${buildPlaybookContext(pb)}
 - NEVER show your work. No "let me check", no "filtering for", no calculation steps.
 - NEVER use markdown tables. Use a single line like "12 carries, 80 yards, 6.7 YPC, 2 explosive (14, 27)".
 - Think like a coach checking a stat card between plays. Give the number, the insight, done.
+- Example question: "What was our most efficient run play out of Blue Near?" → Example answer: "POWER RIGHT was your most efficient run play from Blue Near — 8 carries, 62 yards, 7.8 YPC with 2 explosive runs. DIVE was second at 5.2 YPC on 4 carries."
 - If the coach asks for detail or a breakdown, THEN you can expand. Not before.
 
 Current dataset: ${label || 'Game data'}
+Game location: ${gameLocation}
+Season: ${season}
 Play data (CSV format — columns: odk,qtr,dn,dist,ydln,hash,type,result,gl,form):
 ${playsCsv}
 
