@@ -6110,13 +6110,9 @@ async function sendChat() {
     return div;
   }
 
-  if (!Array.isArray(chatHistory)) chatHistory = [];
-  // Sliding window: keep only the last Q&A pair to avoid compounding tokens
-  // This prevents rate limiting while still allowing basic follow-ups
-  if (chatHistory.length > 2) {
-    chatHistory = chatHistory.slice(-2); // keep last user + assistant
-  }
-  chatHistory.push({ role: 'user', content: msg });
+  // Stateless: each question gets full data context but no prior Q&A history
+  // This eliminates rate limiting from token accumulation
+  chatHistory = [{ role: 'user', content: msg }];
   appendMsg('user', msg);
   const thinkingDiv = appendMsg('assistant thinking', 'Analyzing your data…');
 
