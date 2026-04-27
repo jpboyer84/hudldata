@@ -10,14 +10,8 @@ One-click Chrome Web Store install. Extension watches the Hudl video page for cl
 - Railway relay endpoints needed: `/api/remote/send` and `/api/remote/listen` (SSE)
 - noHuddleRemote (Rose-Hulman): Chrome Extension + phone app combo that controls Hudl playback over WiFi — same concept, different direction
 
-## 2. PASSER 99 JV Exclusion Filter
-When a play's PASSER column = 99, that signals JV took over. All plays from that point forward in that cutup should be excluded from Stats & Analysis (Spotlight, Ask AI, and visual charts). Affects three functions: `renderStatsFromData`, `buildDataSummary`, and `runSpotlightAnalysis`. All three already filter `p.ignore === 'SKIP'` — this adds a second filter pass that scans per-cutup and marks passer-99-onward plays as excluded. Could be a hard filter or a toggle in the Stats filter drawer.
-
-## 3. Voice Mode for Tracker
+## 2. Voice Mode for Tracker
 Use the browser's built-in Web Speech API (works in Chrome and Safari/iOS) to dictate play data hands-free. Coach enters voice mode, speaks play info like "1st and 10, own 20, right hash, run right, gain of 5" and the tracker parses it into the correct columns. "Next play" advances the tracker. Parsing pipeline: speech → text → pattern matching against column definitions and button values. Football vocabulary is small and predictable (downs, distances, hash, play types, results, formations), making recognition reliable. Best suited for film review in quiet environments; sideline noise would be a challenge.
-
-## 4. Per-Coach Spotlight Feedback Sync
-Move Spotlight thumbs up/down feedback from `localStorage` (`hd_spotlight_feedback`) to Supabase so it syncs across devices per coach. Currently feedback is per-browser/per-device and doesn't follow the coach to other devices or survive a cache clear. Create a `spotlight_feedback` table in Supabase with `user_id`, `insight_key`, and `liked` (boolean) columns, protected by RLS so each coach only sees their own preferences. On login, pull that coach's feedback history; on thumbs up/down, upsert to Supabase instead of localStorage. The AI prompt that receives feedback data stays the same — it just reads from a different source. Each coach on staff develops their own preferences independently.
 
 ---
 
@@ -25,3 +19,7 @@ Move Spotlight thumbs up/down feedback from `localStorage` (`hd_spotlight_feedba
 
 - **Roster / Player ID Mapping** — Discovered Hudl's roster endpoint at `/api/v2/teams/{teamId}/seasons/{seasonId}/roster`. Railway now auto-fetches the roster, and the app resolves raw participant IDs (e.g. `121936871`) to `#14 Wyatt Tewell` in passer/rusher/receiver fields before data reaches the AI. Zero manual entry, fully automatic.
 - **Hudl Column Sets Auto-Sync** — Hudl column sets now auto-load as templates in the tracker (with HUDL badge). Fetched via `/api/hudl/column-sets` on Railway.
+- **Varsity Only Filter** — Checkbox in Stats picker (default ON). Excludes plays where OPP PASSER = 99 or VARSITY = N/No. Replaces the old "PASSER 99 JV Exclusion" concept with a more robust filter.
+- **Per-Coach Spotlight Feedback Sync** — Moved from localStorage to Supabase `spotlight_feedback` table. Feedback syncs across devices per coach.
+- **Dynamic Hudl Columns** — `normalizeClip` passes through ALL breakdownData keys. `/api/hudl/columns` returns structured column list dynamically. New Hudl columns appear automatically without code changes.
+- **Cross-device sync** — Saved insights, spotlight feedback, and play position all stored in Supabase instead of localStorage.
