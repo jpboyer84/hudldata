@@ -29,6 +29,29 @@ export default function TrackerPage() {
   const [layoutOpen, setLayoutOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [voiceActive, setVoiceActive] = useState(false);
+  const [hudlSyncActive, setHudlSyncActive] = useState(false);
+
+  // ─── HUDL EXTENSION SYNC ───
+  useEffect(() => {
+    function handleSyncMessage(event) {
+      if (event.source !== window) return;
+      if (!event.data || event.data.source !== 'assistant-coach-sync') return;
+
+      if (event.data.type === 'extension-ready') {
+        setHudlSyncActive(true);
+      }
+      if (event.data.type === 'clip-changed') {
+        // Hudl advanced to a new clip → advance our tracker to match
+        const idx = event.data.clipIndex;
+        if (idx >= 0 && idx < plays.length && idx !== playIdx) {
+          setPlayIdx(idx);
+          showToast(`Synced to clip ${idx + 1}`);
+        }
+      }
+    }
+    window.addEventListener('message', handleSyncMessage);
+    return () => window.removeEventListener('message', handleSyncMessage);
+  }, [plays.length, playIdx]);
   const [modal, setModal] = useState(null);
   const [jumpOpen, setJumpOpen] = useState(false);
   const [editGameOpen, setEditGameOpen] = useState(false);
@@ -179,9 +202,20 @@ export default function TrackerPage() {
       next = plays.length;
     }
     setPlayIdx(next);
+    // Sync to Hudl extension if connected
+    if (hudlSyncActive) {
+      window.postMessage({ source: 'assistant-coach-sync', action: 'next-clip' }, '*');
+    }
   }
 
-  function prevPlay() { if (playIdx > 0) setPlayIdx(playIdx - 1); }
+  function prevPlay() {
+    if (playIdx > 0) {
+      setPlayIdx(playIdx - 1);
+      if (hudlSyncActive) {
+        window.postMessage({ source: 'assistant-coach-sync', action: 'prev-clip' }, '*');
+      }
+    }
+  }
 
   function addRows() {
     setPlays(prev => [...prev, ...emptyPlays(25)]);
@@ -395,6 +429,9 @@ export default function TrackerPage() {
         <div style={{ display: 'flex', gap: 5 }}>
           {game.hudl_cutup_id && (
             <button className="hdr-btn" style={{ color: '#27ae60' }} onClick={openHudlPush}>▲ Send</button>
+          )}
+          {hudlSyncActive && (
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.12)', padding: '4px 8px', borderRadius: 6, letterSpacing: '0.03em' }}>SYNCED</div>
           )}
           <div style={{ position: 'relative' }}>
             <button className="hdr-btn" onClick={() => setLayoutOpen(!layoutOpen)}>Layout ▾</button>
