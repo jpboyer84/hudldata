@@ -71,6 +71,7 @@ TB - Touchback
 TD - Touchdown
 TE - Tight End
 TFL - Tackle for Loss
+TARGET - Target Position
 TOT - Total (combined tackles)
 WPA - Win Probability Added
 WR - Wide Receiver
@@ -130,6 +131,7 @@ Slot - A receiver lined up inside of the outermost WR, typically off the line of
 Stop - A defensive play where the opponent gains 0 or fewer yards.
 Success Rate - The percentage of plays with positive EPA. Measures offensive consistency. A team with a high success rate moves the chains reliably rather than depending on big plays. Above 50% is elite. Strongly predictive of future wins.
 Tackle for Loss - A play where the ball carrier is tackled behind the line of scrimmage for negative yardage. Excludes penalties.
+Target - Which position got the ball, either handed or thrown to them on a given play. Identifies the skill player who was the intended or actual ball carrier/receiver.
 Touchback - Ball placed at the 25-yard line (kickoff) or 20-yard line (punt) when not returned.
 Trap - A run play where a pulling lineman blocks a defensive lineman who was intentionally left unblocked.
 Win Probability Added - Measures how much a single play changes a team's probability of winning. Unlike EPA, WPA accounts for score, time remaining, and game situation. A clutch 4th-quarter conversion adds more WPA than the same play in the 1st quarter.
@@ -283,6 +285,7 @@ ${buildPlaybookContext(pb)}
 - **Red Zone**: yardln between 1 and 20
 - **Explosive Play**: run gaining 10+ yards, or pass gaining 15+ yards
 - **Stop**: defensive play where opponent gains 0 or fewer yards
+- **Target**: which position got the ball — either handed or thrown to them on a given play. Identifies the skill player who was the intended or actual ball carrier/receiver.
 
 ## RULES
 - First sentence = the answer (a number, percentage, or direct fact)
