@@ -42,6 +42,8 @@ export default function ColumnCard({ col, value, onSetValue, onOpenModal, onEdit
   // ── TYPE: btns_dd (buttons + dropdown trigger) ──
   function renderBtnsDd() {
     const btns = col.btns || [];
+    const btnVals = new Set(btns.map(b => b.v));
+    const ddSelected = v && !btnVals.has(v) && (col.dd || []).includes(v);
     const allItems = [...btns.map(b => b), { isDd: true }];
     const gc = gridCls(allItems.length);
     return (
@@ -59,16 +61,17 @@ export default function ColumnCard({ col, value, onSetValue, onOpenModal, onEdit
           );
         })}
         <div
-          className={`t-btn${allItems.length > 4 ? ' sm' : ''}`}
+          className={`t-btn${ddSelected ? ' sel' : ''}${allItems.length > 4 ? ' sm' : ''}`}
           onClick={() => onOpenModal({
             type: 'dropdown',
             columnId: colKey,
             title: col.name,
             options: col.dd || [],
+            centerOn: v,
           })}
-          style={{ color: 'var(--color-accent)' }}
+          style={ddSelected ? {} : { color: 'var(--color-accent)' }}
         >
-          {col.ddLbl || '▼'}
+          {ddSelected ? v : (col.ddLbl || '▼')}
         </div>
       </div>
     );
@@ -147,3 +150,4 @@ export default function ColumnCard({ col, value, onSetValue, onOpenModal, onEdit
     </div>
   );
 }
+
