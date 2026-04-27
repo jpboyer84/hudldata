@@ -76,7 +76,7 @@ export default function LandingPage() {
           }}>
 
             {/* Tag Game Film — open to everyone */}
-            <div className="lcard" onClick={() => navigate('/trackers?new=1')}>
+            <div className="lcard" onClick={() => navigate('/trackers')}>
               <div className="lcard-icon">
                 <TagGameIcon />
               </div>
