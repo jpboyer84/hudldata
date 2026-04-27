@@ -264,6 +264,7 @@ CRITICAL RULES:
           </div>
         </div>
         <div style={{ fontSize: 16, fontWeight: 700, color: sideColor, marginTop: 4 }}>{ins.stat}</div>
+        <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4, color: ins.priority === 'high' ? '#ef4444' : ins.priority === 'medium' ? '#f59e0b' : 'var(--color-text)' }}>{ins.headline}</div>
       </div>
     );
   }
