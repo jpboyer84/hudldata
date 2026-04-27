@@ -157,7 +157,6 @@ export default function TrackersHubPage() {
         <button className="hdr-btn" onClick={() => navigate('/')}>← Back</button>
         <div className="hdr-title">Tag Game Film</div>
         <div style={{ display: 'flex', gap: 5 }}>
-          <button className="hdr-btn" onClick={() => navigate('/archive')}>Archive</button>
           <button className="hdr-btn" onClick={() => navigate('/templates')}>Templates</button>
           <button className="hdr-btn" onClick={() => navigate('/columns')}>Columns</button>
           <button
