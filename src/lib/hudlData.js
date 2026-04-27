@@ -17,6 +17,7 @@ const HUDL_TO_COL = {
   play_dir: 'playdir',
   eff: 'eff',
   passer: 'passer',
+  rusher: 'rusher',
   receiver: 'receiver',
   series: 'series',
   personnel: 'personnel',
@@ -139,4 +140,45 @@ export async function sendToHudl(plays, cutupId, coach) {
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.error || 'Failed to write to Hudl');
   return data;
+}
+
+// ─── ROSTER: Fetch and cache player roster for a season ───
+let rosterCache = {}; // { seasonId: { players, ts } }
+
+export async function fetchRoster(seasonId, coach) {
+  if (!seasonId) return null;
+
+  // Check local cache (24hr)
+  const cached = rosterCache[seasonId];
+  if (cached && Date.now() - cached.ts < 24 * 60 * 60 * 1000) return cached.data;
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (coach?.hudl_cookie) headers['X-Hudl-Cookie'] = coach.hudl_cookie;
+  if (coach?.hudl_team_id) headers['X-Hudl-Team'] = coach.hudl_team_id;
+
+  try {
+    const resp = await fetch(`${HUDL_API}/api/hudl/roster/${seasonId}`, { headers });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    rosterCache[seasonId] = { data, ts: Date.now() };
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+// Replace raw participant IDs with "#14 Wyatt Tewell" labels in clip data
+export function resolvePlayerIds(clips, roster) {
+  if (!roster?.players || !clips?.length) return clips;
+  const players = roster.players;
+  return clips.map(clip => {
+    const resolved = { ...clip };
+    for (const field of ['passer', 'rusher', 'receiver']) {
+      const id = clip[field];
+      if (id && players[id]) {
+        resolved[field] = players[id].label;
+      }
+    }
+    return resolved;
+  });
 }
