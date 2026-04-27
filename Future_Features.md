@@ -10,8 +10,8 @@ One-click Chrome Web Store install. Extension watches the Hudl video page for cl
 - Railway relay endpoints needed: `/api/remote/send` and `/api/remote/listen` (SSE)
 - noHuddleRemote (Rose-Hulman): Chrome Extension + phone app combo that controls Hudl playback over WiFi — same concept, different direction
 
-## 2. Voice Mode for Tracker
-Use the browser's built-in Web Speech API (works in Chrome and Safari/iOS) to dictate play data hands-free. Coach enters voice mode, speaks play info like "1st and 10, own 20, right hash, run right, gain of 5" and the tracker parses it into the correct columns. "Next play" advances the tracker. Parsing pipeline: speech → text → pattern matching against column definitions and button values. Football vocabulary is small and predictable (downs, distances, hash, play types, results, formations), making recognition reliable. Best suited for film review in quiet environments; sideline noise would be a challenge.
+## 2. Voice Mode for Tracker — IMPLEMENTED
+~~Use the browser's built-in Web Speech API~~ — **Now live.** See VoiceMode.jsx.
 
 ---
 
@@ -23,3 +23,4 @@ Use the browser's built-in Web Speech API (works in Chrome and Safari/iOS) to di
 - **Per-Coach Spotlight Feedback Sync** — Moved from localStorage to Supabase `spotlight_feedback` table. Feedback syncs across devices per coach.
 - **Dynamic Hudl Columns** — `normalizeClip` passes through ALL breakdownData keys. `/api/hudl/columns` returns structured column list dynamically. New Hudl columns appear automatically without code changes.
 - **Cross-device sync** — Saved insights, spotlight feedback, and play position all stored in Supabase instead of localStorage.
+- **Voice Mode for Tracker** — Web Speech API-based voice input. Tap 🎤 in the bottom nav to enter voice mode. Continuous listening with auto-restart. Parses football speech: "1st and 10 own 20 right hash run gain of 5" → fills DN, DIST, YARDLN, HASH, PLAYTYPE, GAINLOSS. Commands: "next play", "previous", "clear", "stop". See `VoiceMode.jsx`.
