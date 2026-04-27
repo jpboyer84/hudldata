@@ -9,7 +9,7 @@ import { fetchSavedInsights, createSavedInsight, deleteSavedInsight, fetchSpotli
 import { HUDL_API } from '../lib/constants';
 import HudlCutupPicker from '../components/HudlCutupPicker';
 
-const MAIN_TABS = ['SPOTLIGHT', 'STATS', 'ASK', 'SAVED'];
+const MAIN_TABS = ['AI ANALYSIS', 'STATS', 'ASK', 'SAVED'];
 const STAT_SUBS = ['OVERVIEW', 'OFFENSE', 'DEFENSE', 'FIELD', 'BY QTR'];
 
 // ═══════════════════════════════════════
@@ -265,7 +265,6 @@ CRITICAL RULES:
         </div>
         <div style={{ fontSize: 16, fontWeight: 700, color: sideColor, marginTop: 4 }}>{ins.stat}</div>
         <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4, color: ins.priority === 'high' ? '#ef4444' : ins.priority === 'medium' ? '#f59e0b' : 'var(--color-text)' }}>{ins.headline}</div>
-        <div style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>{ins.why}</div>
       </div>
     );
   }
@@ -273,7 +272,7 @@ CRITICAL RULES:
   return (
     <div style={{ padding: 14 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ fontWeight: 700, fontSize: 14 }}>AI Spotlight</span>
+        <span style={{ fontWeight: 700, fontSize: 14 }}>AI Analysis</span>
         <button className="hdr-btn" onClick={() => runAnalysis(false)} style={{ fontSize: 10, padding: '4px 10px' }}>↺ REFRESH</button>
       </div>
       {loading && insights.length === 0 && (
@@ -498,7 +497,7 @@ export default function StatsPage() {
   const [plays, setPlays] = useState(filteredDirect || []);
   const [stats, setStats] = useState(filteredDirect ? calcStats(filteredDirect) : null);
   const [playbook, setPlaybook] = useState(null);
-  const [mainTab, setMainTab] = useState('SPOTLIGHT');
+  const [mainTab, setMainTab] = useState('AI ANALYSIS');
   const [subTab, setSubTab] = useState('OVERVIEW');
   const [loadingClips, setLoadingClips] = useState(false);
   const [label, setLabel] = useState(directLabel || '');
@@ -632,7 +631,7 @@ export default function StatsPage() {
       <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         {loadingClips ? (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>Loading play data…</div>
-        ) : mainTab === 'SPOTLIGHT' ? (
+        ) : mainTab === 'AI ANALYSIS' ? (
           plays.length > 0 ? <SpotlightTab plays={plays} playbook={playbook} label={label} coach={coach} /> : <div className="empty-msg">Tap <strong>Filter</strong> to select cutups and load data.</div>
         ) : mainTab === 'ASK' ? (
           <AskAITab plays={plays} playbook={playbook} label={label} savedList={saved} onSave={handleSaveAI} />
@@ -655,4 +654,5 @@ export default function StatsPage() {
     </div>
   );
 }
+
 
