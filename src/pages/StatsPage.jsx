@@ -202,7 +202,7 @@ CRITICAL RULES:
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
           max_tokens: 1600,
-          system: systemPrompt,
+          system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
           messages: [{ role: 'user', content: `Analyze this football play data and return insights as JSON:\n${JSON.stringify(summaryObj, null, 2)}${existingNote}` }],
         }),
       });
@@ -341,7 +341,12 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
       const resp = await fetch(`${HUDL_API}/api/claude`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 500, system: systemPrompt, messages: history }),
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 500,
+          system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+          messages: history,
+        }),
       });
       const data = await resp.json();
       // Handle API errors — retry once on rate limit
@@ -354,7 +359,12 @@ function AskAITab({ plays, playbook, label, savedList, onSave }) {
           const resp2 = await fetch(`${HUDL_API}/api/claude`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 500, system: systemPrompt, messages: history }),
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 500,
+              system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+              messages: history,
+            }),
           });
           const data2 = await resp2.json();
           if (data2.error) {
