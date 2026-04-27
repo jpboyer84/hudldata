@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [coach, setCoach] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [coachChecked, setCoachChecked] = useState(false);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export function AuthProvider({ children }) {
         if (session?.user) fetchCoach(session.user.id);
         else {
           setCoach(null);
+          setCoachChecked(false);
           setLoading(false);
         }
       }
@@ -49,8 +51,11 @@ export function AuthProvider({ children }) {
         console.error('Error fetching coach:', error);
       }
       setCoach(data || null);
+      // Only mark checked on successful query (not on network errors)
+      setCoachChecked(true);
     } catch (err) {
       console.error('fetchCoach error:', err);
+      // Network error — don't set coachChecked, so we don't redirect to team-setup
     } finally {
       setLoading(false);
     }
@@ -189,6 +194,7 @@ export function AuthProvider({ children }) {
     user,
     coach,
     loading,
+    coachChecked,
     passwordRecovery,
     setPasswordRecovery,
     signUp,
@@ -211,4 +217,5 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+
 
