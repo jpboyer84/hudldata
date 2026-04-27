@@ -5,55 +5,80 @@ import { supabase } from './supabase';
 // ════════════════════════════════════════
 
 export const PLAYBOOK_DEFAULTS = {
-  team_info: `Team Name = Your School Name (Abbreviation)
-School = Full School Name, City, State
-Rivals = Opponent 1, Opponent 2, Opponent 3
-3 Best Opponents (Big 3) = Opponent 1, Opponent 2, Opponent 3
-Conference Opponents = Opponent 1, Opponent 2, Opponent 3`,
+  team_info: `Team Name - Your School Name (Abbreviation)
+School - Full School Name, City, State
+Rivals - Opponent 1, Opponent 2, Opponent 3
+3 Best Opponents (Big 3) - Opponent 1, Opponent 2, Opponent 3
+Conference Opponents - Opponent 1, Opponent 2, Opponent 3`,
 
-  run_plays: `Play Name = Concept (e.g. Power Right)
-Play Name = Concept (e.g. Counter Left)
-Play Name = Concept (e.g. Inside Zone Right)`,
+  run_plays: `Play Name - Concept (e.g. Power Right)
+Play Name - Concept (e.g. Counter Left)
+Play Name - Concept (e.g. Inside Zone Right)`,
 
-  pass_plays: `Play Name = Concept (e.g. Four Verticals)
-Play Name = Concept (e.g. Shallow Cross)`,
+  pass_plays: `Play Name - Concept (e.g. Four Verticals)
+Play Name - Concept (e.g. Shallow Cross)`,
 
-  formations: `Formation Name = Personnel grouping (e.g. 11 personnel — 1 RB, 1 TE, 3 WR)
-Formation Name = Personnel grouping`,
+  formations: `Formation Name - Personnel grouping (e.g. 11 personnel — 1 RB, 1 TE, 3 WR)
+Formation Name - Personnel grouping`,
 
-  tags: `Tag Name = What it does (e.g. extra blocker added)
-Motion Name = How the player moves pre-snap`,
+  tags: `Tag Name - What it does (e.g. extra blocker added)
+Motion Name - How the player moves pre-snap`,
 
-  defense: `Front Name = Description (e.g. Under = Weak 3-tech, Strong 5-tech)
-Coverage Name = Description (e.g. Cover 3 = 3 deep, 4 under)
-Blitz Name = Description (e.g. Fire Zone = 5-man pressure with 3 dropping)`,
+  defense: `Front Name - Description (e.g. Under - Weak 3-tech, Strong 5-tech)
+Coverage Name - Description (e.g. Cover 3 - 3 deep, 4 under)
+Blitz Name - Description (e.g. Fire Zone - 5-man pressure with 3 dropping)`,
 
-  stat_rules: `First Down = gainLoss >= dist, OR result contains "TD", OR result is "1st DN"
-3rd/4th Down Conversion = same logic as First Down
-Yards Per Carry = sum gainLoss for Run plays / run count
-Yards Per Pass Attempt = includes incomplete passes at 0 yards
-Completion Rate = result contains "Complete" / total pass attempts
-Red Zone = yardLine >= 1 AND yardLine <= 20 (opponent's 20-yard line to goal line)
-Score Zone = yardLine >= 1 AND yardLine <= 10
-Goal Line = yardLine >= 1 AND yardLine <= 5
-Sack Rate = result contains "Sack" / total pass attempts
-Explosive Run = gainLoss >= 10 on a Run play
-Explosive Pass = gainLoss >= 15 on a Pass play
-Negative Play = gainLoss < 0`,
+  terminology: `TFL - Tackle for Loss. A play where the ball carrier is tackled behind the line of scrimmage (negative yardage). Excludes fumbles and penalties.
+LOS - Line of Scrimmage. The yard line where the ball is snapped.
+ODK - Offense/Defense/Kicking. Tags each play as O, D, or K.
+QBR - Quarterback Rating (NFL Passer Rating formula, 0-158.3 scale).
+YPC - Yards Per Carry. Total rush yards divided by rush attempts.
+YPA - Yards Per Attempt. Total pass yards divided by pass attempts (incompletes count as 0).
+RZ - Red Zone. Plays inside the opponent's 20-yard line.
+GL - Gain/Loss. Net yardage on a play.
+DN - Down (1st, 2nd, 3rd, 4th).
+DIST - Distance to go for a first down.
+RPO - Run-Pass Option.
+PA - Play Action.
+HASH - Field position: Left, Middle, or Right hash.
+EXPLOSIVE - A big play. Run of 10+ yards or pass of 15+ yards.
+NEGATIVE PLAY - Any play with negative yardage (gainloss < 0).
+CONVERSION - Earning a first down on 3rd or 4th down.
+STOP - A defensive play where the opponent gains 0 or fewer yards.
+SACK - Quarterback is tackled behind the LOS on a pass play.
+INT - Interception.
+TD - Touchdown.
+FG - Field Goal.`,
+
+  stat_rules: `First Down - gainLoss >= dist, OR result contains "TD", OR result is "1st DN"
+3rd/4th Down Conversion - same logic as First Down
+Yards Per Carry - sum gainLoss for Run plays / run count
+Yards Per Pass Attempt - includes incomplete passes at 0 yards
+Completion Rate - result contains "Complete" / total pass attempts
+Red Zone - yardLine >= 1 AND yardLine <= 20 (opponent's 20-yard line to goal line)
+Score Zone - yardLine >= 1 AND yardLine <= 10
+Goal Line - yardLine >= 1 AND yardLine <= 5
+Sack Rate - result contains "Sack" / total pass attempts
+Explosive Run - gainLoss >= 10 on a Run play
+Explosive Pass - gainLoss >= 15 on a Pass play
+Negative Play - gainLoss < 0
+TFL (our defense) - defense.tflsForced: defensive plays with negative yardage, excluding fumbles/penalties
+TFL (against our offense) - offense.tflAgainst: offensive plays with negative yardage, excluding fumbles/penalties`,
 
   general: '',
 };
 
 // Section metadata
 export const PB_SECTIONS = {
-  team_info:   { title: '🏫 TEAM INFO',         emoji: '🏫', hint: 'Key = Value format, one per line. Tells the AI who you are, your rivalries, and conference opponents.',  heading: 'TEAM INFO' },
-  run_plays:   { title: '🏃 RUN PLAYS & PASS PRO', emoji: '🏃', hint: 'Play Name = Concept, one per line. Include run plays and pass protection schemes.',          heading: 'RUN PLAYS & PASS PROTECTION' },
-  pass_plays:  { title: '🎯 PASS PLAYS',         emoji: '🎯', hint: 'Play Name = Concept, one per line. Add your pass play names and route concepts.',                heading: 'PASS PLAY NAMES' },
-  formations:  { title: '🗂 FORMATIONS',          emoji: '🗂', hint: 'Formation Name = Personnel / description, one per line.',                                         heading: 'FORMATIONS & PERSONNEL' },
-  tags:        { title: '🏷 TAGS & MOTION',       emoji: '🏷', hint: 'Tag = What it means, one per line. These are modifiers added to play names.',                     heading: 'PLAY TAGS & MOTION' },
-  defense:     { title: '🛡 DEFENSIVE TERMS',     emoji: '🛡', hint: 'Term = Meaning, one per line. Fronts, coverages, blitz packages.',                                heading: 'DEFENSIVE TERMINOLOGY' },
-  stat_rules:  { title: '📐 STAT RULES',          emoji: '📐', hint: 'Stat Name = How it\'s calculated, one per line.',                                                 heading: 'STAT CALCULATION RULES' },
-  general:     { title: '📝 GENERAL NOTES',        emoji: '📝', hint: 'Free-form notes for the AI. Anything you want it to know.',                                      heading: 'GENERAL COACHING NOTES' },
+  team_info:    { title: '🏫 TEAM INFO',         emoji: '🏫', hint: 'Key - Value format, one per line. Tells the AI who you are, your rivalries, and conference opponents.',  heading: 'TEAM INFO' },
+  run_plays:    { title: '🏃 RUN PLAYS & PASS PRO', emoji: '🏃', hint: 'Play Name - Concept, one per line. Include run plays and pass protection schemes.',          heading: 'RUN PLAYS & PASS PROTECTION' },
+  pass_plays:   { title: '🎯 PASS PLAYS',         emoji: '🎯', hint: 'Play Name - Concept, one per line. Add your pass play names and route concepts.',                heading: 'PASS PLAY NAMES' },
+  formations:   { title: '🗂 FORMATIONS',          emoji: '🗂', hint: 'Formation Name - Personnel / description, one per line.',                                         heading: 'FORMATIONS & PERSONNEL' },
+  tags:         { title: '🏷 TAGS & MOTION',       emoji: '🏷', hint: 'Tag - What it means, one per line. These are modifiers added to play names.',                     heading: 'PLAY TAGS & MOTION' },
+  defense:      { title: '🛡 DEFENSIVE TERMS',     emoji: '🛡', hint: 'Term - Meaning, one per line. Fronts, coverages, blitz packages.',                                heading: 'DEFENSIVE TERMINOLOGY' },
+  terminology:  { title: '📖 TERMINOLOGY',          emoji: '📖', hint: 'Abbreviation - Definition, one per line. Football terms used throughout the app.',                heading: 'FOOTBALL TERMINOLOGY' },
+  stat_rules:   { title: '📐 STAT RULES',          emoji: '📐', hint: 'Stat Name - How it\'s calculated, one per line.',                                                 heading: 'STAT CALCULATION RULES' },
+  general:      { title: '📝 GENERAL NOTES',        emoji: '📝', hint: 'Free-form notes for the AI. Anything you want it to know.',                                      heading: 'GENERAL COACHING NOTES' },
 };
 
 // ═══ CRUD ═══
