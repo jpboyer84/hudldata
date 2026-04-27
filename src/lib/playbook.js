@@ -15,101 +15,113 @@ Conference Opponents - `,
 
   general: '',
 
-  terminology: `TFL - Tackle for Loss. A play where the ball carrier is tackled behind the line of scrimmage (negative yardage). Excludes fumbles and penalties.
-LOS - Line of Scrimmage. The yard line where the ball is snapped.
-ODK - Offense/Defense/Kicking. Tags each play as O, D, or K.
-QBR - Quarterback Rating. NFL Passer Rating formula, scale of 0-158.3.
-YPC - Yards Per Carry. Total rush yards divided by rush attempts.
-YPA - Yards Per Attempt. Total pass yards divided by pass attempts (incompletes count as 0).
-YPP - Yards Per Play. Total yards divided by total plays.
-RZ - Red Zone. Plays inside the opponent's 20-yard line.
-GL - Gain/Loss. Net yardage on a play.
-DN - Down (1st, 2nd, 3rd, 4th).
-DIST - Distance to go for a first down.
-RPO - Run-Pass Option. A play where the QB reads a defender to decide run or pass post-snap.
-PA - Play Action. A fake handoff before a pass.
-HASH - Field position: Left (L), Middle (M), or Right (R) hash mark.
-FORMATION SET - How many eligible WRs are on each side of the center (e.g. 3x1 = 3 receivers to one side and 1 to the other, 2x2 = 2 on each side, 3x2, Empty, etc).
-PERSONNEL - Number grouping indicating RBs and TEs on the field (e.g. 11 = 1 RB + 1 TE + 3 WR, 12 = 1 RB + 2 TE + 2 WR, 21 = 2 RB + 1 TE + 2 WR, 22 = 2 RB + 2 TE + 1 WR, 10 = 1 RB + 0 TE + 4 WR, 00 = 0 RB + 0 TE + 5 WR Empty).
-EXPLOSIVE - A big play. Run of 10+ yards or pass of 15+ yards.
-NEGATIVE PLAY - Any play with negative yardage (gainloss < 0).
-CONVERSION - Earning a first down on 3rd or 4th down (gainloss >= dist, or TD).
-STOP - A defensive play where the opponent gains 0 or fewer yards.
-SACK - Quarterback is tackled behind the LOS on a pass play.
-INT - Interception. A pass caught by the defense.
-TD - Touchdown. Worth 6 points.
-FG - Field Goal. Worth 3 points.
-PAT - Point After Touchdown (extra point). Worth 1 point.
-2PT - Two-point conversion attempt after a touchdown.
-KO - Kickoff.
-KR - Kick Return.
-PR - Punt Return.
-TB - Touchback. Ball placed at the 25-yard line (kickoff) or 20-yard line (punt).
-OL - Offensive Line.
-DL - Defensive Line.
-LB - Linebacker.
-DB - Defensive Back.
-CB - Cornerback.
-SS - Strong Safety.
-FS - Free Safety.
-DE - Defensive End.
-DT - Defensive Tackle.
-NT - Nose Tackle.
-TE - Tight End.
-WR - Wide Receiver.
-RB - Running Back.
-FB - Fullback.
-QB - Quarterback.
-OLB - Outside Linebacker.
-ILB/MLB - Inside/Middle Linebacker.
-SLOT - A receiver lined up inside of the outermost WR.
-MOTION - Pre-snap movement by a skill player.
-SHIFT - Pre-snap repositioning of multiple players.
-CADENCE - The QB's snap count and signals.
-AUDIBLE - A play change called at the line of scrimmage.
-CHECK - A secondary play call if the defense shows a certain look.
-BLITZ - A defensive play where extra rushers are sent beyond the standard front.
-ZONE - Zone coverage. Defenders cover areas of the field rather than specific players.
-MAN - Man-to-man coverage. Each defender covers a specific offensive player.
-PRESS - Defensive technique where the CB lines up at the LOS to jam the WR.
-OFF - Defensive technique where the CB lines up 5-7+ yards off the WR.
-GAP - The space between offensive linemen (A gap, B gap, C gap, D gap).
-HOLE - The numbered running lane (even numbers right, odd numbers left).
-TRAP - A run play where a pulling lineman blocks a defensive lineman who was intentionally left unblocked.
-PULL - An offensive lineman leaving his position to block at another point.
-SCREEN - A short pass behind the LOS with blockers set up in front of the receiver.
-DRAW - A delayed handoff designed to look like a pass play.
-COUNTER - A run play with misdirection where the back starts one way then cuts back.
-POWER - A gap run scheme with a pulling guard and a lead blocker.
-ZONE RUN - A run scheme where the OL blocks in one direction and the RB reads the blocks.
-INSIDE ZONE (IZ) - A zone run between the tackles.
-OUTSIDE ZONE (OZ) - A zone run toward the edge.
-BOB - Big on Big. Pass protection where linemen block linemen, back picks up free rusher.
-SLIDE - Pass protection where the OL slides in one direction together.
-HALF SLIDE - Pass protection where one side slides, other side is man blocking.
-MAX PROTECT - Using extra blockers (RB, TE) to protect the QB, fewer receivers in routes.
-HOT - A quick throw to a predetermined receiver when a blitz is detected.
-SIGHT ADJUST - A WR changes his route based on the coverage he sees.
-SCRAMBLE - When the QB runs out of the pocket to avoid pressure.`,
+  terminology: `=== ACRONYMS ===
+2PT - Two-Point Conversion
+BOB - Big on Big
+CB - Cornerback
+DB - Defensive Back
+DE - Defensive End
+DL - Defensive Line
+DN - Down
+DIST - Distance
+DT - Defensive Tackle
+FB - Fullback
+FG - Field Goal
+FS - Free Safety
+GL - Gain/Loss
+HASH - Hash Mark
+HOT - Hot Route
+ILB - Inside Linebacker
+INT - Interception
+IZ - Inside Zone
+KO - Kickoff
+KR - Kick Return
+LB - Linebacker
+LOS - Line of Scrimmage
+MLB - Middle Linebacker
+NT - Nose Tackle
+ODK - Offense/Defense/Kicking
+OL - Offensive Line
+OLB - Outside Linebacker
+OZ - Outside Zone
+PA - Play Action
+PAT - Point After Touchdown
+PR - Punt Return
+QB - Quarterback
+QBR - Quarterback Rating
+RB - Running Back
+RPO - Run-Pass Option
+RZ - Red Zone
+SS - Strong Safety
+TB - Touchback
+TD - Touchdown
+TE - Tight End
+TFL - Tackle for Loss
+WR - Wide Receiver
+YPA - Yards Per Attempt
+YPC - Yards Per Carry
+YPP - Yards Per Play
+
+=== DEFINITIONS ===
+Audible - A play change called by the QB at the line of scrimmage based on the defensive alignment.
+Blitz - A defensive play where extra rushers are sent beyond the standard front to pressure the QB.
+Cadence - The QB's snap count and verbal signals used to start the play.
+Check - A secondary play call triggered if the defense shows a certain pre-snap look.
+Conversion - Earning a first down on 3rd or 4th down (gainloss >= dist, or a touchdown).
+Counter - A run play with misdirection where the back starts one way then cuts back the other direction.
+Draw - A delayed handoff designed to look like a pass play, freezing linebackers before the run.
+Explosive Play - A big play. Run of 10+ yards or pass of 15+ yards.
+Formation Set - How many eligible WRs are on each side of the center (e.g. 3x1 = 3 to one side and 1 to the other, 2x2 = 2 on each side).
+Gap - The space between offensive linemen (A gap between C and G, B gap between G and T, C gap between T and TE, D gap outside TE).
+Half Slide - Pass protection where one side of the OL slides together while the other side blocks man-to-man.
+Hole - The numbered running lane (even numbers to the right, odd numbers to the left).
+Hot Route - A quick throw to a predetermined receiver when a blitz is detected pre-snap.
+Inside Zone - A zone run scheme between the tackles where the RB reads the blocks.
+Line of Scrimmage - The yard line where the ball is snapped to start each play.
+Man Coverage - Man-to-man coverage where each defender covers a specific offensive player.
+Max Protect - Using extra blockers (RB, TE) to protect the QB, sending fewer receivers into routes.
+Motion - Pre-snap movement by a single skill player, often to identify coverage or gain alignment advantage.
+Negative Play - Any play resulting in negative yardage (gainloss < 0).
+Off Coverage - Defensive technique where the CB lines up 5-7+ yards off the WR at the snap.
+Outside Zone - A zone run scheme toward the edge where the OL blocks laterally.
+Personnel - Number grouping indicating RBs and TEs on the field (e.g. 11 = 1 RB + 1 TE + 3 WR, 12 = 1 RB + 2 TE + 2 WR, 21 = 2 RB + 1 TE, 22 = 2 RB + 2 TE, 10 = 1 RB + 4 WR, 00 = Empty 5 WR).
+Power - A gap run scheme with a pulling guard and a lead blocker at the point of attack.
+Press Coverage - Defensive technique where the CB lines up at the LOS to jam the WR at the snap.
+Pull - An offensive lineman leaving his original position to block at another point on the line.
+Quarterback Rating - NFL Passer Rating formula on a 0-158.3 scale. Uses completion %, yards/attempt, TD %, and INT %.
+Red Zone - Plays inside the opponent's 20-yard line.
+Run-Pass Option - A play where the QB reads a defender post-snap to decide whether to hand off or throw.
+Scramble - When the QB runs out of the pocket to avoid pressure, either throwing on the run or gaining yards.
+Screen - A short pass behind the LOS with blockers set up in front of the receiver.
+Shift - Pre-snap repositioning of multiple offensive players simultaneously.
+Sight Adjust - A WR changes his route on the fly based on the coverage he reads at the snap.
+Slide Protection - Pass protection where the entire OL slides in one direction together.
+Slot - A receiver lined up inside of the outermost WR, typically off the line of scrimmage.
+Stop - A defensive play where the opponent gains 0 or fewer yards.
+Tackle for Loss - A play where the ball carrier is tackled behind the line of scrimmage for negative yardage. Excludes penalties.
+Touchback - Ball placed at the 25-yard line (kickoff) or 20-yard line (punt) when not returned.
+Trap - A run play where a pulling lineman blocks a defensive lineman who was intentionally left unblocked.
+Zone Coverage - Defenders cover areas of the field rather than specific offensive players.
+Zone Run - A run scheme where the OL blocks in one direction and the RB reads the blocks to find the lane.`,
 
   defense: `Front Name - Description
 Coverage Name - Description
 Blitz Name - Description`,
 
-  stat_rules: `First Down - gainLoss >= dist, OR result contains "TD", OR result is "1st DN"
-3rd/4th Down Conversion - same logic as First Down
-Yards Per Carry - sum gainLoss for Run plays / run count
-Yards Per Pass Attempt - includes incomplete passes at 0 yards
+  stat_rules: `3rd/4th Down Conversion - same logic as First Down (gainloss >= dist, or TD)
 Completion Rate - result contains "Complete" / total pass attempts
-Red Zone - yardLine >= 1 AND yardLine <= 20 (opponent's 20-yard line to goal line)
-Score Zone - yardLine >= 1 AND yardLine <= 10
-Goal Line - yardLine >= 1 AND yardLine <= 5
-Sack Rate - result contains "Sack" / total pass attempts
-Explosive Run - gainLoss >= 10 on a Run play
 Explosive Pass - gainLoss >= 15 on a Pass play
+Explosive Run - gainLoss >= 10 on a Run play
+First Down - gainLoss >= dist, OR result contains "TD", OR result is "1st DN"
+Goal Line - yardLine >= 1 AND yardLine <= 5
 Negative Play - gainLoss < 0
-TFL (our defense) - defense.tflsForced: defensive plays with negative yardage, excluding fumbles/penalties
-TFL (against our offense) - offense.tflAgainst: offensive plays with negative yardage, excluding fumbles/penalties`,
+Red Zone - yardLine >= 1 AND yardLine <= 20 (opponent's 20-yard line to goal line)
+Sack Rate - result contains "Sack" / total pass attempts
+Score Zone - yardLine >= 1 AND yardLine <= 10
+TFL (against our offense) - offense.tflAgainst: offensive plays with negative yardage, excluding penalties
+TFL (our defense) - defense.tflsForced: defensive plays with negative yardage, excluding penalties
+Yards Per Carry - sum gainLoss for Run plays / run count
+Yards Per Pass Attempt - includes incomplete passes at 0 yards`,
 
   formations: `Formation Name - Formation Set, Personnel (e.g. Blue Near - 3x1, 11p)
 Formation Name - Formation Set, Personnel`,
@@ -137,7 +149,7 @@ export const PB_COL2 = ['formations', 'tags', 'run_plays', 'pass_pro', 'pass_pla
 export const PB_SECTIONS = {
   team_info:    { title: '🏫 TEAM INFO',           emoji: '🏫', hint: 'Fill in your team details.',                                                                      heading: 'TEAM INFO' },
   general:      { title: '📝 GENERAL NOTES',        emoji: '📝', hint: 'Free-form notes for the AI. Anything you want it to know.',                                      heading: 'GENERAL COACHING NOTES' },
-  terminology:  { title: '📖 TERMINOLOGY',          emoji: '📖', hint: 'Abbreviation - Definition, one per line. All terms here are hardcoded into the AI.',              heading: 'FOOTBALL TERMINOLOGY' },
+  terminology:  { title: '📖 TERMINOLOGY',          emoji: '📖', hint: 'Two sections: Acronyms (abbreviation - expansion) and Definitions (term - full definition). All terms are hardcoded into the AI.',  heading: 'FOOTBALL TERMINOLOGY' },
   defense:      { title: '🛡 DEFENSIVE SCHEME',     emoji: '🛡', hint: 'Fronts, coverages, blitz packages. Term - Meaning, one per line.',                                heading: 'DEFENSIVE SCHEME' },
   stat_rules:   { title: '📐 STAT RULES',          emoji: '📐', hint: 'Stat Name - How it\'s calculated, one per line.',                                                 heading: 'STAT CALCULATION RULES' },
   formations:   { title: '🗂 FORMATIONS',           emoji: '🗂', hint: 'Formation Name - Formation Set, Personnel. e.g. Blue Near - 3x1, 11p',                            heading: 'FORMATIONS' },
@@ -224,7 +236,7 @@ ${buildPlaybookContext(pb)}
 ## FOOTBALL STAT DEFINITIONS
 - **First Down**: play where gainloss >= dist, OR result contains "TD", OR result is "1st DN"
 - **3rd/4th Down Conversion**: 3rd or 4th down play that earns a first down (same criteria as above)
-- **TFL (Tackle for Loss)**: a run or pass play where the ball carrier was tackled behind the line of scrimmage (gainloss < 0). Excludes fumbles and penalties.
+- **TFL (Tackle for Loss)**: a run or pass play where the ball carrier was tackled behind the line of scrimmage (gainloss < 0). Excludes penalties.
   - offense.tflAgainst = times OUR offense was tackled for a loss (opponent's defense made the TFL against us)
   - defense.tflsForced = times OUR defense tackled the OPPONENT for a loss (we made the TFL)
   - "How many TFLs did our opponents have?" = offense.tflAgainst (they tackled us)
