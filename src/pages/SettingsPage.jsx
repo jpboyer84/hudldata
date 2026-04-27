@@ -331,24 +331,6 @@ export default function SettingsPage() {
           />
         </div>
 
-        {/* Templates & columns */}
-        <div className="settings-group">
-          <div className="settings-group-title">Templates & columns</div>
-          <div className="settings-group-sub">
-            Manage your tracker templates and custom columns.
-          </div>
-          <div className="settings-row">
-            <div className="settings-btn" onClick={() => navigate('/templates')}>
-              <span className="settings-btn-icon">📐</span>
-              Templates
-            </div>
-            <div className="settings-btn" onClick={() => navigate('/columns')}>
-              <span className="settings-btn-icon">📋</span>
-              Columns
-            </div>
-          </div>
-        </div>
-
         {/* Hudl connection */}
         <div className="settings-group">
           <div className="settings-group-title">Hudl connection</div>
