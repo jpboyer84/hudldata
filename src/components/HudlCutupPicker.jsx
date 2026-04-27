@@ -26,7 +26,7 @@ function getCutupCategory(title) {
   return 'untagged';
 }
 
-export default function HudlCutupPicker({ onLoad, onClose, initialSelected, initialFilters, singleSelect }) {
+export default function HudlCutupPicker({ onLoad, onClose, initialSelected, initialFilters, singleSelect, varsityOnly, onVarsityChange }) {
   const { coach } = useAuth();
   const [items, setItems] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -243,6 +243,30 @@ export default function HudlCutupPicker({ onLoad, onClose, initialSelected, init
             AWAY
           </div>
         </div>
+
+        {/* Varsity Only filter */}
+        {varsityOnly !== undefined && onVarsityChange && (
+          <div
+            onClick={() => onVarsityChange(!varsityOnly)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '10px 16px', borderBottom: '1px solid var(--color-border)',
+              cursor: 'pointer',
+            }}
+          >
+            <div style={{
+              width: 20, height: 20, borderRadius: 4,
+              border: `2px solid ${varsityOnly ? 'var(--color-accent)' : 'var(--color-border)'}`,
+              background: varsityOnly ? 'var(--color-accent)' : 'transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, color: '#fff', fontWeight: 700, flexShrink: 0,
+            }}>
+              {varsityOnly && '✓'}
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>Varsity Only</span>
+            <span style={{ fontSize: 10, color: 'var(--color-muted)' }}>Excludes JV plays from stats</span>
+          </div>
+        )}
 
         {/* List */}
         <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
