@@ -45,7 +45,7 @@ function PlaceholderPage({ title }) {
 }
 
 function AppRoutes() {
-  const { passwordRecovery, user, coach, loading } = useAuth();
+  const { passwordRecovery, user, coach, loading, coachChecked } = useAuth();
 
   // If password recovery mode, show reset form regardless of route
   if (passwordRecovery) {
@@ -53,8 +53,8 @@ function AppRoutes() {
   }
 
   // If logged in but no coach/team profile, send to team setup
-  // (skip while loading, and allow auth pages to remain accessible)
-  if (!loading && user && !coach) {
+  // Only redirect when we've confirmed the coach doesn't exist (not on network errors)
+  if (!loading && user && !coach && coachChecked) {
     return (
       <Routes>
         <Route path="/team-setup" element={<TeamSetupPage />} />
@@ -116,3 +116,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
