@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchGame, updateGame, fetchTemplates, fetchColumns } from '../lib/supaData';
@@ -16,6 +16,7 @@ const emptyPlays = n => Array.from({ length: n }, () => ({}));
 export default function TrackerPage() {
   const { gameId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { coach } = useAuth();
   const showToast = useToast();
 
@@ -61,6 +62,11 @@ export default function TrackerPage() {
       setPlays(p);
       if (g.columns_config && Array.isArray(g.columns_config) && g.columns_config.length > 0) {
         setColumns(g.columns_config);
+      } else if (location.state?.colIds) {
+        // Hudl template: resolve col_ids from navigation state
+        const allCols = defaultColumns();
+        const resolved = location.state.colIds.map(id => allCols.find(c => c.id === id)).filter(Boolean);
+        if (resolved.length > 0) setColumns(resolved);
       }
       // Restore play position (#4)
       try {
