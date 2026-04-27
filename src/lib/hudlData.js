@@ -14,6 +14,7 @@ const HUDL_TO_COL = {
   gain_loss: 'gainloss',
   off_form: 'offform',
   off_play: 'offplay',
+  off_str: 'offstr',
   play_dir: 'playdir',
   eff: 'eff',
   passer: 'passer',
@@ -24,9 +25,20 @@ const HUDL_TO_COL = {
   backfield: 'backfield',
   coverage: 'coverage',
   def_front: 'deffront',
+  def_str: 'defstr',
   blocking: 'blocking',
   motion: 'motion',
+  motion_dir: 'motiondir',
   blitz: 'blitz',
+  gap: 'gap',
+  pass_zone: 'passzone',
+  penalty: 'penalty',
+  kick_yards: 'kickyds',
+  ret_yards: 'retyds',
+  two_min: 'twomin',
+  team: 'team',
+  opp_team: 'oppteam',
+  play_num: 'playnum',
 };
 
 // Map from our column IDs → Hudl column names (for write-back)
