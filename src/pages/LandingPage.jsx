@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
+import { fetchGames } from '../lib/supaData';
 import {
   LogoIcon, TagGameIcon, StatsIcon, PlaybookIcon,
   HudlConnectIcon, HudlConnectedIcon, HelpIcon,
@@ -27,11 +28,38 @@ function SettingsHelpIcon() {
   );
 }
 
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const ms = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(ms / 60000);
+  const hrs = Math.floor(mins / 60);
+  const days = Math.floor(hrs / 24);
+  if (days > 0) return `${days}d ago`;
+  if (hrs > 0) return `${hrs}h ago`;
+  if (mins > 0) return `${mins}m ago`;
+  return 'just now';
+}
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user, coach } = useAuth();
   const showToast = useToast();
   const [hudlModalOpen, setHudlModalOpen] = useState(false);
+  const [lastGame, setLastGame] = useState(null);
+
+  useEffect(() => {
+    if (coach?.team_id) {
+      fetchGames(coach.team_id).then(games => {
+        if (games && games.length > 0) {
+          // Sort by created_at descending to find most recent
+          const sorted = [...games].sort((a, b) =>
+            new Date(b.created_at) - new Date(a.created_at)
+          );
+          setLastGame(sorted[0]);
+        }
+      }).catch(console.error);
+    }
+  }, [coach?.team_id]);
 
   const isLoggedIn = !!user;
   const hudlConnected = !!coach?.hudl_cookie;
@@ -179,6 +207,10 @@ export default function LandingPage() {
           maxWidth: 500, margin: '0 auto', width: '100%'
         }}>
           <div
+            onClick={() => {
+              if (lastGame) navigate(`/tracker/${lastGame.id}`);
+              else navigate('/trackers');
+            }}
             style={{
               background: '#161618',
               border: '1px solid #222224',
@@ -197,10 +229,15 @@ export default function LandingPage() {
                 Last game tracked
               </div>
               <div style={{ fontSize: 14, fontWeight: 600, color: '#ccc' }}>
-                No games yet
+                {lastGame
+                  ? `${lastGame.home || ''} vs ${lastGame.away || ''}${lastGame.week ? ` · Week ${lastGame.week}` : ''}`
+                  : 'No games yet'
+                }
               </div>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--color-muted)' }}></div>
+            <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+              {lastGame ? timeAgo(lastGame.created_at) : ''}
+            </div>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
               <path d="M6 4L10 8L6 12" stroke="#666" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
@@ -213,3 +250,4 @@ export default function LandingPage() {
     </div>
   );
 }
+
