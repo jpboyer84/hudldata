@@ -39,6 +39,12 @@ const HUDL_TO_COL = {
   team: 'team',
   opp_team: 'oppteam',
   play_num: 'playnum',
+  opp_passer: 'opppasser',
+  opp_receiver: 'oppreceiver',
+  opp_kicker: 'oppkicker',
+  target: 'target',
+  hurries: 'hurries',
+  varsity: 'varsity',
 };
 
 // Map from our column IDs → Hudl column names (for write-back)
@@ -185,7 +191,7 @@ export function resolvePlayerIds(clips, roster) {
   const players = roster.players;
   return clips.map(clip => {
     const resolved = { ...clip };
-    for (const field of ['passer', 'rusher', 'receiver']) {
+    for (const field of ['passer', 'rusher', 'receiver', 'opp_passer', 'opppasser', 'opp_receiver', 'oppreceiver', 'opp_kicker', 'oppkicker', 'target', 'kicker', 'returner', 'tackler1', 'tackler2', 'keyplayer', 'recoveredby']) {
       const id = clip[field];
       if (id && players[id]) {
         resolved[field] = players[id].label;
@@ -193,6 +199,37 @@ export function resolvePlayerIds(clips, roster) {
     }
     return resolved;
   });
+}
+
+// ─── FETCH ALL HUDL COLUMNS dynamically ───
+let hudlColumnsCache = null;
+
+export async function fetchHudlColumns(coach) {
+  if (hudlColumnsCache) return hudlColumnsCache;
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (coach?.hudl_cookie) headers['X-Hudl-Cookie'] = coach.hudl_cookie;
+  if (coach?.hudl_team_id) headers['X-Hudl-Team'] = coach.hudl_team_id;
+
+  try {
+    const resp = await fetch(`${HUDL_API}/api/hudl/columns`, { headers });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    const columns = (data.columns || []).map(c => ({
+      id: c.appKey,
+      hudlId: c.hudlId,
+      name: c.hudlName,
+      type: 'btns_dd', // Default type — coach can change later
+      btns: [],
+      ddLbl: 'SELECT',
+      dd: (c.knownValues || []).slice(0, 50), // Cap at 50 values
+      isHudl: true,
+    }));
+    hudlColumnsCache = columns;
+    return columns;
+  } catch {
+    return [];
+  }
 }
 
 // ─── SYNC TEMPLATE TO HUDL: Save/update a column set in Hudl ───
