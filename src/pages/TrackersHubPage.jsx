@@ -20,17 +20,24 @@ export default function TrackersHubPage() {
   const [pendingHudlCutup, setPendingHudlCutup] = useState(null);
   const [templates, setTemplates] = useState([]);
 
+  const shouldAutoNew = searchParams.get('new') === '1';
+
   useEffect(() => {
+    if (shouldAutoNew) {
+      searchParams.delete('new');
+      setSearchParams(searchParams, { replace: true });
+      if (!coach?.team_id) {
+        showToast('Sign in and set up your team first');
+        navigate('/login');
+        return;
+      }
+    }
     if (coach?.team_id) {
       fetchGames(coach.team_id).then(setGames).catch(console.error);
       fetchTemplates(coach.team_id).then(t => {
         setTemplates(t);
-        // Auto-open new game modal if ?new=1
-        if (searchParams.get('new') === '1') {
-          searchParams.delete('new');
-          setSearchParams(searchParams, { replace: true });
+        if (shouldAutoNew) {
           if (t.length === 0) {
-            // Create default template first
             createTemplate({
               team_id: coach.team_id,
               name: 'ODK',
