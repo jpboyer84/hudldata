@@ -26,7 +26,7 @@ function getCutupCategory(title) {
   return 'untagged';
 }
 
-export default function HudlCutupPicker({ onLoad, onClose, initialSelected, initialFilters }) {
+export default function HudlCutupPicker({ onLoad, onClose, initialSelected, initialFilters, singleSelect }) {
   const { coach } = useAuth();
   const [items, setItems] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -143,12 +143,16 @@ export default function HudlCutupPicker({ onLoad, onClose, initialSelected, init
   }
 
   function toggleItem(id) {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    if (singleSelect) {
+      setSelected(prev => prev.has(id) ? new Set() : new Set([id]));
+    } else {
+      setSelected(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+    }
   }
 
   function selectAllVisible() {
@@ -304,24 +308,28 @@ export default function HudlCutupPicker({ onLoad, onClose, initialSelected, init
           flexShrink: 0,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div
-              onClick={selectAllVisible}
-              style={{
-                padding: '5px 10px', borderRadius: 6, border: '1px solid var(--color-border)',
-                background: 'var(--color-surface2)', cursor: 'pointer',
-                fontSize: 10, fontWeight: 700, color: 'var(--color-accent)',
-                letterSpacing: '0.03em',
-              }}
-            >ALL</div>
-            <div
-              onClick={selectNoneVisible}
-              style={{
-                padding: '5px 10px', borderRadius: 6, border: '1px solid var(--color-border)',
-                background: 'var(--color-surface2)', cursor: 'pointer',
-                fontSize: 10, fontWeight: 700, color: 'var(--color-muted)',
-                letterSpacing: '0.03em',
-              }}
-            >NONE</div>
+            {!singleSelect && (
+              <>
+                <div
+                  onClick={selectAllVisible}
+                  style={{
+                    padding: '5px 10px', borderRadius: 6, border: '1px solid var(--color-border)',
+                    background: 'var(--color-surface2)', cursor: 'pointer',
+                    fontSize: 10, fontWeight: 700, color: 'var(--color-accent)',
+                    letterSpacing: '0.03em',
+                  }}
+                >ALL</div>
+                <div
+                  onClick={selectNoneVisible}
+                  style={{
+                    padding: '5px 10px', borderRadius: 6, border: '1px solid var(--color-border)',
+                    background: 'var(--color-surface2)', cursor: 'pointer',
+                    fontSize: 10, fontWeight: 700, color: 'var(--color-muted)',
+                    letterSpacing: '0.03em',
+                  }}
+                >NONE</div>
+              </>
+            )}
             <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>
               {visibleSelectedCount} selected
             </span>
