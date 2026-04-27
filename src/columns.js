@@ -202,7 +202,18 @@ export function defaultColumns() {
     {
       id:'blocking', name:'BLOCKING', type:'btns_dd',
       btns:[], ddLbl:'SELECT', dd:[]
-    }
+    },
+    {
+      id:'defstr', name:'DEF STR', type:'buttons',
+      btns:[{l:'L',v:'L'},{l:'BAL',v:'Bal'},{l:'R',v:'R'}]
+    },
+    {
+      id:'twomin', name:'2 MIN', type:'buttons',
+      btns:[{l:'YES',v:'Yes'},{l:'NO',v:'No'}]
+    },
+    { id:'team',    name:'TEAM',     type:'btns_dd', btns:[], ddLbl:'SELECT', dd:[] },
+    { id:'oppteam', name:'OPP TEAM', type:'btns_dd', btns:[], ddLbl:'SELECT', dd:[] },
+    { id:'playnum', name:'PLAY #',   type:'numpad' },
   ];
 }
 
