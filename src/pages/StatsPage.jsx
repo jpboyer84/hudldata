@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { calcStats, buildSummaryObj, buildSlimCsv } from '../utils/statsCalc';
@@ -480,17 +480,21 @@ function SavedTab({ saved, onDelete }) {
 // ═══════════════════════════════════════
 export default function StatsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { coach } = useAuth();
   const showToast = useToast();
 
-  const [pickerOpen, setPickerOpen] = useState(true);
-  const [plays, setPlays] = useState([]);
-  const [stats, setStats] = useState(null);
+  const directPlays = location.state?.directPlays;
+  const directLabel = location.state?.directLabel;
+
+  const [pickerOpen, setPickerOpen] = useState(!directPlays);
+  const [plays, setPlays] = useState(directPlays || []);
+  const [stats, setStats] = useState(directPlays ? calcStats(directPlays) : null);
   const [playbook, setPlaybook] = useState(null);
   const [mainTab, setMainTab] = useState('SPOTLIGHT');
   const [subTab, setSubTab] = useState('OVERVIEW');
   const [loadingClips, setLoadingClips] = useState(false);
-  const [label, setLabel] = useState('');
+  const [label, setLabel] = useState(directLabel || '');
   const [loadedIds, setLoadedIds] = useState(new Set()); // IDs of currently loaded cutups
   const [loadedFilters, setLoadedFilters] = useState(null); // Filter state when data was loaded
   const [saved, setSaved] = useState([]);
