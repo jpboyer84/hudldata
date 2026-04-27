@@ -5,6 +5,7 @@ import { useToast } from '../hooks/useToast';
 import { calcStats, buildSummaryObj, buildSlimCsv } from '../utils/statsCalc';
 import { fetchHudlClips, hudlClipsToPlays, fetchRoster, resolvePlayerIds } from '../lib/hudlData';
 import { fetchPlaybook, buildPlaybookContext, buildAskAISystemPrompt } from '../lib/playbook';
+import { fetchSavedInsights, createSavedInsight, deleteSavedInsight, fetchSpotlightFeedback, upsertSpotlightFeedback } from '../lib/supaData';
 import { HUDL_API } from '../lib/constants';
 import HudlCutupPicker from '../components/HudlCutupPicker';
 
@@ -128,16 +129,20 @@ function ByQtrTab({ s }) {
 // ═══════════════════════════════════════
 // SPOTLIGHT TAB
 // ═══════════════════════════════════════
-function SpotlightTab({ plays, playbook, label }) {
+function SpotlightTab({ plays, playbook, label, coach }) {
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(false);
   const [methodology, setMethodology] = useState(null);
   const [methLoading, setMethLoading] = useState(false);
-  const [feedback, setFeedback] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hd_spotlight_feedback') || '{"liked":[],"disliked":[]}'); }
-    catch { return { liked: [], disliked: [] }; }
-  });
+  const [feedback, setFeedback] = useState({ liked: [], disliked: [] });
   const hasRun = useRef(false);
+
+  // Load feedback from Supabase on mount
+  useEffect(() => {
+    if (coach?.id) {
+      fetchSpotlightFeedback(coach.id).then(setFeedback).catch(() => {});
+    }
+  }, [coach?.id]);
 
   useEffect(() => {
     if (plays.length > 0 && !hasRun.current) {
@@ -146,20 +151,22 @@ function SpotlightTab({ plays, playbook, label }) {
     }
   }, [plays]);
 
-  function saveFeedback(fb) {
-    setFeedback(fb);
-    localStorage.setItem('hd_spotlight_feedback', JSON.stringify(fb));
-  }
-
   function rate(ins, liked) {
     const fb = { ...feedback };
-    fb.liked = fb.liked.filter(x => x.headline !== ins.headline);
-    fb.disliked = fb.disliked.filter(x => x.headline !== ins.headline);
-    if (liked) fb.liked.push({ headline: ins.headline, stat: ins.stat, tag: ins.tag, ts: Date.now() });
-    else fb.disliked.push({ headline: ins.headline, stat: ins.stat, tag: ins.tag, ts: Date.now() });
+    fb.liked = fb.liked.filter(x => x !== ins.headline);
+    fb.disliked = fb.disliked.filter(x => x !== ins.headline);
+    if (liked) fb.liked.push(ins.headline);
+    else fb.disliked.push(ins.headline);
     if (fb.liked.length > 20) fb.liked = fb.liked.slice(-20);
     if (fb.disliked.length > 20) fb.disliked = fb.disliked.slice(-20);
-    saveFeedback(fb);
+    setFeedback(fb);
+    // Persist to Supabase
+    if (coach?.id) {
+      upsertSpotlightFeedback({
+        coach_id: coach.id, team_id: coach.team_id,
+        headline: ins.headline, stat: ins.stat || '', tag: ins.tag || '', liked,
+      }).catch(() => {});
+    }
   }
 
   async function runAnalysis(append) {
@@ -453,11 +460,13 @@ function SavedTab({ saved, onDelete }) {
   return (
     <div style={{ padding: 14 }}>
       {saved.map((s, i) => (
-        <div key={s.ts || i} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, padding: '12px 14px', marginBottom: 10 }}>
+        <div key={s.id || i} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, padding: '12px 14px', marginBottom: 10 }}>
           {s.question && <div style={{ fontSize: 11, color: 'var(--color-accent)', fontWeight: 600, marginBottom: 4 }}>{s.question}</div>}
-          <div style={{ fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{s.text}</div>
+          <div style={{ fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{s.answer || s.text}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-            <span style={{ fontSize: 10, color: 'var(--color-muted)' }}>{new Date(s.ts).toLocaleDateString()}</span>
+            <span style={{ fontSize: 10, color: 'var(--color-muted)' }}>
+              {s.data_label ? `${s.data_label} · ` : ''}{new Date(s.created_at || s.ts).toLocaleDateString()}
+            </span>
             <button onClick={() => onDelete(i)} style={{ background: 'none', border: 'none', color: 'var(--color-red)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Delete</button>
           </div>
         </div>
@@ -484,28 +493,36 @@ export default function StatsPage() {
   const [label, setLabel] = useState('');
   const [loadedIds, setLoadedIds] = useState(new Set()); // IDs of currently loaded cutups
   const [loadedFilters, setLoadedFilters] = useState(null); // Filter state when data was loaded
-  const [saved, setSaved] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hd_saved_ai') || '[]'); } catch { return []; }
-  });
+  const [saved, setSaved] = useState([]);
 
-  // Load playbook
+  // Load playbook and saved insights from Supabase
   useEffect(() => {
     if (coach?.team_id) {
       fetchPlaybook(coach.team_id).then(setPlaybook).catch(console.error);
     }
-  }, [coach?.team_id]);
+    if (coach?.id) {
+      fetchSavedInsights(coach.id).then(setSaved).catch(() => {});
+    }
+  }, [coach?.team_id, coach?.id]);
 
   function handleSaveAI(entry) {
-    const next = [...saved, entry];
-    setSaved(next);
-    localStorage.setItem('hd_saved_ai', JSON.stringify(next));
-    showToast('Saved!');
+    if (!coach?.id) return;
+    createSavedInsight({
+      coach_id: coach.id, team_id: coach.team_id,
+      question: entry.question || '', answer: entry.text || '',
+      data_label: label || '',
+    }).then(row => {
+      setSaved(prev => [row, ...prev]);
+      showToast('Saved!');
+    }).catch(err => showToast('Save failed: ' + err.message));
   }
 
   function handleDeleteSaved(idx) {
-    const next = saved.filter((_, i) => i !== idx);
-    setSaved(next);
-    localStorage.setItem('hd_saved_ai', JSON.stringify(next));
+    const item = saved[idx];
+    if (!item?.id) return;
+    deleteSavedInsight(item.id).then(() => {
+      setSaved(prev => prev.filter((_, i) => i !== idx));
+    }).catch(err => showToast('Delete failed: ' + err.message));
   }
 
   async function handlePickerLoad(selectedItems, filters) {
@@ -591,7 +608,7 @@ export default function StatsPage() {
         {loadingClips ? (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>Loading play data…</div>
         ) : mainTab === 'SPOTLIGHT' ? (
-          plays.length > 0 ? <SpotlightTab plays={plays} playbook={playbook} label={label} /> : <div className="empty-msg">Tap <strong>Filter</strong> to select cutups and load data.</div>
+          plays.length > 0 ? <SpotlightTab plays={plays} playbook={playbook} label={label} coach={coach} /> : <div className="empty-msg">Tap <strong>Filter</strong> to select cutups and load data.</div>
         ) : mainTab === 'ASK' ? (
           <AskAITab plays={plays} playbook={playbook} label={label} savedList={saved} onSave={handleSaveAI} />
         ) : mainTab === 'SAVED' ? (
