@@ -63,6 +63,8 @@ export default function TrackersHubPage() {
     }
 
     try {
+      // Hudl template IDs start with hudl_cs_ — can't store in FK column
+      const isHudlTemplate = opts.template_id && String(opts.template_id).startsWith('hudl_cs_');
       const game = await createGame({
         team_id: coach.team_id,
         created_by: coach.id,
@@ -72,12 +74,18 @@ export default function TrackersHubPage() {
         date: opts.date || null,
         game_type: opts.game_type || 'Game',
         hudl_source: opts._title || null,
-        template_id: opts.template_id || null,
+        template_id: isHudlTemplate ? null : (opts.template_id || null),
         plays: Array.from({ length: 200 }, () => ({})),
       });
 
       setNewGameOpen(false);
-      navigate(`/tracker/${game.id}`);
+      // If Hudl template, pass col_ids via navigation state so TrackerPage uses them
+      if (isHudlTemplate) {
+        const hudlTmpl = templates.find(t => t.id === opts.template_id);
+        navigate(`/tracker/${game.id}`, { state: { colIds: hudlTmpl?.col_ids } });
+      } else {
+        navigate(`/tracker/${game.id}`);
+      }
     } catch (err) {
       showToast('Failed to create game: ' + err.message);
     }
