@@ -5,53 +5,96 @@ import { supabase } from './supabase';
 // ════════════════════════════════════════
 
 export const PLAYBOOK_DEFAULTS = {
-  team_info: `Team Name - Your School Name (Abbreviation)
-School - Full School Name, City, State
-Rivals - Opponent 1, Opponent 2, Opponent 3
-3 Best Opponents (Big 3) - Opponent 1, Opponent 2, Opponent 3
-Conference Opponents - Opponent 1, Opponent 2, Opponent 3`,
+  team_info: `School Name (Full) - 
+School Name (Abbreviation) - 
+Mascot - 
+Location - 
+Head Coach - 
+Rivals - 
+Conference Opponents - `,
 
-  run_plays: `Play Name - Concept (e.g. Power Right)
-Play Name - Concept (e.g. Counter Left)
-Play Name - Concept (e.g. Inside Zone Right)`,
-
-  pass_pro: `Protection Name - Description (e.g. Half Slide - Center and backside slide, frontside man)
-Protection Name - Description (e.g. BOB - Big on Big, back picks up free rusher)`,
-
-  pass_plays: `Play Name - Concept (e.g. Four Verticals)
-Play Name - Concept (e.g. Shallow Cross)`,
-
-  formations: `Formation Name - Personnel grouping (e.g. 11 personnel — 1 RB, 1 TE, 3 WR)
-Formation Name - Personnel grouping`,
-
-  tags: `Tag Name - What it does (e.g. extra blocker added)
-Motion Name - How the player moves pre-snap`,
-
-  defense: `Front Name - Description (e.g. Under - Weak 3-tech, Strong 5-tech)
-Coverage Name - Description (e.g. Cover 3 - 3 deep, 4 under)
-Blitz Name - Description (e.g. Fire Zone - 5-man pressure with 3 dropping)`,
+  general: '',
 
   terminology: `TFL - Tackle for Loss. A play where the ball carrier is tackled behind the line of scrimmage (negative yardage). Excludes fumbles and penalties.
 LOS - Line of Scrimmage. The yard line where the ball is snapped.
 ODK - Offense/Defense/Kicking. Tags each play as O, D, or K.
-QBR - Quarterback Rating (NFL Passer Rating formula, 0-158.3 scale).
+QBR - Quarterback Rating. NFL Passer Rating formula, scale of 0-158.3.
 YPC - Yards Per Carry. Total rush yards divided by rush attempts.
 YPA - Yards Per Attempt. Total pass yards divided by pass attempts (incompletes count as 0).
+YPP - Yards Per Play. Total yards divided by total plays.
 RZ - Red Zone. Plays inside the opponent's 20-yard line.
 GL - Gain/Loss. Net yardage on a play.
 DN - Down (1st, 2nd, 3rd, 4th).
 DIST - Distance to go for a first down.
-RPO - Run-Pass Option.
-PA - Play Action.
-HASH - Field position: Left, Middle, or Right hash.
+RPO - Run-Pass Option. A play where the QB reads a defender to decide run or pass post-snap.
+PA - Play Action. A fake handoff before a pass.
+HASH - Field position: Left (L), Middle (M), or Right (R) hash mark.
+FORMATION SET - How many eligible WRs are on each side of the center (e.g. 3x1 = 3 receivers to one side and 1 to the other, 2x2 = 2 on each side, 3x2, Empty, etc).
+PERSONNEL - Number grouping indicating RBs and TEs on the field (e.g. 11 = 1 RB + 1 TE + 3 WR, 12 = 1 RB + 2 TE + 2 WR, 21 = 2 RB + 1 TE + 2 WR, 22 = 2 RB + 2 TE + 1 WR, 10 = 1 RB + 0 TE + 4 WR, 00 = 0 RB + 0 TE + 5 WR Empty).
 EXPLOSIVE - A big play. Run of 10+ yards or pass of 15+ yards.
 NEGATIVE PLAY - Any play with negative yardage (gainloss < 0).
-CONVERSION - Earning a first down on 3rd or 4th down.
+CONVERSION - Earning a first down on 3rd or 4th down (gainloss >= dist, or TD).
 STOP - A defensive play where the opponent gains 0 or fewer yards.
 SACK - Quarterback is tackled behind the LOS on a pass play.
-INT - Interception.
-TD - Touchdown.
-FG - Field Goal.`,
+INT - Interception. A pass caught by the defense.
+TD - Touchdown. Worth 6 points.
+FG - Field Goal. Worth 3 points.
+PAT - Point After Touchdown (extra point). Worth 1 point.
+2PT - Two-point conversion attempt after a touchdown.
+KO - Kickoff.
+KR - Kick Return.
+PR - Punt Return.
+TB - Touchback. Ball placed at the 25-yard line (kickoff) or 20-yard line (punt).
+OL - Offensive Line.
+DL - Defensive Line.
+LB - Linebacker.
+DB - Defensive Back.
+CB - Cornerback.
+SS - Strong Safety.
+FS - Free Safety.
+DE - Defensive End.
+DT - Defensive Tackle.
+NT - Nose Tackle.
+TE - Tight End.
+WR - Wide Receiver.
+RB - Running Back.
+FB - Fullback.
+QB - Quarterback.
+OLB - Outside Linebacker.
+ILB/MLB - Inside/Middle Linebacker.
+SLOT - A receiver lined up inside of the outermost WR.
+MOTION - Pre-snap movement by a skill player.
+SHIFT - Pre-snap repositioning of multiple players.
+CADENCE - The QB's snap count and signals.
+AUDIBLE - A play change called at the line of scrimmage.
+CHECK - A secondary play call if the defense shows a certain look.
+BLITZ - A defensive play where extra rushers are sent beyond the standard front.
+ZONE - Zone coverage. Defenders cover areas of the field rather than specific players.
+MAN - Man-to-man coverage. Each defender covers a specific offensive player.
+PRESS - Defensive technique where the CB lines up at the LOS to jam the WR.
+OFF - Defensive technique where the CB lines up 5-7+ yards off the WR.
+GAP - The space between offensive linemen (A gap, B gap, C gap, D gap).
+HOLE - The numbered running lane (even numbers right, odd numbers left).
+TRAP - A run play where a pulling lineman blocks a defensive lineman who was intentionally left unblocked.
+PULL - An offensive lineman leaving his position to block at another point.
+SCREEN - A short pass behind the LOS with blockers set up in front of the receiver.
+DRAW - A delayed handoff designed to look like a pass play.
+COUNTER - A run play with misdirection where the back starts one way then cuts back.
+POWER - A gap run scheme with a pulling guard and a lead blocker.
+ZONE RUN - A run scheme where the OL blocks in one direction and the RB reads the blocks.
+INSIDE ZONE (IZ) - A zone run between the tackles.
+OUTSIDE ZONE (OZ) - A zone run toward the edge.
+BOB - Big on Big. Pass protection where linemen block linemen, back picks up free rusher.
+SLIDE - Pass protection where the OL slides in one direction together.
+HALF SLIDE - Pass protection where one side slides, other side is man blocking.
+MAX PROTECT - Using extra blockers (RB, TE) to protect the QB, fewer receivers in routes.
+HOT - A quick throw to a predetermined receiver when a blitz is detected.
+SIGHT ADJUST - A WR changes his route based on the coverage he sees.
+SCRAMBLE - When the QB runs out of the pocket to avoid pressure.`,
+
+  defense: `Front Name - Description
+Coverage Name - Description
+Blitz Name - Description`,
 
   stat_rules: `First Down - gainLoss >= dist, OR result contains "TD", OR result is "1st DN"
 3rd/4th Down Conversion - same logic as First Down
@@ -68,21 +111,40 @@ Negative Play - gainLoss < 0
 TFL (our defense) - defense.tflsForced: defensive plays with negative yardage, excluding fumbles/penalties
 TFL (against our offense) - offense.tflAgainst: offensive plays with negative yardage, excluding fumbles/penalties`,
 
-  general: '',
+  formations: `Formation Name - Formation Set, Personnel (e.g. Blue Near - 3x1, 11p)
+Formation Name - Formation Set, Personnel`,
+
+  tags: `Tag Name - What it does (e.g. Jet - WR motion across the formation pre-snap)
+Motion Name - How the player moves pre-snap`,
+
+  run_plays: `Play Name - Concept (e.g. Power Right)
+Play Name - Concept (e.g. Counter Left)
+Play Name - Concept (e.g. Inside Zone Right)`,
+
+  pass_pro: `Protection Name - Description (e.g. Half Slide - Center and backside slide, frontside man)
+Protection Name - Description (e.g. BOB - Big on Big, back picks up free rusher)`,
+
+  pass_plays: `Play Name - Concept (e.g. Four Verticals)
+Play Name - Concept (e.g. Shallow Cross)`,
 };
 
-// Section metadata
+// Section metadata — ordered for two-column layout
+// Column 1: team_info, general, terminology, defense, stat_rules
+// Column 2: formations, tags, run_plays, pass_pro, pass_plays
+export const PB_COL1 = ['team_info', 'general', 'terminology', 'defense', 'stat_rules'];
+export const PB_COL2 = ['formations', 'tags', 'run_plays', 'pass_pro', 'pass_plays'];
+
 export const PB_SECTIONS = {
-  team_info:    { title: '🏫 TEAM INFO',         emoji: '🏫', hint: 'Key - Value format, one per line. Tells the AI who you are, your rivalries, and conference opponents.',  heading: 'TEAM INFO' },
-  run_plays:    { title: '🏃 RUN PLAYS',          emoji: '🏃', hint: 'Play Name - Concept, one per line.',                                                                heading: 'RUN PLAYS' },
-  pass_pro:     { title: '🛡️ PASS PROTECTION',    emoji: '🛡️', hint: 'Protection Name - Description, one per line. Include slide rules and pickup assignments.',          heading: 'PASS PROTECTION SCHEMES' },
-  pass_plays:   { title: '🎯 PASS PLAYS',         emoji: '🎯', hint: 'Play Name - Concept, one per line. Add your pass play names and route concepts.',                heading: 'PASS PLAY NAMES' },
-  formations:   { title: '🗂 FORMATIONS',          emoji: '🗂', hint: 'Formation Name - Personnel / description, one per line.',                                         heading: 'FORMATIONS & PERSONNEL' },
-  tags:         { title: '🏷 TAGS & MOTION',       emoji: '🏷', hint: 'Tag - What it means, one per line. These are modifiers added to play names.',                     heading: 'PLAY TAGS & MOTION' },
-  defense:      { title: '🛡 DEFENSIVE TERMS',     emoji: '🛡', hint: 'Term - Meaning, one per line. Fronts, coverages, blitz packages.',                                heading: 'DEFENSIVE TERMINOLOGY' },
-  terminology:  { title: '📖 TERMINOLOGY',          emoji: '📖', hint: 'Abbreviation - Definition, one per line. Football terms used throughout the app.',                heading: 'FOOTBALL TERMINOLOGY' },
-  stat_rules:   { title: '📐 STAT RULES',          emoji: '📐', hint: 'Stat Name - How it\'s calculated, one per line.',                                                 heading: 'STAT CALCULATION RULES' },
+  team_info:    { title: '🏫 TEAM INFO',           emoji: '🏫', hint: 'Fill in your team details.',                                                                      heading: 'TEAM INFO' },
   general:      { title: '📝 GENERAL NOTES',        emoji: '📝', hint: 'Free-form notes for the AI. Anything you want it to know.',                                      heading: 'GENERAL COACHING NOTES' },
+  terminology:  { title: '📖 TERMINOLOGY',          emoji: '📖', hint: 'Abbreviation - Definition, one per line. All terms here are hardcoded into the AI.',              heading: 'FOOTBALL TERMINOLOGY' },
+  defense:      { title: '🛡 DEFENSIVE SCHEME',     emoji: '🛡', hint: 'Fronts, coverages, blitz packages. Term - Meaning, one per line.',                                heading: 'DEFENSIVE SCHEME' },
+  stat_rules:   { title: '📐 STAT RULES',          emoji: '📐', hint: 'Stat Name - How it\'s calculated, one per line.',                                                 heading: 'STAT CALCULATION RULES' },
+  formations:   { title: '🗂 FORMATIONS',           emoji: '🗂', hint: 'Formation Name - Formation Set, Personnel. e.g. Blue Near - 3x1, 11p',                            heading: 'FORMATIONS' },
+  tags:         { title: '🏷 TAGS & MOTION',        emoji: '🏷', hint: 'Tag - What it means, one per line. Modifiers added to play names.',                               heading: 'PLAY TAGS & MOTION' },
+  run_plays:    { title: '🏃 RUN PLAYS',            emoji: '🏃', hint: 'Play Name - Concept, one per line.',                                                              heading: 'RUN PLAYS' },
+  pass_pro:     { title: '🛡️ PASS PROTECTION',     emoji: '🛡️', hint: 'Protection Name - Description, one per line.',                                                   heading: 'PASS PROTECTION SCHEMES' },
+  pass_plays:   { title: '🎯 PASS PLAYS',           emoji: '🎯', hint: 'Play Name - Concept, one per line.',                                                              heading: 'PASS PLAY NAMES' },
 };
 
 // ═══ CRUD ═══
