@@ -132,3 +132,60 @@ export async function deleteColumn(id) {
     .eq('id', id);
   if (error) throw error;
 }
+
+// ─── SAVED INSIGHTS (cross-device) ───
+
+export async function fetchSavedInsights(coachId) {
+  const { data, error } = await supabase
+    .from('saved_insights')
+    .select('*')
+    .eq('coach_id', coachId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function createSavedInsight({ coach_id, team_id, question, answer, data_label }) {
+  const { data, error } = await supabase
+    .from('saved_insights')
+    .insert({ coach_id, team_id, question, answer, data_label })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteSavedInsight(id) {
+  const { error } = await supabase
+    .from('saved_insights')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+}
+
+// ─── SPOTLIGHT FEEDBACK (cross-device) ───
+
+export async function fetchSpotlightFeedback(coachId) {
+  const { data, error } = await supabase
+    .from('spotlight_feedback')
+    .select('*')
+    .eq('coach_id', coachId);
+  if (error) throw error;
+  // Convert to the format the app expects: { liked: [...], disliked: [...] }
+  const liked = (data || []).filter(f => f.liked).map(f => f.headline || f.stat || f.tag);
+  const disliked = (data || []).filter(f => !f.liked).map(f => f.headline || f.stat || f.tag);
+  return { liked, disliked };
+}
+
+export async function upsertSpotlightFeedback({ coach_id, team_id, headline, stat, tag, liked }) {
+  const { error } = await supabase
+    .from('spotlight_feedback')
+    .upsert({ coach_id, team_id, headline, stat, tag, liked },
+      { onConflict: 'coach_id,headline' });
+  if (error) {
+    // If upsert fails (no unique constraint), just insert
+    await supabase.from('spotlight_feedback')
+      .insert({ coach_id, team_id, headline, stat, tag, liked });
+  }
+}
+
