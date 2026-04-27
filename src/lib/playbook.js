@@ -120,77 +120,17 @@ export async function savePlaybookSection(teamId, key, value, coachId) {
 export function buildPlaybookContext(pb) {
   const parts = [];
 
-  // Universal football conventions
-  parts.push(`## STANDARD FOOTBALL ABBREVIATIONS
-KOR = Kick Off Return
-KO = Kickoff
-TFL = Tackle For Loss
-YPR = Yards Per Rush
-YPP = Yards Per Pass Attempt
-YPC = Yards Per Carry
-YAC = Yards After Catch
-QBR = Quarterback Rating
-PR = Punt Return
-P = Punter
-K = Kicker
-TD = Touchdown
-INT = Interception
-FG = Field Goal
-PAT = Point After Touchdown (Extra Point)
-RZ = Red Zone
-EPA = Expected Points Added
-SR = Success Rate
-DVOA = Defense-adjusted Value Over Average
-PBU = Pass Breakup
-FF = Forced Fumble
-FR = Fumble Recovery
-TB = Touchback
-OL = Offensive Line
-DL = Defensive Line
-LB = Linebacker
-DB = Defensive Back
-CB = Cornerback
-S = Safety (position)
-WR = Wide Receiver
-RB = Running Back
-TE = Tight End
-QB = Quarterback
-FB = Fullback`);
+  // Universal football conventions (kept minimal — coach-editable terminology section has the full list)
+  parts.push(`## CORE ABBREVIATIONS
+O - Offense, D - Defense, K - Kicking/Special Teams
+ODK tags every play as O, D, or K in the data.`);
 
   parts.push(`## PERSONNEL SHORTHAND
 When a number is followed by "p" (e.g. 11p, 10p, 21p, 12p), it means personnel grouping. The two digits represent the number of RBs and TEs on the field (WRs fill the remaining spots to make 5 skill players).
-10p = 10 personnel (1 RB, 0 TE, 4 WR)
-11p = 11 personnel (1 RB, 1 TE, 3 WR)
-12p = 12 personnel (1 RB, 2 TE, 2 WR)
-13p = 13 personnel (1 RB, 3 TE, 1 WR)
-20p = 20 personnel (2 RB, 0 TE, 3 WR)
-21p = 21 personnel (2 RB, 1 TE, 2 WR)
-22p = 22 personnel (2 RB, 2 TE, 1 WR)
-23p = 23 personnel (2 RB, 3 TE, 0 WR)
 This convention applies everywhere — in formation names, in data fields, and in coach questions.`);
 
-  parts.push(`## COACHING TERMINOLOGY
-LOS = Line of scrimmage
-Pass pro = Pass protection
-Cov Shell = Number of safeties (0, 1, or 2)
-Cov Type = Coverage type (Man, Zone, or Mix)
-Off Str = Offensive strength direction (L, Bal, R)
-Play Dir = Direction the play is designed to go
-Pen Yards = Penalty yards
-STK = Special teams / kicking
-DN = Down
-YPC = Yards per carry
-YPP = Yards per play
-conv = conversion
-avg = average
-comp = completion
-inc = incomplete
-neg = negative
-INT = interception
-TFL = tackle for loss
-RZ = red zone`);
-
-  // Coach-defined sections
+  // Coach-defined sections (editable in Playbook page)
+  if (pb?.terminology?.trim()) parts.push('## FOOTBALL TERMINOLOGY\n'        + pb.terminology.trim());
   if (pb?.team_info?.trim())   parts.push('## TEAM INFO\n'                  + pb.team_info.trim());
   if (pb?.run_plays?.trim())   parts.push('## RUN PLAY NAMES\n'             + pb.run_plays.trim());
   if (pb?.pass_plays?.trim())  parts.push('## PASS PLAY NAMES\n'            + pb.pass_plays.trim());
