@@ -487,9 +487,16 @@ export default function StatsPage() {
   const directPlays = location.state?.directPlays;
   const directLabel = location.state?.directLabel;
 
-  const [pickerOpen, setPickerOpen] = useState(!directPlays);
-  const [plays, setPlays] = useState(directPlays || []);
-  const [stats, setStats] = useState(directPlays ? calcStats(directPlays) : null);
+  // Filter out JV plays from direct plays on initial load
+  const filteredDirect = directPlays ? directPlays.filter(p => {
+    const oppPasser = String(p.opppasser || p.opp_passer || '').trim();
+    const v = String(p.varsity || '').trim().toLowerCase();
+    return oppPasser !== '99' && v !== 'n' && v !== 'no';
+  }) : null;
+
+  const [pickerOpen, setPickerOpen] = useState(!filteredDirect);
+  const [plays, setPlays] = useState(filteredDirect || []);
+  const [stats, setStats] = useState(filteredDirect ? calcStats(filteredDirect) : null);
   const [playbook, setPlaybook] = useState(null);
   const [mainTab, setMainTab] = useState('SPOTLIGHT');
   const [subTab, setSubTab] = useState('OVERVIEW');
@@ -497,7 +504,20 @@ export default function StatsPage() {
   const [label, setLabel] = useState(directLabel || '');
   const [loadedIds, setLoadedIds] = useState(new Set()); // IDs of currently loaded cutups
   const [loadedFilters, setLoadedFilters] = useState(null); // Filter state when data was loaded
+  const [varsityOnly, setVarsityOnly] = useState(true); // Exclude JV plays by default
   const [saved, setSaved] = useState([]);
+
+  // Filter out JV plays: opp_passer=99 OR varsity=N/No
+  function filterVarsity(playList) {
+    if (!varsityOnly) return playList;
+    return playList.filter(p => {
+      const oppPasser = String(p.opppasser || p.opp_passer || '').trim();
+      const varsity = String(p.varsity || '').trim().toLowerCase();
+      if (oppPasser === '99') return false;
+      if (varsity === 'n' || varsity === 'no') return false;
+      return true;
+    });
+  }
 
   // Load playbook and saved insights from Supabase
   useEffect(() => {
@@ -549,8 +569,9 @@ export default function StatsPage() {
         const mapped = hudlClipsToPlays(clips).map(p => ({ ...p, _gameTitle: item.title }));
         allPlays = allPlays.concat(mapped);
       }
-      setPlays(allPlays); setStats(calcStats(allPlays));
-      showToast(`Loaded ${allPlays.length} plays`);
+      const filtered = filterVarsity(allPlays);
+      setPlays(filtered); setStats(calcStats(filtered));
+      showToast(`Loaded ${filtered.length} plays${varsityOnly && filtered.length < allPlays.length ? ` (${allPlays.length - filtered.length} JV excluded)` : ''}`);
     } catch (err) { showToast('Load failed: ' + err.message); }
     setLoadingClips(false);
   }
@@ -630,7 +651,7 @@ export default function StatsPage() {
         )}
       </div>
 
-      {pickerOpen && <HudlCutupPicker onLoad={handlePickerLoad} onClose={() => setPickerOpen(false)} initialSelected={loadedIds} initialFilters={loadedFilters} />}
+      {pickerOpen && <HudlCutupPicker onLoad={handlePickerLoad} onClose={() => setPickerOpen(false)} initialSelected={loadedIds} initialFilters={loadedFilters} varsityOnly={varsityOnly} onVarsityChange={setVarsityOnly} />}
     </div>
   );
 }
