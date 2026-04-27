@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { HUDL_API } from '../lib/constants';
 
-const TYPE_FILTERS = ['ALL', 'Game', 'Scout', 'JV', 'Other', 'Tracked'];
+const TYPE_FILTERS = ['ALL', 'Game', 'Scout', 'JV', 'Other'];
 const YEAR_FILTERS = ['2024', '2025', '2026'];
 
 // Matches HTML parseSeason / parseWeekSort exactly
@@ -63,11 +63,7 @@ export default function HudlCutupPicker({ onLoad, onClose, initialSelected, init
     // Type filter (multi-select)
     if (typeFilter.size > 0) {
       const cats = new Set([...typeFilter].map(t => t.toLowerCase()));
-      if (cats.has('tracked')) {
-        f = [];
-      } else {
-        f = f.filter(i => cats.has(i._category));
-      }
+      f = f.filter(i => cats.has(i._category));
     }
 
     // Year filter (multi-select)
