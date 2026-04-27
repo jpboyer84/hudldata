@@ -15,6 +15,8 @@ export default function PlaybookPage() {
     schoolFull: '', schoolAbbr: '', mascot: '', location: '',
     headCoach: '', rivals: '', conferenceOpponents: '',
   });
+  const [termAcronyms, setTermAcronyms] = useState('');
+  const [termDefinitions, setTermDefinitions] = useState('');
 
   const TEAM_INFO_LABELS = [
     { key: 'schoolFull', label: 'School Name (Full)', placeholder: 'e.g. Hanover Central High School' },
@@ -77,11 +79,20 @@ export default function PlaybookPage() {
     if (key === 'team_info') {
       setTeamInfoFields(parseTeamInfo(val));
     }
+    if (key === 'terminology') {
+      // Parse two sections
+      const acroMatch = val.match(/=== ACRONYMS ===([\s\S]*?)(?:=== DEFINITIONS ===|$)/);
+      const defMatch = val.match(/=== DEFINITIONS ===([\s\S]*?)$/);
+      setTermAcronyms((acroMatch ? acroMatch[1] : val).trim());
+      setTermDefinitions((defMatch ? defMatch[1] : '').trim());
+    }
   }
 
   async function saveEditor() {
     if (!editSection || !coach?.team_id) return;
-    const valueToSave = editSection === 'team_info' ? serializeTeamInfo(teamInfoFields) : editValue;
+    const valueToSave = editSection === 'team_info' ? serializeTeamInfo(teamInfoFields)
+      : editSection === 'terminology' ? `=== ACRONYMS ===\n${termAcronyms}\n\n=== DEFINITIONS ===\n${termDefinitions}`
+      : editValue;
     try {
       await savePlaybookSection(coach.team_id, editSection, valueToSave, coach.id);
       setPb(prev => ({ ...prev, [editSection]: valueToSave }));
@@ -133,6 +144,37 @@ export default function PlaybookPage() {
                       />
                     </div>
                   ))}
+                </div>
+              ) : editSection === 'terminology' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, height: '100%' }}>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)', marginBottom: 6, letterSpacing: '0.04em' }}>ACRONYMS</div>
+                    <textarea
+                      value={termAcronyms}
+                      onChange={e => setTermAcronyms(e.target.value)}
+                      style={{
+                        flex: 1, width: '100%', background: 'var(--color-bg)',
+                        border: '1px solid var(--color-border)', borderRadius: 10,
+                        padding: 12, color: 'var(--color-text)', fontFamily: 'var(--font-ui)',
+                        fontSize: 13, lineHeight: 1.6, resize: 'none', outline: 'none',
+                      }}
+                      placeholder="TFL - Tackle for Loss&#10;LOS - Line of Scrimmage&#10;..."
+                    />
+                  </div>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)', marginBottom: 6, letterSpacing: '0.04em' }}>DEFINITIONS</div>
+                    <textarea
+                      value={termDefinitions}
+                      onChange={e => setTermDefinitions(e.target.value)}
+                      style={{
+                        flex: 1, width: '100%', background: 'var(--color-bg)',
+                        border: '1px solid var(--color-border)', borderRadius: 10,
+                        padding: 12, color: 'var(--color-text)', fontFamily: 'var(--font-ui)',
+                        fontSize: 13, lineHeight: 1.6, resize: 'none', outline: 'none',
+                      }}
+                      placeholder="Tackle for Loss - A play where the ball carrier is tackled behind the line...&#10;..."
+                    />
+                  </div>
                 </div>
               ) : (
                 <textarea
