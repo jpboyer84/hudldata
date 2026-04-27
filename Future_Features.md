@@ -19,11 +19,9 @@ Use the browser's built-in Web Speech API (works in Chrome and Safari/iOS) to di
 ## 4. Per-Coach Spotlight Feedback Sync
 Move Spotlight thumbs up/down feedback from `localStorage` (`hd_spotlight_feedback`) to Supabase so it syncs across devices per coach. Currently feedback is per-browser/per-device and doesn't follow the coach to other devices or survive a cache clear. Create a `spotlight_feedback` table in Supabase with `user_id`, `insight_key`, and `liked` (boolean) columns, protected by RLS so each coach only sees their own preferences. On login, pull that coach's feedback history; on thumbs up/down, upsert to Supabase instead of localStorage. The AI prompt that receives feedback data stays the same — it just reads from a different source. Each coach on staff develops their own preferences independently.
 
-## 5. Roster / Player ID Mapping
-Hudl's clip data returns internal player IDs (e.g. `121936871`) for PASSER, RUSHER, and RECEIVER fields — not jersey numbers or names. The AI can't answer questions like "What was Wyatt's passer rating?" without knowing which ID maps to which player. Two approaches:
+---
 
-**Option A — Manual roster page (fallback).** Add a Roster page in the app where coaches enter jersey number, player name, position, and Hudl player ID. One-time setup per season. When clips load, the app swaps raw IDs for "#14 Wyatt" before data reaches the AI or stats engine. On first load of a new game, the app could surface unrecognized IDs and prompt the coach to tag them.
+## Recently Implemented (removed from backlog)
 
-**Option B — Auto-discover Hudl's roster endpoint (preferred).** Hudl resolves these IDs to jersey numbers in their own UI, so an internal endpoint likely exists (e.g. `/api/v2/teams/107097/athletes`). Investigate by checking the Network tab on Hudl's roster page in Chrome. If found, Railway can fetch the full roster automatically — zero manual entry, auto-refreshes each season.
-
-Either way, once the mapping exists, the `normalizeClip` output and `buildDataSummary` CSV should replace raw IDs with `#14 Wyatt` so the AI can answer player-specific questions for passers, rushers, and receivers.
+- **Roster / Player ID Mapping** — Discovered Hudl's roster endpoint at `/api/v2/teams/{teamId}/seasons/{seasonId}/roster`. Railway now auto-fetches the roster, and the app resolves raw participant IDs (e.g. `121936871`) to `#14 Wyatt Tewell` in passer/rusher/receiver fields before data reaches the AI. Zero manual entry, fully automatic.
+- **Hudl Column Sets Auto-Sync** — Hudl column sets now auto-load as templates in the tracker (with HUDL badge). Fetched via `/api/hudl/column-sets` on Railway.
