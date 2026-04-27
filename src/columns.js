@@ -214,6 +214,15 @@ export function defaultColumns() {
     { id:'team',    name:'TEAM',     type:'btns_dd', btns:[], ddLbl:'SELECT', dd:[] },
     { id:'oppteam', name:'OPP TEAM', type:'btns_dd', btns:[], ddLbl:'SELECT', dd:[] },
     { id:'playnum', name:'PLAY #',   type:'numpad' },
+    { id:'opppasser',   name:'OPP PASSER',   type:'numpad' },
+    { id:'oppreceiver', name:'OPP RECEIVER', type:'numpad' },
+    { id:'oppkicker',   name:'OPP KICKER',   type:'numpad' },
+    { id:'target',      name:'TARGET',       type:'numpad' },
+    { id:'hurries',     name:'HURRIES',      type:'numpad' },
+    {
+      id:'varsity', name:'VARSITY', type:'buttons',
+      btns:[{l:'V',v:'V'},{l:'JV',v:'JV'},{l:'FR',v:'FR'}]
+    },
   ];
 }
 
