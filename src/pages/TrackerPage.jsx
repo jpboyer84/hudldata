@@ -9,6 +9,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { DropdownModal, PlayNavModal, EditGameModal } from '../components/Modals';
 import { exportGameXLSX } from '../utils/xlsxExport';
 import { sendToHudl, fetchHudlColumnSets } from '../lib/hudlData';
+import VoiceMode from '../components/VoiceMode';
 
 const INITIAL_PLAYS = 200;
 const emptyPlays = n => Array.from({ length: n }, () => ({}));
@@ -27,6 +28,7 @@ export default function TrackerPage() {
   const [layoutCols, setLayoutCols] = useState(1);
   const [layoutOpen, setLayoutOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [voiceActive, setVoiceActive] = useState(false);
   const [modal, setModal] = useState(null);
   const [jumpOpen, setJumpOpen] = useState(false);
   const [editGameOpen, setEditGameOpen] = useState(false);
@@ -366,6 +368,24 @@ export default function TrackerPage() {
   // Hudl push data
   const playsWithClipIds = plays.filter(p => p._clipId && Object.keys(p).some(k => k !== '_clipId' && p[k]));
 
+  // ─── VOICE MODE HANDLERS ───
+  function handleVoiceValues(parsed) {
+    for (const [colId, value] of Object.entries(parsed)) {
+      if (colId.startsWith('_')) continue;
+      setVal(colId, value);
+    }
+  }
+
+  function handleVoiceCommand(cmd) {
+    switch (cmd) {
+      case 'next': nextPlay(); break;
+      case 'prev': prevPlay(); break;
+      case 'clear': clearRow(); break;
+      case 'stop': setVoiceActive(false); break;
+      default: break;
+    }
+  }
+
   return (
     <div className="view" style={{ position: 'relative' }}>
       {/* Header */}
@@ -443,8 +463,29 @@ export default function TrackerPage() {
       </div>
 
       {/* Nav bar */}
+      {/* Voice mode bar */}
+      <VoiceMode
+        active={voiceActive}
+        onToggle={() => setVoiceActive(!voiceActive)}
+        onValues={handleVoiceValues}
+        onCommand={handleVoiceCommand}
+      />
+
       <div className="nav-bar">
         <button className="nav-btn nav-prev" onClick={prevPlay} disabled={playIdx === 0}>← Prev</button>
+        <button
+          className="nav-btn"
+          onClick={() => setVoiceActive(!voiceActive)}
+          style={{
+            fontSize: 16, padding: '8px 12px', flexShrink: 0,
+            background: voiceActive ? '#ef4444' : 'var(--color-surface2)',
+            color: voiceActive ? '#fff' : 'var(--color-text)',
+            border: `1px solid ${voiceActive ? '#ef4444' : 'var(--color-border)'}`,
+            borderRadius: 8,
+          }}
+        >
+          {voiceActive ? '⏹' : '🎤'}
+        </button>
         <button className="nav-btn nav-mid" onClick={addRows} style={{ fontSize: 11 }}>+ Rows</button>
         <button className="nav-btn nav-new" onClick={nextPlay}>Next play →</button>
       </div>
