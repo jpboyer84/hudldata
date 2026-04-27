@@ -37,6 +37,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function fetchCoach(userId) {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('coaches')
@@ -210,3 +211,4 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+
