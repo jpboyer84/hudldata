@@ -86,7 +86,7 @@ export default function ColumnsPage() {
             }}>
               CUSTOM COLUMNS
             </div>
-            {customColumns.map(col => (
+            {customColumns.sort((a, b) => a.name.localeCompare(b.name)).map(col => (
               <div key={col.id} className="arch-card" style={{ gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="arch-title">{col.name}</div>
