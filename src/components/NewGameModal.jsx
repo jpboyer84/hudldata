@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { fetchTemplates } from '../lib/supaData';
+import { fetchHudlColumnSets } from '../lib/hudlData';
 
 const GAME_TYPES = ['Game', 'JV', 'Scout', 'Other'];
 
@@ -17,10 +18,15 @@ export default function NewGameModal({ open, onClose, onStart, onNavigate, hudlS
 
   useEffect(() => {
     if (open && coach?.team_id) {
-      fetchTemplates(coach.team_id).then(t => {
-        setTemplates(t);
-        if (t.length > 0 && !templateId) setTemplateId(t[0].id);
-      }).catch(console.error);
+      // Fetch both Supabase templates and Hudl column sets in parallel
+      const supaPromise = fetchTemplates(coach.team_id).catch(() => []);
+      const hudlPromise = coach.hudl_cookie ? fetchHudlColumnSets(coach).catch(() => []) : Promise.resolve([]);
+
+      Promise.all([supaPromise, hudlPromise]).then(([supa, hudl]) => {
+        const merged = [...supa, ...hudl];
+        setTemplates(merged);
+        if (merged.length > 0 && !templateId) setTemplateId(merged[0].id);
+      });
       // Default team name from profile
       if (!team && coach?.teams?.name) setTeam(coach.teams.name);
       // Try to parse Hudl source title for week/opponent
@@ -99,7 +105,7 @@ export default function NewGameModal({ open, onClose, onStart, onNavigate, hudlS
           <div className="fg">
             <label className="fl">TEMPLATE</label>
             <select className="fi" value={templateId} onChange={e => setTemplateId(e.target.value)}>
-              {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {templates.map(t => <option key={t.id} value={t.id}>{t.isHudl ? `${t.name} (HUDL)` : t.name}</option>)}
             </select>
           </div>
 
@@ -180,3 +186,4 @@ export default function NewGameModal({ open, onClose, onStart, onNavigate, hudlS
     </div>
   );
 }
+
