@@ -241,7 +241,7 @@ export default function SettingsPage() {
 
   return (
     <div className="view">
-      <Header title="Settings & Help" onBack={() => navigate('/')} />
+      <Header title="Settings" onBack={() => navigate('/')} />
 
       <div className="settings-body">
         {/* Help / FAQ */}
