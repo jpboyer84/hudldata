@@ -8,7 +8,7 @@ import ColumnCard from '../components/ColumnCard';
 import ConfirmModal from '../components/ConfirmModal';
 import { DropdownModal, PlayNavModal, EditGameModal } from '../components/Modals';
 import { exportGameXLSX } from '../utils/xlsxExport';
-import { sendToHudl } from '../lib/hudlData';
+import { sendToHudl, fetchHudlColumnSets } from '../lib/hudlData';
 
 const INITIAL_PLAYS = 200;
 const emptyPlays = n => Array.from({ length: n }, () => ({}));
@@ -70,7 +70,16 @@ export default function TrackerPage() {
     }).catch(err => showToast('Failed to load game'));
 
     if (coach?.team_id) {
-      fetchTemplates(coach.team_id).then(setAllTemplates).catch(() => {});
+      fetchTemplates(coach.team_id).then(supaTemplates => {
+        // Also fetch Hudl column sets if connected
+        if (coach.hudl_cookie) {
+          fetchHudlColumnSets(coach).then(hudlTmpls => {
+            setAllTemplates([...supaTemplates, ...hudlTmpls]);
+          }).catch(() => setAllTemplates(supaTemplates));
+        } else {
+          setAllTemplates(supaTemplates);
+        }
+      }).catch(() => {});
     }
   }, [gameId, coach?.team_id]);
 
@@ -518,7 +527,10 @@ export default function TrackerPage() {
             </div>
             <div className="list-scroll">
               {allTemplates.map(t => (
-                <div key={t.id} className="dd-item" onClick={() => handleSwitchTemplate(t)}>{t.name}</div>
+                <div key={t.id} className="dd-item" onClick={() => handleSwitchTemplate(t)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{t.name}</span>
+                  {t.isHudl && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--color-accent)', background: 'rgba(232,89,12,0.12)', padding: '2px 6px', borderRadius: 4 }}>HUDL</span>}
+                </div>
               ))}
               {allTemplates.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>No templates saved yet</div>}
             </div>
