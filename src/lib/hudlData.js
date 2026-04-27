@@ -182,3 +182,39 @@ export function resolvePlayerIds(clips, roster) {
     return resolved;
   });
 }
+
+// ─── HUDL COLUMN SETS: Fetch and convert to app templates ───
+let hudlTemplatesCache = null;
+
+export async function fetchHudlColumnSets(coach) {
+  if (hudlTemplatesCache) return hudlTemplatesCache;
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (coach?.hudl_cookie) headers['X-Hudl-Cookie'] = coach.hudl_cookie;
+  if (coach?.hudl_team_id) headers['X-Hudl-Team'] = coach.hudl_team_id;
+
+  try {
+    const resp = await fetch(`${HUDL_API}/api/hudl/column-sets`, { headers });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    const sets = data.columnSets || [];
+
+    const templates = sets
+      .map(s => {
+        const colIds = (s.columns || []).map(c => c.appKey).filter(Boolean);
+        if (colIds.length === 0) return null;
+        return {
+          id: `hudl_cs_${s.id}`,
+          name: s.name,
+          col_ids: colIds,
+          isHudl: true,
+        };
+      })
+      .filter(Boolean);
+
+    hudlTemplatesCache = templates;
+    return templates;
+  } catch {
+    return [];
+  }
+}
