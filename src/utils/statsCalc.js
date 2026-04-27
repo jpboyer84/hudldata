@@ -343,7 +343,7 @@ export function buildSummaryObj(plays, label) {
   const defResults = {};
   def.forEach(p => { const r = getResult(p); if (r) defResults[r] = (defResults[r] || 0) + 1; });
   const sacks = def.filter(p => (getResult(p) || '').toLowerCase().includes('sack')).length;
-  const tfl = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('tfl') || r.includes('for loss'); }).length;
+  const tfl = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return r.includes('tfl') || r.includes('for loss') || (gl !== null && gl < 0); }).length;
   const ints = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('int') || r.includes('interception'); }).length;
   const defThird = def.filter(p => String(getDn(p)) === '3');
   const defThirdStop = defThird.filter(p => {
