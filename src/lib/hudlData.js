@@ -183,7 +183,29 @@ export function resolvePlayerIds(clips, roster) {
   });
 }
 
-// ─── HUDL COLUMN SETS: Fetch and convert to app templates ───
+// ─── SYNC TEMPLATE TO HUDL: Save/update a column set in Hudl ───
+export async function syncTemplateToHudl(name, colIds, coach) {
+  if (!coach?.hudl_cookie) return null; // Not connected to Hudl
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (coach.hudl_cookie) headers['X-Hudl-Cookie'] = coach.hudl_cookie;
+  if (coach.hudl_team_id) headers['X-Hudl-Team'] = coach.hudl_team_id;
+
+  try {
+    const resp = await fetch(`${HUDL_API}/api/hudl/column-sets`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ name, appKeys: colIds }),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    // Clear cached Hudl templates so they refresh next time
+    hudlTemplatesCache = null;
+    return data;
+  } catch {
+    return null;
+  }
+}
 let hudlTemplatesCache = null;
 
 export async function fetchHudlColumnSets(coach) {
