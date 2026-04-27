@@ -187,6 +187,8 @@ export default function TrackersHubPage() {
         <div className="hdr-title">Tag Game Film</div>
         <div style={{ display: 'flex', gap: 5 }}>
           <button className="hdr-btn" onClick={() => navigate('/archive')}>Archive</button>
+          <button className="hdr-btn" onClick={() => navigate('/templates')}>Templates</button>
+          <button className="hdr-btn" onClick={() => navigate('/columns')}>Columns</button>
           <button
             className="hdr-btn"
             style={{ background: 'var(--color-accent)', color: '#fff', borderColor: 'var(--color-accent)' }}
