@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
-import { PLAYBOOK_DEFAULTS, PB_SECTIONS, fetchPlaybook, savePlaybookSection } from '../lib/playbook';
+import { PLAYBOOK_DEFAULTS, PB_SECTIONS, PB_COL1, PB_COL2, fetchPlaybook, savePlaybookSection } from '../lib/playbook';
 
 export default function PlaybookPage() {
   const navigate = useNavigate();
@@ -168,47 +168,44 @@ export default function PlaybookPage() {
           Tell the AI about your program. Everything here is shared with your staff and injected into every AI prompt — Spotlight, Ask AI, and Methodology explanations.
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* Row pairs matching HTML layout */}
-          <div className="settings-row">
-            <div className="settings-btn" onClick={() => openEditor('team_info')}>
-              <span className="settings-btn-icon">🏫</span>TEAM INFO
-              <span className="settings-btn-label">Name, school, rivals, conference</span>
-            </div>
-            <div className="settings-btn" onClick={() => openEditor('general')}>
-              <span className="settings-btn-icon">📝</span>GENERAL
-              <span className="settings-btn-label">Anything else for the AI</span>
-            </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {/* Column 1 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {PB_COL1.map(key => {
+              const sec = PB_SECTIONS[key];
+              if (!sec) return null;
+              const sub = key === 'team_info' ? 'Name, school, rivals'
+                : key === 'general' ? 'Notes for the AI'
+                : key === 'terminology' ? 'Football abbreviations'
+                : key === 'defense' ? 'Fronts, coverages, blitzes'
+                : key === 'stat_rules' ? 'How stats are calculated' : '';
+              return (
+                <div key={key} className="settings-btn" onClick={() => openEditor(key)}>
+                  <span className="settings-btn-icon">{sec.emoji}</span>
+                  {sec.title.replace(sec.emoji + ' ', '')}
+                  <span className="settings-btn-label">{sub}</span>
+                </div>
+              );
+            })}
           </div>
-          <div className="settings-row">
-            <div className="settings-btn" onClick={() => openEditor('run_plays')}>
-              <span className="settings-btn-icon">🏃</span>RUN PLAYS & PASS PRO
-              <span className="settings-btn-label">Names & concepts</span>
-            </div>
-            <div className="settings-btn" onClick={() => openEditor('pass_plays')}>
-              <span className="settings-btn-icon">🎯</span>PASS PLAYS
-              <span className="settings-btn-label">Names & concepts</span>
-            </div>
-          </div>
-          <div className="settings-row">
-            <div className="settings-btn" onClick={() => openEditor('formations')}>
-              <span className="settings-btn-icon">🗂</span>FORMATIONS
-              <span className="settings-btn-label">Personnel & groupings</span>
-            </div>
-            <div className="settings-btn" onClick={() => openEditor('tags')}>
-              <span className="settings-btn-icon">🏷</span>TAGS & MOTION
-              <span className="settings-btn-label">Play modifiers</span>
-            </div>
-          </div>
-          <div className="settings-row">
-            <div className="settings-btn" onClick={() => openEditor('defense')}>
-              <span className="settings-btn-icon">🛡</span>DEFENSIVE TERMS
-              <span className="settings-btn-label">Fronts, coverages, blitzes</span>
-            </div>
-            <div className="settings-btn" onClick={() => openEditor('stat_rules')}>
-              <span className="settings-btn-icon">📐</span>STAT RULES
-              <span className="settings-btn-label">How stats are calculated</span>
-            </div>
+          {/* Column 2 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {PB_COL2.map(key => {
+              const sec = PB_SECTIONS[key];
+              if (!sec) return null;
+              const sub = key === 'formations' ? 'Name, set, personnel'
+                : key === 'tags' ? 'Play modifiers & motion'
+                : key === 'run_plays' ? 'Names & concepts'
+                : key === 'pass_pro' ? 'Protection schemes'
+                : key === 'pass_plays' ? 'Names & concepts' : '';
+              return (
+                <div key={key} className="settings-btn" onClick={() => openEditor(key)}>
+                  <span className="settings-btn-icon">{sec.emoji}</span>
+                  {sec.title.replace(sec.emoji + ' ', '')}
+                  <span className="settings-btn-label">{sub}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
