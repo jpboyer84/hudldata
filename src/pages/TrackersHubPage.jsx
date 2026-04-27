@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchGames, createGame, fetchTemplates, createTemplate } from '../lib/supaData';
@@ -10,7 +10,6 @@ import HudlCutupPicker from '../components/HudlCutupPicker';
 
 export default function TrackersHubPage() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { coach } = useAuth();
   const showToast = useToast();
   const [games, setGames] = useState([]);
@@ -20,38 +19,10 @@ export default function TrackersHubPage() {
   const [pendingHudlCutup, setPendingHudlCutup] = useState(null);
   const [templates, setTemplates] = useState([]);
 
-  const shouldAutoNew = searchParams.get('new') === '1';
-
   useEffect(() => {
-    if (shouldAutoNew) {
-      searchParams.delete('new');
-      setSearchParams(searchParams, { replace: true });
-      if (!coach?.team_id) {
-        showToast('Sign in and set up your team first');
-        navigate('/login');
-        return;
-      }
-    }
     if (coach?.team_id) {
       fetchGames(coach.team_id).then(setGames).catch(console.error);
-      fetchTemplates(coach.team_id).then(t => {
-        setTemplates(t);
-        if (shouldAutoNew) {
-          if (t.length === 0) {
-            createTemplate({
-              team_id: coach.team_id,
-              name: 'ODK',
-              col_ids: DEFAULT_COLUMNS.map(c => c.id),
-              sort_order: 0,
-            }).then(tmpl => {
-              setTemplates([tmpl]);
-              setNewGameOpen(true);
-            }).catch(console.error);
-          } else {
-            setNewGameOpen(true);
-          }
-        }
-      }).catch(console.error);
+      fetchTemplates(coach.team_id).then(setTemplates).catch(console.error);
     }
   }, [coach?.team_id]);
 
@@ -281,6 +252,7 @@ export default function TrackersHubPage() {
         <HudlCutupPicker
           onLoad={handleCutupSelected}
           onClose={() => setHudlOpen(false)}
+          singleSelect
         />
       )}
     </div>
