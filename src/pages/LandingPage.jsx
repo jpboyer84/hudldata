@@ -150,10 +150,10 @@ export default function LandingPage() {
                 <div className="lcard-sm-label">Help</div>
               </div>
 
-              {/* Settings & Help */}
+              {/* Settings */}
               <div className="lcard-sm" onClick={() => navigate('/settings')}>
                 <SettingsHelpIcon />
-                <div className="lcard-sm-label">Settings & Help</div>
+                <div className="lcard-sm-label">Settings</div>
               </div>
 
               {/* Sign in / Account */}
