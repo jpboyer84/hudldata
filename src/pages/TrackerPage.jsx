@@ -68,11 +68,8 @@ export default function TrackerPage() {
         const resolved = location.state.colIds.map(id => allCols.find(c => c.id === id)).filter(Boolean);
         if (resolved.length > 0) setColumns(resolved);
       }
-      // Restore play position (#4)
-      try {
-        const pos = JSON.parse(localStorage.getItem('hd_play_positions') || '{}');
-        if (pos[g.id] != null && pos[g.id] < p.length) setPlayIdx(pos[g.id]);
-      } catch {}
+      // Restore play position from game record
+      if (g.play_position != null && g.play_position < p.length) setPlayIdx(g.play_position);
     }).catch(err => showToast('Failed to load game'));
 
     if (coach?.team_id) {
@@ -231,11 +228,7 @@ export default function TrackerPage() {
   // ─── LEAVE TRACKER (#4) ───
   function leaveTracker() {
     if (game?.id) {
-      try {
-        const pos = JSON.parse(localStorage.getItem('hd_play_positions') || '{}');
-        pos[game.id] = playIdx;
-        localStorage.setItem('hd_play_positions', JSON.stringify(pos));
-      } catch {}
+      updateGame(game.id, { play_position: playIdx }).catch(() => {});
     }
     navigate('/');
   }
