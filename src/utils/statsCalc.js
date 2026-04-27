@@ -157,7 +157,7 @@ export function calcStats(plays) {
   const defGL = def.map(getGL).filter(v => v !== null);
   const sacks = def.filter(p => (getResult(p) || '').toLowerCase().includes('sack'));
   const ints = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('int') || r.includes('interception'); });
-  const tfls = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return (r.includes('tfl') || r.includes('for loss') || (gl !== null && gl < 0)); });
+  const tfls = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return (gl !== null && gl < 0) && !r.includes('fumble') && !r.includes('penalty') && !r.includes('flag'); });
   const stops = def.filter(p => { const gl = getGL(p); return gl !== null && gl <= 0; });
   const defResults = (() => { const t = tally(def, getResult); return Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, 8); })();
 
@@ -343,7 +343,9 @@ export function buildSummaryObj(plays, label) {
   const defResults = {};
   def.forEach(p => { const r = getResult(p); if (r) defResults[r] = (defResults[r] || 0) + 1; });
   const sacks = def.filter(p => (getResult(p) || '').toLowerCase().includes('sack')).length;
-  const tfl = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return r.includes('tfl') || r.includes('for loss') || (gl !== null && gl < 0); }).length;
+  const tfl = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return (gl !== null && gl < 0) && !r.includes('fumble') && !r.includes('penalty') && !r.includes('flag'); }).length;
+  // Offensive TFLs = times OUR offense was tackled for a loss (opponent's TFLs against us)
+  const offTfl = off.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return (gl !== null && gl < 0) && !r.includes('fumble') && !r.includes('penalty') && !r.includes('flag'); }).length;
   const ints = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('int') || r.includes('interception'); }).length;
   const defThird = def.filter(p => String(getDn(p)) === '3');
   const defThirdStop = defThird.filter(p => {
@@ -375,13 +377,14 @@ export function buildSummaryObj(plays, label) {
       avgPassYds: avg(passes.map(getGL).filter(v => v !== null)),
       thirdDowns: third.length, thirdConversions: thirdConv.length,
       thirdConvPct: third.length ? Math.round(thirdConv.length/third.length*100) : 0,
+      tflAgainst: offTfl, // times OUR offense was tackled for a loss by the opponent
     },
     defense: {
       plays: def.length, playsWithYardage: defGL.length, missingYardage: def.length - defGL.length,
       avgYdsAllowed: avg(defGL), oppRunPlays: defRuns.length, oppPassPlays: defPasses.length,
       oppRunPct: def.length ? Math.round(defRuns.length/def.length*100) : 0,
       oppPassPct: def.length ? Math.round(defPasses.length/def.length*100) : 0,
-      sacks, tfl, interceptions: ints,
+      sacks, tflsForced: tfl, interceptions: ints,
       negativePlaysPct: defGL.length ? Math.round(defNegPlays/defGL.length*100) : 0,
       thirdDownFaced: defThird.length, thirdDownStops: defThirdStop.length,
       thirdDownStopPct: defThird.length ? Math.round(defThirdStop.length/defThird.length*100) : 0,
