@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchColumns, fetchTemplates, createTemplate, updateTemplate } from '../lib/supaData';
 import { syncTemplateToHudl } from '../lib/hudlData';
-import { DEFAULT_COLUMNS } from '../columns';
+import { defaultColumns } from '../columns';
 
 export default function TemplateBuilderPage() {
   const { id } = useParams(); // edit mode if id exists
@@ -24,10 +24,13 @@ export default function TemplateBuilderPage() {
 
     // Load custom columns from Supabase + built-in defaults
     fetchColumns(coach.team_id).then(customCols => {
-      // Merge: built-in DEFAULT_COLUMNS + custom columns from Supabase
-      const builtIn = DEFAULT_COLUMNS.map(c => ({ id: c.id, name: c.name, source: 'built-in', column: c }));
-      const custom = customCols.map(c => ({ id: c.id, name: c.name, source: 'custom', column: c }));
-      setAllColumns([...builtIn, ...custom]);
+      // All built-in columns (40+) + custom columns from Supabase
+      const builtIn = defaultColumns().map(c => ({ id: c.id, name: c.name, source: 'built-in', column: c }));
+      const custom = customCols.map(c => ({ id: c.data_key || c.id, name: c.name, source: 'custom', column: c }));
+      // Deduplicate: custom overrides built-in
+      const customIds = new Set(custom.map(c => c.id));
+      const merged = [...builtIn.filter(c => !customIds.has(c.id)), ...custom];
+      setAllColumns(merged);
     }).catch(console.error);
 
     // If editing, load existing template
