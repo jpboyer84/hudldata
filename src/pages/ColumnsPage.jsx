@@ -122,7 +122,7 @@ export default function ColumnsPage() {
           borderTop: customColumns.length > 0 ? '1px solid var(--color-border)' : 'none',
           marginTop: customColumns.length > 0 ? 8 : 0,
         }}>
-          BUILT-IN COLUMNS ({builtInCols.length})
+          ALL COLUMNS ({builtInCols.length})
         </div>
         {builtInCols
           .filter(c => !customIds.has(c.id))
@@ -135,9 +135,7 @@ export default function ColumnsPage() {
                   {getTypeLabel(col)} · {getButtonCount(col)} {col.type === 'numpad' ? 'keys' : 'buttons'}
                 </div>
               </div>
-              <div style={{
-                display: 'flex', gap: 6, alignItems: 'center',
-              }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 <button
                   className="hdr-btn"
                   style={{ background: 'var(--color-accent)', color: '#fff', borderColor: 'var(--color-accent)', fontSize: 10, padding: '5px 10px' }}
@@ -145,13 +143,6 @@ export default function ColumnsPage() {
                 >
                   EDIT
                 </button>
-                <div style={{
-                  fontSize: 9, fontWeight: 700, color: 'var(--color-muted)',
-                  background: 'var(--color-bg)', padding: '3px 8px',
-                  borderRadius: 4, letterSpacing: '0.05em',
-                }}>
-                  BUILT-IN
-                </div>
               </div>
             </div>
           ))}
