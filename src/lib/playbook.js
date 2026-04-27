@@ -17,22 +17,33 @@ Conference Opponents - `,
 
   terminology: `=== ACRONYMS ===
 2PT - Two-Point Conversion
+aDOT - Average Depth of Target
+BLK - Blocked Kick (punt or field goal blocked by defense)
 BOB - Big on Big
 CB - Cornerback
+CPOE - Completion Percentage Over Expected
 DB - Defensive Back
 DE - Defensive End
 DL - Defensive Line
 DN - Down
 DIST - Distance
+DSR - Drive Success Rate
 DT - Defensive Tackle
+DVOA - Defense-adjusted Value Over Average
+EPA - Expected Points Added
+EP - Expected Points
 FB - Fullback
+FFUM - Forced Fumble
 FG - Field Goal
+FGA - Field Goal Attempted
+FGM - Field Goal Made
 FS - Free Safety
 GL - Gain/Loss
 HASH - Hash Mark
 HOT - Hot Route
 ILB - Inside Linebacker
 INT - Interception
+INTTD - Interception Returned for Touchdown
 IZ - Inside Zone
 KO - Kickoff
 KR - Kick Return
@@ -46,37 +57,55 @@ OLB - Outside Linebacker
 OZ - Outside Zone
 PA - Play Action
 PAT - Point After Touchdown
+PFF - Pro Football Focus
 PR - Punt Return
 QB - Quarterback
 QBR - Quarterback Rating
 RB - Running Back
 RPO - Run-Pass Option
+RYOE - Rushing Yards Over Expected
 RZ - Red Zone
+SR - Success Rate
 SS - Strong Safety
 TB - Touchback
 TD - Touchdown
 TE - Tight End
 TFL - Tackle for Loss
+TOT - Total (combined tackles)
+WPA - Win Probability Added
 WR - Wide Receiver
+YAC - Yards After Catch
 YPA - Yards Per Attempt
 YPC - Yards Per Carry
 YPP - Yards Per Play
+YPR - Yards Per Reception
 
 === DEFINITIONS ===
 Audible - A play change called by the QB at the line of scrimmage based on the defensive alignment.
+Average Depth of Target - The average distance downfield a QB throws the ball past the LOS. Higher aDOT indicates a more aggressive passing attack. Predictive of big-play ability and interception risk.
+Blocked Kick - A punt or field goal blocked by the defensive team before it can travel downfield.
 Blitz - A defensive play where extra rushers are sent beyond the standard front to pressure the QB.
 Cadence - The QB's snap count and verbal signals used to start the play.
 Check - A secondary play call triggered if the defense shows a certain pre-snap look.
+Completion Percentage Over Expected - Compares a QB's actual completion rate to expected based on throw difficulty, distance, and coverage. CPOE of +3% or higher indicates elite accuracy. One of the most predictive QB metrics available.
 Conversion - Earning a first down on 3rd or 4th down (gainloss >= dist, or a touchdown).
 Counter - A run play with misdirection where the back starts one way then cuts back the other direction.
+Defense-adjusted Value Over Average - Compares a team's efficiency on every play to the league average, adjusting for down, distance, score, and opponent quality. Expressed as a percentage. One of the most predictive team-level metrics.
 Draw - A delayed handoff designed to look like a pass play, freezing linebackers before the run.
+Drive Success Rate - The percentage of drives that result in a first down or touchdown. One of the most predictive single metrics for overall team quality.
+Expected Points - The average number of points a team is expected to score from a given field position, down, and distance, based on historical data. The baseline for EPA calculations.
+Expected Points Added - Measures how much a single play changes a team's expected point total. Accounts for down, distance, and field position. Positive EPA means the play improved scoring chances. The most widely used advanced metric in football. Think of it as "yards with context." Strongly predictive of future team performance.
 Explosive Play - A big play. Run of 10+ yards or pass of 15+ yards.
+Field Goal Attempted - Total field goals attempted by the kicker.
+Field Goal Made - Total field goals successfully made.
+Forced Fumble - When a defender causes the ball carrier to lose possession by stripping or knocking the ball loose.
 Formation Set - How many eligible WRs are on each side of the center (e.g. 3x1 = 3 to one side and 1 to the other, 2x2 = 2 on each side).
 Gap - The space between offensive linemen (A gap between C and G, B gap between G and T, C gap between T and TE, D gap outside TE).
 Half Slide - Pass protection where one side of the OL slides together while the other side blocks man-to-man.
 Hole - The numbered running lane (even numbers to the right, odd numbers to the left).
 Hot Route - A quick throw to a predetermined receiver when a blitz is detected pre-snap.
 Inside Zone - A zone run scheme between the tackles where the RB reads the blocks.
+Interception Returned for Touchdown - An interception by the defense that is returned all the way to the end zone for a defensive score.
 Line of Scrimmage - The yard line where the ball is snapped to start each play.
 Man Coverage - Man-to-man coverage where each defender covers a specific offensive player.
 Max Protect - Using extra blockers (RB, TE) to protect the QB, sending fewer receivers into routes.
@@ -90,7 +119,8 @@ Press Coverage - Defensive technique where the CB lines up at the LOS to jam the
 Pull - An offensive lineman leaving his original position to block at another point on the line.
 Quarterback Rating - NFL Passer Rating formula on a 0-158.3 scale. Uses completion %, yards/attempt, TD %, and INT %.
 Red Zone - Plays inside the opponent's 20-yard line.
-Run-Pass Option - A play where the QB reads a defender post-snap to decide whether to hand off or throw.
+Run-Pass Option - A play where the QB reads a defender post-snap to decide whether to hand off or throw. Not the same as play action — the run threat is real, not faked.
+Rushing Yards Over Expected - Measures how many yards a rusher gains beyond what was expected given blocking, defensive alignment, and situation. Positive RYOE indicates a back who creates yards on his own. Highly predictive of future rushing performance.
 Scramble - When the QB runs out of the pocket to avoid pressure, either throwing on the run or gaining yards.
 Screen - A short pass behind the LOS with blockers set up in front of the receiver.
 Shift - Pre-snap repositioning of multiple offensive players simultaneously.
@@ -98,9 +128,13 @@ Sight Adjust - A WR changes his route on the fly based on the coverage he reads 
 Slide Protection - Pass protection where the entire OL slides in one direction together.
 Slot - A receiver lined up inside of the outermost WR, typically off the line of scrimmage.
 Stop - A defensive play where the opponent gains 0 or fewer yards.
+Success Rate - The percentage of plays with positive EPA. Measures offensive consistency. A team with a high success rate moves the chains reliably rather than depending on big plays. Above 50% is elite. Strongly predictive of future wins.
 Tackle for Loss - A play where the ball carrier is tackled behind the line of scrimmage for negative yardage. Excludes penalties.
 Touchback - Ball placed at the 25-yard line (kickoff) or 20-yard line (punt) when not returned.
 Trap - A run play where a pulling lineman blocks a defensive lineman who was intentionally left unblocked.
+Win Probability Added - Measures how much a single play changes a team's probability of winning. Unlike EPA, WPA accounts for score, time remaining, and game situation. A clutch 4th-quarter conversion adds more WPA than the same play in the 1st quarter.
+Yards After Catch - Yards gained by a receiver after catching the ball. High YAC indicates playmaking ability and is predictive of receiver quality.
+Yards Per Reception - Total receiving yards divided by number of receptions.
 Zone Coverage - Defenders cover areas of the field rather than specific offensive players.
 Zone Run - A run scheme where the OL blocks in one direction and the RB reads the blocks to find the lane.`,
 
