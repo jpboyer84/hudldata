@@ -59,7 +59,7 @@ export default function TemplatesPage() {
             Tap + New to create one.
           </div>
         ) : (
-          templates.map(t => (
+          templates.sort((a, b) => a.name.localeCompare(b.name)).map(t => (
             <div key={t.id} className="arch-card" style={{ gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="arch-title">{t.name}</div>
@@ -99,3 +99,4 @@ export default function TemplatesPage() {
     </div>
   );
 }
+
