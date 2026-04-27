@@ -116,17 +116,50 @@ export function parseFootballSpeech(text) {
   else if (/\b(?:right\s+hash|hash\s+right)\b/.test(t)) result.hash = 'R';
   else if (/\b(?:middle\s+hash|hash\s+middle|middle)\b/.test(t)) result.hash = 'M';
 
-  // Play type
-  if (/\b(?:run|rush|rushing|carry|ran)\b/.test(t)) result.playtype = 'Run';
-  else if (/\b(?:pass|passing|threw|throw|thrown)\b/.test(t)) result.playtype = 'Pass';
+  // Play type — check specific STK types BEFORE generic run/pass
+  if (/\b(?:punt\s+return|punt\s+rec|returning?\s+(?:a\s+)?punt)\b/.test(t)) {
+    result.playtype = 'Punt Rec'; if (!result.odk) result.odk = 'K';
+  } else if (/\b(?:kick\s*off?\s+return|kick\s+return|ko\s+rec|returning?\s+(?:a\s+)?kick)\b/.test(t)) {
+    result.playtype = 'KO Rec'; if (!result.odk) result.odk = 'K';
+  } else if (/\b(?:onside\s+kick)\b/.test(t)) {
+    result.playtype = /\brec/.test(t) ? 'Onside Kick Rec' : 'Onside Kick'; if (!result.odk) result.odk = 'K';
+  } else if (/\b(?:fake\s+punt)\b/.test(t)) {
+    result.playtype = 'Fake Punt'; if (!result.odk) result.odk = 'K';
+  } else if (/\b(?:fake\s+field\s+goal|fake\s+fg)\b/.test(t)) {
+    result.playtype = 'Fake FG'; if (!result.odk) result.odk = 'K';
+  } else if (/\b(?:field\s+goal|fg)\b/.test(t)) {
+    result.playtype = /\bblock/.test(t) ? 'FG Block' : 'FG'; if (!result.odk) result.odk = 'K';
+  } else if (/\b(?:extra\s+point|pat)\b/.test(t)) {
+    result.playtype = /\bblock/.test(t) ? 'Extra Pt. Block' : 'Extra Pt.'; if (!result.odk) result.odk = 'K';
+  } else if (/\b(?:two\s+point|2\s+point)\b/.test(t)) {
+    result.playtype = /\bdefend/.test(t) ? '2 Pt. Defend' : '2 Pt.'; if (!result.odk) result.odk = 'K';
+  } else if (/\b(?:kick\s*off|ko)\b/.test(t)) {
+    result.playtype = 'KO'; if (!result.odk) result.odk = 'K';
+  } else if (/\bpunt\b/.test(t) && !/\bfake/.test(t)) {
+    result.playtype = 'Punt'; if (!result.odk) result.odk = 'K';
+  } else if (/\b(?:run|rush|rushing|carry|ran)\b/.test(t)) {
+    result.playtype = 'Run';
+  } else if (/\b(?:pass|passing|threw|throw|thrown)\b/.test(t)) {
+    result.playtype = 'Pass';
+  }
 
   // Play direction
   const dirMatch = t.match(/\b(?:run|rush|pass)\s+(left|right)\b/);
   if (dirMatch && !result.hash) result.playdir = dirMatch[1] === 'left' ? 'L' : 'R';
 
-  // Result — ordered patterns: check 'incomplete'/'in complete' BEFORE 'complete'
-  // Speech recognition sometimes splits "incomplete" into "in complete"
+  // Result — compound patterns first, then simple. Ordered so longer matches win.
   const RESULT_PATTERNS = [
+    // Compound results (must be before simple versions)
+    [/\b(?:rush\s+td|rushing\s+touchdown)\b/, 'Rush TD'],
+    [/\b(?:complete\s+td|passing\s+touchdown|pass\s+td)\b/, 'Complete TD'],
+    [/\b(?:complete\s+fumble)\b/, 'Complete Fumble'],
+    [/\b(?:scramble\s+td)\b/, 'Scramble TD'],
+    [/\b(?:sack\s+fumble)\b/, 'Sack Fumble'],
+    [/\b(?:sack\s+safety)\b/, 'Sack Safety'],
+    [/\b(?:rush\s+safety)\b/, 'Rush Safety'],
+    [/\b(?:interception\s+fumble)\b/, 'Interception Fumble'],
+    [/\b(?:extra\s+point\s+block|pat\s+block)\b/, 'Extra Pt. Block'],
+    // Simple results
     [/\b(?:incomplete|incompletion|in\s+complete)\b/, 'Incomplete'],
     [/\bdropped\b/, 'Incomplete'],
     [/\b(?:complete|completion|caught)\b/, 'Complete'],
@@ -137,6 +170,18 @@ export function parseFootballSpeech(text) {
     [/\b(?:fumble|fumbled)\b/, 'Fumble'],
     [/\b(?:touchdown|td)\b/, 'TD'],
     [/\b(?:penalty|flag)\b/, 'Penalty'],
+    [/\b(?:fair\s+catch)\b/, 'Fair Catch'],
+    [/\btouchback\b/, 'Touchback'],
+    [/\b(?:out\s+of\s+bounds)\b/, 'Out of Bounds'],
+    [/\b(?:batted\s+down|bat\s+down)\b/, 'Batted Down'],
+    [/\bsafety\b/, 'Safety'],
+    [/\b(?:first\s+down|1st\s+down)\b/, '1st DN'],
+    [/\bdowned\b/, 'Downed'],
+    [/\b(?:good|made\s+it)\b/, 'Good'],
+    [/\b(?:no\s+good|missed|miss)\b/, 'No Good'],
+    [/\breturn\b/, 'Return'],
+    [/\brecovered\b/, 'Recovered'],
+    [/\btimeout\b/, 'Timeout'],
   ];
   for (const [rx, val] of RESULT_PATTERNS) {
     if (rx.test(t)) { result.result = val; break; }
@@ -310,4 +355,5 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
     </div>
   );
 }
+
 
