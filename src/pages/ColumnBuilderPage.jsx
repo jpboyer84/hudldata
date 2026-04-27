@@ -4,17 +4,26 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchColumns, createColumn, updateColumn } from '../lib/supaData';
 import { defaultColumns } from '../columns';
+import { syncTemplateToHudl } from '../lib/hudlData';
 
-// Extract button labels from a built-in column's btns array
+const COLUMN_TYPES = [
+  { value: 'buttons', label: 'Buttons' },
+  { value: 'btns_dd', label: 'Buttons + Dropdown' },
+  { value: 'btn_dds', label: 'Multi-Dropdown' },
+  { value: 'numpad', label: 'Number Pad' },
+];
+
 function extractButtons(col) {
   if (!col) return [];
-  // Built-in columns: btns is [{l, v}, ...] — use the label (l)
   if (Array.isArray(col.btns)) return col.btns.map(b => b.l || b.v || '');
-  // Dropdown values
   if (Array.isArray(col.dd)) return col.dd;
-  // Custom columns: known_values is [string, ...]
   if (Array.isArray(col.known_values)) return col.known_values;
   return [];
+}
+
+function getColType(col) {
+  if (!col) return 'buttons';
+  return col.type || 'buttons';
 }
 
 export default function ColumnBuilderPage() {
@@ -26,26 +35,25 @@ export default function ColumnBuilderPage() {
   const showToast = useToast();
 
   const [name, setName] = useState('');
+  const [colType, setColType] = useState('buttons');
   const [buttons, setButtons] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [overrideId, setOverrideId] = useState(null); // Supabase row ID if override exists
+  const [overrideId, setOverrideId] = useState(null);
 
   useEffect(() => {
     if (!id) return;
 
     if (isBuiltIn) {
-      // Load from built-in defaults
       const builtIn = defaultColumns().find(c => c.id === id);
       if (builtIn) {
         setName(builtIn.name);
+        setColType(getColType(builtIn));
         setButtons(extractButtons(builtIn));
       }
-      // Also check if there's already a custom override in Supabase
       if (coach?.team_id) {
         fetchColumns(coach.team_id).then(cols => {
           const existing = cols.find(c => c.data_key === id || c.name === builtIn?.name);
           if (existing) {
-            // Load the override's values instead
             setName(existing.name);
             setButtons(existing.known_values || extractButtons(builtIn));
             setOverrideId(existing.id);
@@ -53,7 +61,6 @@ export default function ColumnBuilderPage() {
         }).catch(console.error);
       }
     } else if (coach?.team_id) {
-      // Load custom column from Supabase
       fetchColumns(coach.team_id).then(cols => {
         const col = cols.find(c => c.id === id);
         if (col) {
@@ -64,21 +71,9 @@ export default function ColumnBuilderPage() {
     }
   }, [id, coach?.team_id, isBuiltIn]);
 
-  function addButton() {
-    setButtons(prev => [...prev, '']);
-  }
-
-  function updateButton(idx, val) {
-    setButtons(prev => {
-      const next = [...prev];
-      next[idx] = val;
-      return next;
-    });
-  }
-
-  function removeButton(idx) {
-    setButtons(prev => prev.filter((_, i) => i !== idx));
-  }
+  function addButton() { setButtons(prev => [...prev, '']); }
+  function updateButton(idx, val) { setButtons(prev => { const next = [...prev]; next[idx] = val; return next; }); }
+  function removeButton(idx) { setButtons(prev => prev.filter((_, i) => i !== idx)); }
 
   async function handleSave() {
     if (!name.trim()) { showToast('Enter a column name'); return; }
@@ -89,19 +84,11 @@ export default function ColumnBuilderPage() {
     try {
       if (isBuiltIn) {
         if (overrideId) {
-          // Update existing override in Supabase
-          await updateColumn(overrideId, {
-            name: name.trim(),
-            known_values: cleanButtons,
-          });
+          await updateColumn(overrideId, { name: name.trim(), known_values: cleanButtons });
         } else {
-          // Create a new custom override for the built-in column
           await createColumn({
-            team_id: coach.team_id,
-            name: name.trim(),
-            data_key: id,
-            known_values: cleanButtons,
-            sort_order: 0,
+            team_id: coach.team_id, name: name.trim(), data_key: id,
+            known_values: cleanButtons, sort_order: 0,
           });
         }
         showToast('Column updated');
@@ -113,19 +100,20 @@ export default function ColumnBuilderPage() {
         });
         showToast('Column updated');
       } else {
+        // New custom column
+        const dataKey = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
         await createColumn({
-          team_id: coach.team_id,
-          name: name.trim(),
-          data_key: name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_'),
-          known_values: cleanButtons,
-          sort_order: 0,
+          team_id: coach.team_id, name: name.trim(), data_key: dataKey,
+          known_values: cleanButtons, sort_order: 0,
         });
+        // Auto-sync to Hudl as a column
+        if (coach.hudl_cookie) {
+          await syncTemplateToHudl(name.trim(), [dataKey], coach).catch(() => {});
+        }
         showToast('Column created');
       }
       navigate('/columns');
-    } catch (err) {
-      showToast('Save failed: ' + err.message);
-    }
+    } catch (err) { showToast('Save failed: ' + err.message); }
     setSaving(false);
   }
 
@@ -137,8 +125,7 @@ export default function ColumnBuilderPage() {
         <button
           className="hdr-btn"
           style={{ background: 'var(--color-accent)', color: '#fff', borderColor: 'var(--color-accent)' }}
-          onClick={handleSave}
-          disabled={saving}
+          onClick={handleSave} disabled={saving}
         >
           {saving ? 'Saving…' : 'Save'}
         </button>
@@ -148,33 +135,65 @@ export default function ColumnBuilderPage() {
         <div className="fg">
           <label className="fl">Column Name</label>
           <input
-            className="fi"
-            placeholder="e.g. FORMATION, COVERAGE…"
-            value={name}
-            onChange={e => setName(e.target.value)}
+            className="fi" placeholder="e.g. FORMATION, COVERAGE…"
+            value={name} onChange={e => setName(e.target.value)}
             disabled={isBuiltIn}
           />
           {isBuiltIn && (
             <div style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: 4 }}>
-              Built-in column — name cannot be changed, but you can add, remove, or edit buttons.
+              Name cannot be changed for this column, but you can edit its buttons and type.
             </div>
           )}
         </div>
 
-        <div className="sec-label" style={{ marginTop: 16 }}>Buttons ({buttons.length})</div>
-        {buttons.map((btn, idx) => (
-          <div key={idx} className="btn-row">
-            <input
-              className="btn-input"
-              value={btn}
-              onChange={e => updateButton(idx, e.target.value)}
-              placeholder={`Button ${idx + 1}`}
-            />
-            <button className="btn-rm" onClick={() => removeButton(idx)}>✕</button>
+        <div className="fg" style={{ marginTop: 12 }}>
+          <label className="fl">Column Type</label>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {COLUMN_TYPES.map(t => (
+              <div
+                key={t.value}
+                onClick={() => setColType(t.value)}
+                style={{
+                  padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer', border: '1px solid',
+                  color: colType === t.value ? 'var(--color-accent)' : 'var(--color-muted)',
+                  background: colType === t.value ? 'rgba(232,89,12,0.12)' : 'var(--color-surface2)',
+                  borderColor: colType === t.value ? 'var(--color-accent)' : 'var(--color-border)',
+                }}
+              >
+                {t.label}
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
 
-        <button className="add-btn-row" onClick={addButton}>＋ ADD BUTTON</button>
+        {colType !== 'numpad' && (
+          <>
+            <div className="sec-label" style={{ marginTop: 16 }}>
+              {colType === 'btns_dd' ? 'Buttons & Dropdown Options' : colType === 'btn_dds' ? 'Button Groups' : 'Buttons'} ({buttons.length})
+            </div>
+            {buttons.map((btn, idx) => (
+              <div key={idx} className="btn-row">
+                <input
+                  className="btn-input" value={btn}
+                  onChange={e => updateButton(idx, e.target.value)}
+                  placeholder={`${colType === 'btn_dds' ? 'Group' : 'Button'} ${idx + 1}`}
+                />
+                <button className="btn-rm" onClick={() => removeButton(idx)}>✕</button>
+              </div>
+            ))}
+            <button className="add-btn-row" onClick={addButton}>
+              ＋ ADD {colType === 'btn_dds' ? 'GROUP' : 'BUTTON'}
+            </button>
+          </>
+        )}
+
+        {colType === 'numpad' && (
+          <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
+            Number pad columns don't have buttons — they show a numeric input.
+          </div>
+        )}
+
         <button className="btn-full" onClick={handleSave} disabled={saving}>
           {id ? 'UPDATE COLUMN' : 'SAVE COLUMN'}
         </button>
