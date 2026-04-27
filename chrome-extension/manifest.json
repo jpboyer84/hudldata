@@ -6,7 +6,8 @@
   "description": "Syncs Assistant Coach tracker with Hudl video playback. Advance clips from your tracker or auto-advance your tracker when you navigate in Hudl.",
   "author": "Assistant Coach",
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "host_permissions": [
     "https://www.hudl.com/*",
