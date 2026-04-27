@@ -420,24 +420,7 @@ export default function TrackerPage() {
       {/* Nav bar */}
       <div className="nav-bar">
         <button className="nav-btn nav-prev" onClick={prevPlay} disabled={playIdx === 0}>← Prev</button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div
-            onClick={() => {
-              const cur = currentPlay.qtr;
-              const next = cur === '1' ? '2' : cur === '2' ? '3' : cur === '3' ? '4' : '1';
-              setVal('qtr', next);
-              showToast(`Switched to Q${next}`);
-            }}
-            style={{
-              background: 'rgba(232,89,12,0.15)', border: '1px solid var(--color-accent)',
-              borderRadius: 6, padding: '4px 8px', fontSize: 12, fontWeight: 700,
-              color: 'var(--color-accent)', cursor: 'pointer', minWidth: 28, textAlign: 'center',
-            }}
-          >
-            Q{currentPlay.qtr || '?'}
-          </div>
-          <button className="nav-btn nav-mid" onClick={addRows} style={{ fontSize: 11 }}>+ Rows</button>
-        </div>
+        <button className="nav-btn nav-mid" onClick={addRows} style={{ fontSize: 11 }}>+ Rows</button>
         <button className="nav-btn nav-new" onClick={nextPlay}>Next play →</button>
       </div>
 
