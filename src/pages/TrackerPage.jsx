@@ -317,15 +317,19 @@ export default function TrackerPage() {
     if (!saveAsName.trim() || !coach?.team_id) return;
     try {
       const { createTemplate } = await import('../lib/supaData');
+      const colIds = columns.map(c => c.id);
       await createTemplate({
         team_id: coach.team_id,
         name: saveAsName.trim(),
-        col_ids: columns.map(c => c.id),
+        col_ids: colIds,
         sort_order: 0,
       });
+      // Also sync to Hudl as a column set
+      const { syncTemplateToHudl } = await import('../lib/hudlData');
+      const hudlResult = await syncTemplateToHudl(saveAsName.trim(), colIds, coach);
       setSaveAsOpen(false);
       setSaveAsName('');
-      showToast('Template saved');
+      showToast(hudlResult ? 'Template saved + synced to Hudl' : 'Template saved');
     } catch (err) { showToast('Save failed: ' + err.message); }
   }
 
