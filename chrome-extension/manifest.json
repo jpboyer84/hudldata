@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Assistant Coach — Hudl Sync",
+  "short_name": "AC Hudl Sync",
+  "version": "1.0.0",
+  "description": "Syncs Assistant Coach tracker with Hudl video playback. Advance clips from your tracker or auto-advance your tracker when you navigate in Hudl.",
+  "author": "Assistant Coach",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://www.hudl.com/*",
+    "https://hudldata.vercel.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.hudl.com/*"],
+      "js": ["content-hudl.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://hudldata.vercel.app/*"],
+      "js": ["content-app.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Assistant Coach — Hudl Sync",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
