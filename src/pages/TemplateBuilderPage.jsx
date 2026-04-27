@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchColumns, fetchTemplates, createTemplate, updateTemplate } from '../lib/supaData';
+import { syncTemplateToHudl } from '../lib/hudlData';
 import { DEFAULT_COLUMNS } from '../columns';
 
 export default function TemplateBuilderPage() {
@@ -84,7 +85,8 @@ export default function TemplateBuilderPage() {
     try {
       if (id) {
         await updateTemplate(id, { name: name.trim(), col_ids: selectedIds });
-        showToast('Template updated');
+        const hudlResult = await syncTemplateToHudl(name.trim(), selectedIds, coach);
+        showToast(hudlResult ? 'Template updated + synced to Hudl' : 'Template updated');
       } else {
         await createTemplate({
           team_id: coach.team_id,
@@ -92,7 +94,8 @@ export default function TemplateBuilderPage() {
           col_ids: selectedIds,
           sort_order: 0,
         });
-        showToast('Template created');
+        const hudlResult = await syncTemplateToHudl(name.trim(), selectedIds, coach);
+        showToast(hudlResult ? 'Template created + synced to Hudl' : 'Template created');
       }
       navigate('/templates');
     } catch (err) {
@@ -185,3 +188,4 @@ export default function TemplateBuilderPage() {
     </div>
   );
 }
+
