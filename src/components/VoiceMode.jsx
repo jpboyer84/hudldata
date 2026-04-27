@@ -9,16 +9,7 @@ const DOWN_MAP = {
   'fourth': '4', '4th': '4', 'four': '4', '4': '4',
 };
 
-const RESULT_MAP = {
-  'incomplete': 'Incomplete', 'incompletion': 'Incomplete', 'dropped': 'Incomplete',
-  'complete': 'Complete', 'completion': 'Complete', 'caught': 'Complete',
-  'interception': 'Interception', 'intercepted': 'Interception', 'pick': 'Interception',
-  'scramble': 'Scramble', 'scrambled': 'Scramble',
-  'sack': 'Sack', 'sacked': 'Sack',
-  'fumble': 'Fumble', 'fumbled': 'Fumble',
-  'touchdown': 'TD', 'td': 'TD',
-  'penalty': 'Penalty', 'flag': 'Penalty',
-};
+// Result patterns are defined inline in parseFootballSpeech() for ordered matching
 
 const ODK_MAP = {
   'offense': 'O', 'offensive': 'O',
@@ -69,17 +60,32 @@ export function parseFootballSpeech(text) {
   }
 
   // Down and distance: "1st and 10", "2nd and 7", "third and goal", "2nd down and 10"
-  // Also handles: "3rd n 7", "third in seven", "3 and 7", "third 7"
-  const dnMatch = t.match(/(first|second|third|fourth|1st|2nd|3rd|4th|1|2|3|4)\s+(?:down\s+)?(?:and|n|in|&)\s+(\w+)/i)
-    || t.match(/(first|second|third|fourth|1st|2nd|3rd|4th)\s+(\d+|goal)\b/i);
+  // Also handles: "3rd n 7", "third in seven", "3 and 7", "third 7", "3rd, 7"
+  const dnMatch = t.match(/(first|second|third|fourth|1st|2nd|3rd|4th|1|2|3|4)\s+(?:down\s+)?(?:and|n|in|&|,)\s*(\w+[\w-]*)/i)
+    || t.match(/(first|second|third|fourth|1st|2nd|3rd|4th)\s+(\w+[\w-]*)\b/i);
   if (dnMatch) {
-    const dn = DOWN_MAP[dnMatch[1]];
+    const rawDn = dnMatch[1].toLowerCase();
+    const dn = DOWN_MAP[rawDn];
     if (dn) {
       result.dn = dn;
-      if (dnMatch[2] === 'goal') result.dist2 = 'G';
+      const rawDist = dnMatch[2].toLowerCase();
+      if (rawDist === 'goal') result.dist2 = 'G';
       else {
-        const dist = parseNumber(dnMatch[2]);
-        if (dist !== null) result.dist2 = String(dist);
+        const dist = parseNumber(rawDist);
+        if (dist !== null && dist <= 99) result.dist2 = String(dist);
+      }
+    }
+  }
+
+  // "X yards to go" / "X to go" for distance (standalone, when down already set or not)
+  if (!result.dist2) {
+    const toGoMatch = t.match(/(\w+[\w-]*)\s+(?:yards?\s+)?to\s+go/i);
+    if (toGoMatch) {
+      const rawDist = toGoMatch[1].toLowerCase();
+      if (rawDist === 'goal') result.dist2 = 'G';
+      else {
+        const dist = parseNumber(rawDist);
+        if (dist !== null && dist <= 99) result.dist2 = String(dist);
       }
     }
   }
@@ -118,9 +124,22 @@ export function parseFootballSpeech(text) {
   const dirMatch = t.match(/\b(?:run|rush|pass)\s+(left|right)\b/);
   if (dirMatch && !result.hash) result.playdir = dirMatch[1] === 'left' ? 'L' : 'R';
 
-  // Result — use word boundary to prevent 'complete' matching inside 'incomplete'
-  for (const [phrase, val] of Object.entries(RESULT_MAP)) {
-    if (new RegExp(`\\b${phrase}\\b`).test(t)) { result.result = val; break; }
+  // Result — ordered patterns: check 'incomplete'/'in complete' BEFORE 'complete'
+  // Speech recognition sometimes splits "incomplete" into "in complete"
+  const RESULT_PATTERNS = [
+    [/\b(?:incomplete|incompletion|in\s+complete)\b/, 'Incomplete'],
+    [/\bdropped\b/, 'Incomplete'],
+    [/\b(?:complete|completion|caught)\b/, 'Complete'],
+    [/\b(?:interception|intercepted)\b/, 'Interception'],
+    [/\bpick\b/, 'Interception'],
+    [/\b(?:scramble|scrambled)\b/, 'Scramble'],
+    [/\b(?:sack|sacked)\b/, 'Sack'],
+    [/\b(?:fumble|fumbled)\b/, 'Fumble'],
+    [/\b(?:touchdown|td)\b/, 'TD'],
+    [/\b(?:penalty|flag)\b/, 'Penalty'],
+  ];
+  for (const [rx, val] of RESULT_PATTERNS) {
+    if (rx.test(t)) { result.result = val; break; }
   }
   if (/\bno\s+gain\b/.test(t)) result.result = result.result || 'No Gain';
 
