@@ -193,7 +193,11 @@ ${buildPlaybookContext(pb)}
 ## FOOTBALL STAT DEFINITIONS
 - **First Down**: play where gainloss >= dist, OR result contains "TD", OR result is "1st DN"
 - **3rd/4th Down Conversion**: 3rd or 4th down play that earns a first down (same criteria as above)
-- **TFL (Tackle for Loss)**: any DEFENSIVE play where gainloss < 0 (the opponent lost yardage)
+- **TFL (Tackle for Loss)**: a run or pass play where the ball carrier was tackled behind the line of scrimmage (gainloss < 0). Excludes fumbles and penalties.
+  - offense.tflAgainst = times OUR offense was tackled for a loss (opponent's defense made the TFL against us)
+  - defense.tflsForced = times OUR defense tackled the OPPONENT for a loss (we made the TFL)
+  - "How many TFLs did our opponents have?" = offense.tflAgainst (they tackled us)
+  - "How many TFLs did we have?" = defense.tflsForced (we tackled them)
 - **Sack**: result contains "Sack"
 - **Completion %**: results containing "Complete" divided by total pass attempts
 - **YPC (Yards Per Carry)**: total rush yards / rush attempts
