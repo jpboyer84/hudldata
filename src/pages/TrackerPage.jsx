@@ -25,6 +25,7 @@ export default function TrackerPage() {
   const [columns, setColumns] = useState(DEFAULT_COLUMNS);
   const [playIdx, setPlayIdx] = useState(0);
   const [layoutCols, setLayoutCols] = useState(1);
+  const [layoutOpen, setLayoutOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [modal, setModal] = useState(null);
   const [jumpOpen, setJumpOpen] = useState(false);
@@ -375,10 +376,16 @@ export default function TrackerPage() {
           {game.hudl_cutup_id && (
             <button className="hdr-btn" style={{ color: '#27ae60' }} onClick={openHudlPush}>▲ Send</button>
           )}
-          <button className="hdr-btn" onClick={() => setLayoutCols(layoutCols === 1 ? 2 : 1)}>
-            ▤ {layoutCols === 1 ? '1COL' : '2COL'}
-          </button>
-          <button className="hdr-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ fontSize: 18, padding: '4px 10px', lineHeight: 1 }}>⋯</button>
+          <div style={{ position: 'relative' }}>
+            <button className="hdr-btn" onClick={() => setLayoutOpen(!layoutOpen)}>Layout ▾</button>
+            {layoutOpen && (
+              <div className="dd" style={{ right: 0, top: '100%', minWidth: 120 }}>
+                <div className="dd-item" onClick={() => { setLayoutCols(1); setLayoutOpen(false); }} style={{ fontWeight: layoutCols === 1 ? 700 : 400, color: layoutCols === 1 ? 'var(--color-accent)' : 'var(--color-text)' }}>1 Column</div>
+                <div className="dd-item" onClick={() => { setLayoutCols(2); setLayoutOpen(false); }} style={{ fontWeight: layoutCols === 2 ? 700 : 400, color: layoutCols === 2 ? 'var(--color-accent)' : 'var(--color-text)' }}>2 Columns</div>
+              </div>
+            )}
+          </div>
+          <button className="hdr-btn" onClick={() => setMenuOpen(!menuOpen)}>Menu</button>
         </div>
       </div>
 
@@ -392,7 +399,13 @@ export default function TrackerPage() {
             </div>
             <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
               <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setSheetViewOpen(true); }}>📊 Open Spreadsheet</div>
-              <div className="tracker-menu-item" onClick={() => { navigate('/stats'); setMenuOpen(false); }} style={{ color: 'var(--color-blue)' }}>📈 Stats & Analysis</div>
+              <div className="tracker-menu-item" onClick={() => {
+                setMenuOpen(false);
+                // Pass this game's plays directly to Stats page
+                const activePlays = plays.filter(p => Object.keys(p).length > 0 && p.ignore !== 'SKIP');
+                const title = game ? `${game.home || ''} vs ${game.away || ''}`.trim() || 'Current Game' : 'Current Game';
+                navigate('/stats', { state: { directPlays: activePlays, directLabel: title } });
+              }} style={{ color: 'var(--color-blue)' }}>📈 Stats & Analysis</div>
               <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setColPickerOpen(true); }}>➕ Add / remove columns</div>
               <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setSaveAsOpen(true); setSaveAsName(''); }}>💾 Save as template</div>
               <div className="tracker-menu-item" onClick={() => { setMenuOpen(false); setTmplSwitcherOpen(true); }}>📋 Switch template</div>
