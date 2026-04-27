@@ -60,7 +60,7 @@ export function defaultColumns() {
     },
     {
       id:'qtr', name:'QTR', type:'buttons',
-      btns:[{l:'1Q',v:'1'},{l:'2Q',v:'2'},{l:'3Q',v:'3'},{l:'4Q',v:'4'}]
+      btns:[{l:'Q1',v:'1'},{l:'Q2',v:'2'},{l:'Q3',v:'3'},{l:'Q4',v:'4'}]
     },
     {
       id:'dn', name:'DN', type:'buttons',
@@ -229,3 +229,4 @@ export function resolveTemplateColumns(template, allCols) {
 
 // Legacy compat: DEFAULT_COLUMNS for code that imports it
 export const DEFAULT_COLUMNS = resolveTemplateColumns(defaultTemplate());
+
