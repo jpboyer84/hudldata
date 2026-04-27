@@ -514,11 +514,11 @@ export default function TrackerPage() {
           className="nav-btn"
           onClick={() => setVoiceActive(!voiceActive)}
           style={{
-            fontSize: 16, padding: '8px 12px', flexShrink: 0,
+            fontSize: 13, padding: '6px 10px', flexShrink: 0,
             background: voiceActive ? '#ef4444' : 'var(--color-surface2)',
             color: voiceActive ? '#fff' : 'var(--color-text)',
             border: `1px solid ${voiceActive ? '#ef4444' : 'var(--color-border)'}`,
-            borderRadius: 8,
+            borderRadius: 8, lineHeight: 1,
           }}
         >
           {voiceActive ? '⏹' : '🎤'}
