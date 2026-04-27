@@ -9,6 +9,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { DropdownModal, PlayNavModal, EditGameModal } from '../components/Modals';
 import { exportGameXLSX } from '../utils/xlsxExport';
 import { sendToHudl, fetchHudlColumnSets } from '../lib/hudlData';
+import { HUDL_API } from '../lib/constants';
 import VoiceMode from '../components/VoiceMode';
 
 const INITIAL_PLAYS = 200;
@@ -31,7 +32,50 @@ export default function TrackerPage() {
   const [voiceActive, setVoiceActive] = useState(false);
   const [hudlSyncActive, setHudlSyncActive] = useState(false);
 
-  // ─── HUDL EXTENSION SYNC ───
+  // ─── CROSS-DEVICE HUDL SYNC via Railway SSE ───
+  useEffect(() => {
+    // Room = Hudl team ID or app team ID
+    const room = coach?.hudl_team_id || coach?.team_id;
+    if (!room) return;
+
+    console.log('[AC Sync] Connecting to Railway SSE room:', room);
+    let es = null;
+    let reconnectTimer = null;
+
+    function connect() {
+      es = new EventSource(`${HUDL_API}/api/sync/listen/${room}`);
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'connected') {
+            setHudlSyncActive(true);
+            return;
+          }
+          if (data.type === 'clip-changed') {
+            const idx = data.clipIndex;
+            if (idx >= 0 && idx < playsRef.current.length) {
+              setPlayIdx(idx);
+              showToast(`Synced to clip ${idx + 1}`);
+            }
+          }
+        } catch {}
+      };
+      es.onerror = () => {
+        es.close();
+        setHudlSyncActive(false);
+        reconnectTimer = setTimeout(connect, 5000);
+      };
+    }
+
+    connect();
+
+    return () => {
+      if (es) es.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  }, [coach?.hudl_team_id, coach?.team_id]);
+
+  // ─── SAME-BROWSER EXTENSION SYNC ───
   useEffect(() => {
     function handleSyncMessage(event) {
       if (event.source !== window) return;
@@ -41,7 +85,6 @@ export default function TrackerPage() {
         setHudlSyncActive(true);
       }
       if (event.data.type === 'clip-changed') {
-        // Hudl advanced to a new clip → advance our tracker to match
         const idx = event.data.clipIndex;
         if (idx >= 0 && idx < plays.length && idx !== playIdx) {
           setPlayIdx(idx);
@@ -202,17 +245,28 @@ export default function TrackerPage() {
       next = plays.length;
     }
     setPlayIdx(next);
-    // Sync to Hudl extension if connected
-    if (hudlSyncActive) {
-      window.postMessage({ source: 'assistant-coach-sync', action: 'next-clip' }, '*');
+    // Sync to Hudl — same browser (extension)
+    window.postMessage({ source: 'assistant-coach-sync', action: 'next-clip' }, '*');
+    // Sync to Hudl — cross device (Railway relay)
+    const room = coach?.hudl_team_id || coach?.team_id;
+    if (room) {
+      fetch(`${HUDL_API}/api/sync/push`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room, type: 'command', data: { key: 'ArrowRight' } }),
+      }).catch(() => {});
     }
   }
 
   function prevPlay() {
     if (playIdx > 0) {
       setPlayIdx(playIdx - 1);
-      if (hudlSyncActive) {
-        window.postMessage({ source: 'assistant-coach-sync', action: 'prev-clip' }, '*');
+      window.postMessage({ source: 'assistant-coach-sync', action: 'prev-clip' }, '*');
+      const room = coach?.hudl_team_id || coach?.team_id;
+      if (room) {
+        fetch(`${HUDL_API}/api/sync/push`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ room, type: 'command', data: { key: 'ArrowLeft' } }),
+        }).catch(() => {});
       }
     }
   }
