@@ -50,6 +50,35 @@ export default function LandingPage() {
   return (
     <div className="view">
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+        {/* Top status bar */}
+        <div style={{
+          display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
+          padding: '12px 20px 0', gap: 10, flexShrink: 0,
+        }}>
+          <div
+            onClick={() => {
+              if (!isLoggedIn) { requireAuth('/settings'); return; }
+              if (hudlConnected) navigate('/settings');
+              else setHudlModalOpen(true);
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '5px 10px', borderRadius: 20,
+              background: hudlConnected ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)',
+              border: `1px solid ${hudlConnected ? 'rgba(34,197,94,0.3)' : 'var(--color-border)'}`,
+              cursor: 'pointer', fontSize: 11, fontWeight: 600,
+              color: hudlConnected ? '#22c55e' : 'var(--color-muted)',
+            }}
+          >
+            <div style={{
+              width: 6, height: 6, borderRadius: 3,
+              background: hudlConnected ? '#22c55e' : '#666',
+            }} />
+            {hudlConnected ? 'Hudl Connected' : 'Hudl'}
+          </div>
+        </div>
+
         <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
 
           {/* Logo */}
@@ -113,17 +142,12 @@ export default function LandingPage() {
 
             {/* Small cards row */}
             <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
-              {/* Hudl — requires auth */}
-              <div className="lcard-sm" onClick={() => {
-                if (!isLoggedIn) { requireAuth('/settings'); return; }
-                setHudlModalOpen(true);
-              }}>
+              {/* Help */}
+              <div className="lcard-sm" onClick={() => navigate('/help')}>
                 <div style={{ marginBottom: 8 }}>
-                  {hudlConnected ? <HudlConnectedIcon /> : <HudlConnectIcon />}
+                  <HelpIcon />
                 </div>
-                <div className="lcard-sm-label">
-                  {hudlConnected ? 'Hudl ✓' : 'Connect to Hudl'}
-                </div>
+                <div className="lcard-sm-label">Help</div>
               </div>
 
               {/* Settings & Help */}
