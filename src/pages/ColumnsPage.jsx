@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { fetchColumns, deleteColumn } from '../lib/supaData';
+import { fetchHudlColumns } from '../lib/hudlData';
 import { defaultColumns } from '../columns';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -33,17 +34,24 @@ export default function ColumnsPage() {
   const { coach } = useAuth();
   const showToast = useToast();
   const [customColumns, setCustomColumns] = useState([]);
+  const [hudlColumns, setHudlColumns] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
     if (coach?.team_id) {
       fetchColumns(coach.team_id).then(setCustomColumns).catch(console.error);
     }
-  }, [coach?.team_id]);
+    if (coach?.hudl_cookie) {
+      fetchHudlColumns(coach).then(setHudlColumns).catch(() => {});
+    }
+  }, [coach?.team_id, coach?.hudl_cookie]);
 
   const builtInCols = defaultColumns();
-  // Merge: custom columns override built-in if same ID
+  // Merge: built-in + Hudl columns not already in built-in
+  const builtInIds = new Set(builtInCols.map(c => c.id));
   const customIds = new Set(customColumns.map(c => c.id));
+  const newHudlCols = hudlColumns.filter(c => !builtInIds.has(c.id) && !customIds.has(c.id));
+  const allCols = [...builtInCols, ...newHudlCols].sort((a, b) => a.name.localeCompare(b.name));
 
   function handleDelete(col) {
     setConfirmDelete({
@@ -122,17 +130,17 @@ export default function ColumnsPage() {
           borderTop: customColumns.length > 0 ? '1px solid var(--color-border)' : 'none',
           marginTop: customColumns.length > 0 ? 8 : 0,
         }}>
-          ALL COLUMNS ({builtInCols.length})
+          ALL COLUMNS ({allCols.length})
         </div>
-        {builtInCols
+        {allCols
           .filter(c => !customIds.has(c.id))
-          .sort((a, b) => a.name.localeCompare(b.name))
           .map(col => (
             <div key={col.id} className="arch-card" style={{ gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="arch-title">{col.name}</div>
                 <div className="arch-meta">
                   {getTypeLabel(col)} · {getButtonCount(col)} {col.type === 'numpad' ? 'keys' : 'buttons'}
+                  {col.isHudl && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 700, color: 'var(--color-accent)' }}>HUDL</span>}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
