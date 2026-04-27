@@ -3,15 +3,14 @@
 
 (function () {
   'use strict';
-  if (!window.location.pathname.includes('/library') && !window.location.pathname.includes('/video')) return;
-
-  console.log('[AC Sync] Hudl content script loaded');
+  console.log('[AC Sync] Hudl content script loaded on:', window.location.pathname);
   const RELAY = 'https://hudl-mcp-production.up.railway.app';
 
-  // Extract team ID from URL for room code
-  const teamMatch = window.location.pathname.match(/\/(?:library|video\/\d+)\/(\d+)/);
+  // Extract team ID from URL — try multiple patterns
+  const teamMatch = window.location.pathname.match(/\/(\d{5,})/) || // any 5+ digit number
+                    window.location.href.match(/team[_\/=](\d+)/i);
   const room = teamMatch ? teamMatch[1] : 'default';
-  console.log('[AC Sync] Room:', room);
+  console.log('[AC Sync] Room:', room, '(from URL:', window.location.pathname, ')');
 
   // Same-browser messaging
   let port = null;
