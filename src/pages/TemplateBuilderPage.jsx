@@ -108,7 +108,7 @@ export default function TemplateBuilderPage() {
   }
 
   const selectedCols = selectedIds.map(sid => allColumns.find(c => c.id === sid)).filter(Boolean);
-  const availableCols = allColumns.filter(c => !selectedIds.includes(c.id));
+  const availableCols = allColumns.filter(c => !selectedIds.includes(c.id)).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="view">
