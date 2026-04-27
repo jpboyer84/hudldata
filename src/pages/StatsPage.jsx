@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { calcStats, buildSummaryObj, buildSlimCsv } from '../utils/statsCalc';
-import { fetchHudlClips, hudlClipsToPlays } from '../lib/hudlData';
+import { fetchHudlClips, hudlClipsToPlays, fetchRoster, resolvePlayerIds } from '../lib/hudlData';
 import { fetchPlaybook, buildPlaybookContext, buildAskAISystemPrompt } from '../lib/playbook';
 import { HUDL_API } from '../lib/constants';
 import HudlCutupPicker from '../components/HudlCutupPicker';
@@ -516,8 +516,15 @@ export default function StatsPage() {
     showToast(`Loading ${selectedItems.length} cutup${selectedItems.length > 1 ? 's' : ''}…`);
     try {
       let allPlays = [];
+      let roster = null;
       for (const item of selectedItems) {
-        const clips = await fetchHudlClips(item.id, coach, item.title);
+        let clips = await fetchHudlClips(item.id, coach, item.title);
+        // Fetch roster once using seasonId from first clip
+        if (!roster && clips.length > 0 && clips[0].seasonId) {
+          roster = await fetchRoster(clips[0].seasonId, coach);
+        }
+        // Resolve player IDs → "#14 Wyatt Tewell"
+        if (roster) clips = resolvePlayerIds(clips, roster);
         const mapped = hudlClipsToPlays(clips).map(p => ({ ...p, _gameTitle: item.title }));
         allPlays = allPlays.concat(mapped);
       }
