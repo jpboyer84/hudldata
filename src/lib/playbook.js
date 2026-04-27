@@ -15,6 +15,9 @@ Conference Opponents - Opponent 1, Opponent 2, Opponent 3`,
 Play Name - Concept (e.g. Counter Left)
 Play Name - Concept (e.g. Inside Zone Right)`,
 
+  pass_pro: `Protection Name - Description (e.g. Half Slide - Center and backside slide, frontside man)
+Protection Name - Description (e.g. BOB - Big on Big, back picks up free rusher)`,
+
   pass_plays: `Play Name - Concept (e.g. Four Verticals)
 Play Name - Concept (e.g. Shallow Cross)`,
 
@@ -71,7 +74,8 @@ TFL (against our offense) - offense.tflAgainst: offensive plays with negative ya
 // Section metadata
 export const PB_SECTIONS = {
   team_info:    { title: '🏫 TEAM INFO',         emoji: '🏫', hint: 'Key - Value format, one per line. Tells the AI who you are, your rivalries, and conference opponents.',  heading: 'TEAM INFO' },
-  run_plays:    { title: '🏃 RUN PLAYS & PASS PRO', emoji: '🏃', hint: 'Play Name - Concept, one per line. Include run plays and pass protection schemes.',          heading: 'RUN PLAYS & PASS PROTECTION' },
+  run_plays:    { title: '🏃 RUN PLAYS',          emoji: '🏃', hint: 'Play Name - Concept, one per line.',                                                                heading: 'RUN PLAYS' },
+  pass_pro:     { title: '🛡️ PASS PROTECTION',    emoji: '🛡️', hint: 'Protection Name - Description, one per line. Include slide rules and pickup assignments.',          heading: 'PASS PROTECTION SCHEMES' },
   pass_plays:   { title: '🎯 PASS PLAYS',         emoji: '🎯', hint: 'Play Name - Concept, one per line. Add your pass play names and route concepts.',                heading: 'PASS PLAY NAMES' },
   formations:   { title: '🗂 FORMATIONS',          emoji: '🗂', hint: 'Formation Name - Personnel / description, one per line.',                                         heading: 'FORMATIONS & PERSONNEL' },
   tags:         { title: '🏷 TAGS & MOTION',       emoji: '🏷', hint: 'Tag - What it means, one per line. These are modifiers added to play names.',                     heading: 'PLAY TAGS & MOTION' },
