@@ -3,19 +3,19 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 // ─── FOOTBALL SPEECH PARSER ─────────────────────────────────────
 
 const DOWN_MAP = {
-  'first': '1', '1st': '1', 'one': '1',
-  'second': '2', '2nd': '2', 'two': '2',
-  'third': '3', '3rd': '3', 'three': '3',
-  'fourth': '4', '4th': '4', 'four': '4',
+  'first': '1', '1st': '1', 'one': '1', '1': '1',
+  'second': '2', '2nd': '2', 'two': '2', '2': '2',
+  'third': '3', '3rd': '3', 'three': '3', '3': '3',
+  'fourth': '4', '4th': '4', 'four': '4', '4': '4',
 };
 
 const RESULT_MAP = {
-  'complete': 'Complete', 'completion': 'Complete', 'caught': 'Complete',
   'incomplete': 'Incomplete', 'incompletion': 'Incomplete', 'dropped': 'Incomplete',
-  'sack': 'Sack', 'sacked': 'Sack',
-  'scramble': 'Scramble', 'scrambled': 'Scramble',
-  'fumble': 'Fumble', 'fumbled': 'Fumble',
+  'complete': 'Complete', 'completion': 'Complete', 'caught': 'Complete',
   'interception': 'Interception', 'intercepted': 'Interception', 'pick': 'Interception',
+  'scramble': 'Scramble', 'scrambled': 'Scramble',
+  'sack': 'Sack', 'sacked': 'Sack',
+  'fumble': 'Fumble', 'fumbled': 'Fumble',
   'touchdown': 'TD', 'td': 'TD',
   'penalty': 'Penalty', 'flag': 'Penalty',
 };
@@ -69,7 +69,9 @@ export function parseFootballSpeech(text) {
   }
 
   // Down and distance: "1st and 10", "2nd and 7", "third and goal", "2nd down and 10"
-  const dnMatch = t.match(/(\w+)\s+(?:down\s+)?and\s+(\w+)/);
+  // Also handles: "3rd n 7", "third in seven", "3 and 7", "third 7"
+  const dnMatch = t.match(/(first|second|third|fourth|1st|2nd|3rd|4th|1|2|3|4)\s+(?:down\s+)?(?:and|n|in|&)\s+(\w+)/i)
+    || t.match(/(first|second|third|fourth|1st|2nd|3rd|4th)\s+(\d+|goal)\b/i);
   if (dnMatch) {
     const dn = DOWN_MAP[dnMatch[1]];
     if (dn) {
@@ -116,9 +118,9 @@ export function parseFootballSpeech(text) {
   const dirMatch = t.match(/\b(?:run|rush|pass)\s+(left|right)\b/);
   if (dirMatch && !result.hash) result.playdir = dirMatch[1] === 'left' ? 'L' : 'R';
 
-  // Result
+  // Result — use word boundary to prevent 'complete' matching inside 'incomplete'
   for (const [phrase, val] of Object.entries(RESULT_MAP)) {
-    if (t.includes(phrase)) { result.result = val; break; }
+    if (new RegExp(`\\b${phrase}\\b`).test(t)) { result.result = val; break; }
   }
   if (/\bno\s+gain\b/.test(t)) result.result = result.result || 'No Gain';
 
@@ -289,3 +291,4 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
     </div>
   );
 }
+
