@@ -157,7 +157,7 @@ export function calcStats(plays) {
   const defGL = def.map(getGL).filter(v => v !== null);
   const sacks = def.filter(p => (getResult(p) || '').toLowerCase().includes('sack'));
   const ints = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('int') || r.includes('interception'); });
-  const tfls = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return (gl !== null && gl < 0) && !r.includes('fumble') && !r.includes('penalty') && !r.includes('flag'); });
+  const tfls = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return (gl !== null && gl < 0) && !r.includes('penalty') && !r.includes('flag'); });
   const stops = def.filter(p => { const gl = getGL(p); return gl !== null && gl <= 0; });
   const defResults = (() => { const t = tally(def, getResult); return Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, 8); })();
 
@@ -343,9 +343,9 @@ export function buildSummaryObj(plays, label) {
   const defResults = {};
   def.forEach(p => { const r = getResult(p); if (r) defResults[r] = (defResults[r] || 0) + 1; });
   const sacks = def.filter(p => (getResult(p) || '').toLowerCase().includes('sack')).length;
-  const tfl = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return (gl !== null && gl < 0) && !r.includes('fumble') && !r.includes('penalty') && !r.includes('flag'); }).length;
+  const tfl = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return (gl !== null && gl < 0) && !r.includes('penalty') && !r.includes('flag'); }).length;
   // Offensive TFLs = times OUR offense was tackled for a loss (opponent's TFLs against us)
-  const offTfl = off.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return (gl !== null && gl < 0) && !r.includes('fumble') && !r.includes('penalty') && !r.includes('flag'); }).length;
+  const offTfl = off.filter(p => { const r = (getResult(p) || '').toLowerCase(); const gl = getGL(p); return (gl !== null && gl < 0) && !r.includes('penalty') && !r.includes('flag'); }).length;
   const ints = def.filter(p => { const r = (getResult(p) || '').toLowerCase(); return r.includes('int') || r.includes('interception'); }).length;
   const defThird = def.filter(p => String(getDn(p)) === '3');
   const defThirdStop = defThird.filter(p => {
