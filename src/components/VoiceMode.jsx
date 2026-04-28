@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { HUDL_API } from '../lib/constants';
 
 // ─── FOOTBALL SPEECH PARSER ─────────────────────────────────────
 
@@ -8,8 +9,6 @@ const DOWN_MAP = {
   'third': '3', '3rd': '3', 'three': '3', '3': '3',
   'fourth': '4', '4th': '4', 'four': '4', '4': '4',
 };
-
-// Result patterns are defined inline in parseFootballSpeech() for ordered matching
 
 const ODK_MAP = {
   'offense': 'O', 'offensive': 'O',
@@ -28,9 +27,8 @@ const NUM_WORDS = {
 
 function parseNumber(s) {
   if (!s) return null;
-  const cleaned = s.trim().toLowerCase();
-  if (NUM_WORDS[cleaned] !== undefined) return NUM_WORDS[cleaned];
-  const n = parseInt(cleaned);
+  if (NUM_WORDS[s] !== undefined) return NUM_WORDS[s];
+  const n = parseInt(s);
   return isNaN(n) ? null : n;
 }
 
@@ -38,22 +36,18 @@ export function parseFootballSpeech(text) {
   const result = {};
   const t = text.toLowerCase().trim();
 
-  // Commands — lenient matching (allow trailing noise from speech recognition)
   if (/^(next\s*play|next|advance)\b/i.test(t)) return { _command: 'next' };
   if (/^(previous|prev|go\s*back)\b/i.test(t)) return { _command: 'prev' };
   if (/^(clear|clear\s*row|reset)\b/i.test(t)) return { _command: 'clear' };
   if (/^(stop|stop\s*listening|exit|quit|done)\b/i.test(t)) return { _command: 'stop' };
 
-  // "Play 77" / "go to play 12" / "play number 5"
   const playNumMatch = t.match(/(?:go\s*to\s*)?play\s*(?:number\s*)?(\d+)/);
   if (playNumMatch) return { _command: 'goto', _playNum: parseInt(playNumMatch[1]) };
 
-  // ODK
   for (const [phrase, val] of Object.entries(ODK_MAP)) {
     if (t.includes(phrase)) { result.odk = val; break; }
   }
 
-  // Quarter: "quarter 2", "Q3", "2nd quarter", "quarter two"
   const qtrMatch = t.match(/(?:quarter|q)\s*(\d|one|two|three|four)|(\w+)\s+quarter/);
   if (qtrMatch) {
     const raw = qtrMatch[1] || qtrMatch[2];
@@ -63,8 +57,6 @@ export function parseFootballSpeech(text) {
     else if (raw === '4' || raw === 'four' || raw === 'fourth' || raw === '4th') result.qtr = '4';
   }
 
-  // Down and distance: "1st and 10", "2nd and 7", "third and goal", "2nd down and 10"
-  // Also handles: "3rd n 7", "third in seven", "3 and 7", "third 7", "3rd, 7"
   const dnMatch = t.match(/(first|second|third|fourth|1st|2nd|3rd|4th|1|2|3|4)\s+(?:down\s+)?(?:and|n|in|&|,)\s*(\w+[\w-]*)/i)
     || t.match(/(first|second|third|fourth|1st|2nd|3rd|4th)\s+(\w+[\w-]*)\b/i);
   if (dnMatch) {
@@ -81,7 +73,6 @@ export function parseFootballSpeech(text) {
     }
   }
 
-  // "X yards to go" / "X to go" for distance (standalone, when down already set or not)
   if (!result.dist2) {
     const toGoMatch = t.match(/(\w+[\w-]*)\s+(?:yards?\s+)?to\s+go/i);
     if (toGoMatch) {
@@ -94,19 +85,16 @@ export function parseFootballSpeech(text) {
     }
   }
 
-  // Standalone down without "and": "2nd down"
   if (!result.dn) {
     const dnOnly = t.match(/(\w+)\s+down/);
     if (dnOnly && DOWN_MAP[dnOnly[1]]) result.dn = DOWN_MAP[dnOnly[1]];
   }
 
-  // Yard line: "at own 20", "at the 35", "own 45", "their 30"
   const ylMatch = t.match(/(?:at\s+(?:the\s+)?)?(?:own\s+|our\s+|their\s+|opponent'?s?\s+)?(\d{1,2})\s*(?:yard\s*line)/);
   if (ylMatch) {
     const yl = parseInt(ylMatch[1]);
     if (yl >= 1 && yl <= 50) result.yardln = String(yl);
   }
-  // Also try "at the 20" or "own 35" without "yard line"
   if (!result.yardln) {
     const ylShort = t.match(/(?:at\s+(?:the\s+)?|own\s+|our\s+)(\d{1,2})(?!\s*(?:yard\s+(?:gain|loss)|gain|loss))/);
     if (ylShort) {
@@ -115,12 +103,10 @@ export function parseFootballSpeech(text) {
     }
   }
 
-  // Hash
   if (/\b(?:left\s+hash|hash\s+left)\b/.test(t)) result.hash = 'L';
   else if (/\b(?:right\s+hash|hash\s+right)\b/.test(t)) result.hash = 'R';
   else if (/\b(?:middle\s+hash|hash\s+middle|middle)\b/.test(t)) result.hash = 'M';
 
-  // Play type — check specific STK types BEFORE generic run/pass
   if (/\b(?:punt\s+return|punt\s+rec|returning?\s+(?:a\s+)?punt)\b/.test(t)) {
     result.playtype = 'Punt Rec'; if (!result.odk) result.odk = 'K';
   } else if (/\b(?:kick\s*off?\s+return|kick\s+return|ko\s+rec|returning?\s+(?:a\s+)?kick)\b/.test(t)) {
@@ -147,13 +133,10 @@ export function parseFootballSpeech(text) {
     result.playtype = 'Pass';
   }
 
-  // Play direction
   const dirMatch = t.match(/\b(?:run|rush|pass)\s+(left|right)\b/);
   if (dirMatch && !result.hash) result.playdir = dirMatch[1] === 'left' ? 'L' : 'R';
 
-  // Result — compound patterns first, then simple. Ordered so longer matches win.
   const RESULT_PATTERNS = [
-    // Compound results (must be before simple versions)
     [/\b(?:rush\s+td|rushing\s+touchdown)\b/, 'Rush TD'],
     [/\b(?:complete\s+td|passing\s+touchdown|pass\s+td)\b/, 'Complete TD'],
     [/\b(?:complete\s+fumble)\b/, 'Complete Fumble'],
@@ -163,7 +146,6 @@ export function parseFootballSpeech(text) {
     [/\b(?:rush\s+safety)\b/, 'Rush Safety'],
     [/\b(?:interception\s+fumble)\b/, 'Interception Fumble'],
     [/\b(?:extra\s+point\s+block|pat\s+block)\b/, 'Extra Pt. Block'],
-    // Simple results
     [/\b(?:incomplete|incompletion|in\s+complete)\b/, 'Incomplete'],
     [/\bdropped\b/, 'Incomplete'],
     [/\b(?:complete|completion|caught)\b/, 'Complete'],
@@ -192,7 +174,6 @@ export function parseFootballSpeech(text) {
   }
   if (/\bno\s+gain\b/.test(t)) result.result = result.result || 'No Gain';
 
-  // Gain/Loss
   const gainMatch = t.match(/gain\s+of\s+(\w+)|(\w+)\s+yard\s+gain/);
   if (gainMatch) {
     const n = parseNumber(gainMatch[1] || gainMatch[2]);
@@ -210,14 +191,13 @@ export function parseFootballSpeech(text) {
 
 // ─── VOICE MODE COMPONENT ─────────────────────────────────────
 
+const WS_URL = HUDL_API.replace(/^http/, 'ws') + '/ws/voice';
+
 export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
   const [transcript, setTranscript] = useState('');
   const [parsed, setParsed] = useState(null);
-  const recognitionRef = useRef(null);
-  const restartTimer = useRef(null);
-  const stoppedRef = useRef(false);
+  const [mode, setMode] = useState(null); // 'deepgram' | 'browser' | null
 
-  // Store callbacks in refs so they're always current without triggering useCallback/useEffect
   const onValuesRef = useRef(onValues);
   const onCommandRef = useRef(onCommand);
   const onToggleRef = useRef(onToggle);
@@ -225,95 +205,137 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
   useEffect(() => { onCommandRef.current = onCommand; }, [onCommand]);
   useEffect(() => { onToggleRef.current = onToggle; }, [onToggle]);
 
+  const wsRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const recorderRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const restartTimer = useRef(null);
+  const stoppedRef = useRef(false);
+
   const hasSpeechAPI = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
-  const startListening = useCallback(() => {
-    if (!hasSpeechAPI || stoppedRef.current) return;
+  const handleTranscript = useCallback((text) => {
+    if (!text) return;
+    console.log('[Voice] Transcript:', text);
+    setTranscript(text);
+    const result = parseFootballSpeech(text);
+    console.log('[Voice] Parsed:', JSON.stringify(result));
 
+    if (result._command) {
+      if (result._command === 'stop') {
+        stoppedRef.current = true;
+        onToggleRef.current();
+        return;
+      }
+      onCommandRef.current(result._command, result._playNum);
+      setParsed({ command: result._command, playNum: result._playNum });
+      setTimeout(() => setParsed(null), 1500);
+    } else if (Object.keys(result).length > 0) {
+      onValuesRef.current(result);
+      setParsed(result);
+      setTimeout(() => setParsed(null), 2500);
+    }
+    setTimeout(() => setTranscript(''), 2500);
+  }, []);
+
+  // ── Deepgram mode ──
+  const startDeepgram = useCallback(() => {
+    return new Promise((resolve) => {
+      try {
+        const ws = new WebSocket(WS_URL);
+        let opened = false;
+
+        ws.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'ready' && !opened) {
+              opened = true;
+              wsRef.current = ws;
+              navigator.mediaDevices.getUserMedia({
+                audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1, sampleRate: 48000 },
+              }).then(stream => {
+                mediaStreamRef.current = stream;
+                const recorder = new MediaRecorder(stream, {
+                  mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                    ? 'audio/webm;codecs=opus' : 'audio/webm',
+                });
+                recorderRef.current = recorder;
+                recorder.ondataavailable = (e) => {
+                  if (e.data.size > 0 && ws.readyState === WebSocket.OPEN) ws.send(e.data);
+                };
+                recorder.start(250);
+                setMode('deepgram');
+                resolve(true);
+              }).catch(() => { ws.close(); resolve(false); });
+            } else if (msg.type === 'transcript' && msg.text) {
+              handleTranscript(msg.text);
+            }
+          } catch {}
+        };
+
+        ws.onerror = () => { if (!opened) resolve(false); };
+        ws.onclose = () => { if (!opened) resolve(false); };
+        setTimeout(() => { if (!opened) { ws.close(); resolve(false); } }, 5000);
+      } catch { resolve(false); }
+    });
+  }, [handleTranscript]);
+
+  // ── Web Speech API fallback ──
+  const startBrowserSpeech = useCallback(() => {
+    if (!hasSpeechAPI) return;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-
-    // Single utterance mode — prevents feedback loop
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = 'en-US';
     recognition.maxAlternatives = 1;
-
     recognition.onresult = (event) => {
       const text = event.results[0]?.[0]?.transcript?.trim();
-      console.log('[Voice] Raw transcript:', text);
-      if (!text) return;
-
-      setTranscript(text);
-      const result = parseFootballSpeech(text);
-      console.log('[Voice] Parsed result:', JSON.stringify(result));
-
-      if (result._command) {
-        if (result._command === 'stop') {
-          stoppedRef.current = true;
-          onToggleRef.current();
-          return;
-        }
-        onCommandRef.current(result._command, result._playNum);
-        setParsed({ command: result._command, playNum: result._playNum });
-        setTimeout(() => setParsed(null), 1500);
-      } else if (Object.keys(result).length > 0) {
-        onValuesRef.current(result);
-        setParsed(result);
-        setTimeout(() => setParsed(null), 2500);
-      }
-
-      // Clear transcript after a beat
-      setTimeout(() => setTranscript(''), 2500);
+      if (text) handleTranscript(text);
     };
-
-    recognition.onerror = (event) => {
-      console.log('[Voice] Error:', event.error);
-      if (event.error === 'no-speech' || event.error === 'aborted') return;
-    };
-
+    recognition.onerror = () => {};
     recognition.onend = () => {
-      console.log('[Voice] Recognition ended, stopped:', stoppedRef.current);
       if (!stoppedRef.current) {
         restartTimer.current = setTimeout(() => {
-          if (!stoppedRef.current) {
-            try { startListening(); } catch {}
-          }
+          if (!stoppedRef.current) try { startBrowserSpeech(); } catch {}
         }, 1500);
       }
     };
-
     recognitionRef.current = recognition;
-    try { recognition.start(); console.log('[Voice] Recognition started'); } catch (e) { console.log('[Voice] Start failed:', e); }
-  }, [hasSpeechAPI]); // Only depends on hasSpeechAPI — callbacks use refs
+    try { recognition.start(); } catch {}
+    setMode('browser');
+  }, [hasSpeechAPI, handleTranscript]);
+
+  const cleanup = useCallback(() => {
+    stoppedRef.current = true;
+    if (recorderRef.current) { try { recorderRef.current.stop(); } catch {} recorderRef.current = null; }
+    if (mediaStreamRef.current) { mediaStreamRef.current.getTracks().forEach(t => t.stop()); mediaStreamRef.current = null; }
+    if (wsRef.current) {
+      try { wsRef.current.send(JSON.stringify({ type: 'close' })); wsRef.current.close(); } catch {}
+      wsRef.current = null;
+    }
+    if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch {} recognitionRef.current = null; }
+    if (restartTimer.current) { clearTimeout(restartTimer.current); restartTimer.current = null; }
+    setTranscript(''); setParsed(null); setMode(null);
+  }, []);
 
   useEffect(() => {
     if (active) {
       stoppedRef.current = false;
-      startListening();
+      startDeepgram().then(ok => {
+        if (!ok && !stoppedRef.current) {
+          console.log('[Voice] Deepgram unavailable, using browser speech');
+          startBrowserSpeech();
+        }
+      });
     } else {
-      stoppedRef.current = true;
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
-        recognitionRef.current = null;
-      }
-      if (restartTimer.current) {
-        clearTimeout(restartTimer.current);
-        restartTimer.current = null;
-      }
-      setTranscript('');
-      setParsed(null);
+      cleanup();
     }
-    return () => {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
-      }
-      if (restartTimer.current) clearTimeout(restartTimer.current);
-    };
-  }, [active, startListening]);
+    return cleanup;
+  }, [active, startDeepgram, startBrowserSpeech, cleanup]);
 
-  if (!hasSpeechAPI || !active) return null;
+  if (!active) return null;
 
   return (
     <div style={{
@@ -322,18 +344,16 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
       display: 'flex', alignItems: 'center', gap: 10,
     }}>
       <div style={{
-        width: 10, height: 10, borderRadius: 5, background: '#ef4444', flexShrink: 0,
+        width: 10, height: 10, borderRadius: 5, flexShrink: 0,
+        background: mode === 'deepgram' ? '#22c55e' : '#ef4444',
         animation: 'voicePulse 1.5s ease-in-out infinite',
       }} />
-
       <div style={{ flex: 1, minWidth: 0 }}>
         {transcript ? (
-          <div style={{ fontSize: 13, color: 'var(--color-text)', fontWeight: 500 }}>
-            "{transcript}"
-          </div>
+          <div style={{ fontSize: 13, color: 'var(--color-text)', fontWeight: 500 }}>"{transcript}"</div>
         ) : (
           <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-            Listening… say play data or "next play"
+            {mode === 'deepgram' ? 'Listening (Deepgram)…' : mode === 'browser' ? 'Listening (basic)…' : 'Connecting…'}
           </div>
         )}
         {parsed && !parsed.command && (
@@ -347,18 +367,11 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
           </div>
         )}
       </div>
-
-      <button
-        onClick={onToggle}
-        style={{
-          background: '#ef4444', border: 'none', borderRadius: 6,
-          color: '#fff', fontSize: 11, fontWeight: 700, padding: '6px 10px',
-          cursor: 'pointer', flexShrink: 0,
-        }}
-      >
-        STOP
-      </button>
-
+      <button onClick={onToggle} style={{
+        background: '#ef4444', border: 'none', borderRadius: 6,
+        color: '#fff', fontSize: 11, fontWeight: 700, padding: '6px 10px',
+        cursor: 'pointer', flexShrink: 0,
+      }}>STOP</button>
       <style>{`
         @keyframes voicePulse {
           0%, 100% { opacity: 1; transform: scale(1); }
@@ -368,6 +381,3 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
     </div>
   );
 }
-
-
-
