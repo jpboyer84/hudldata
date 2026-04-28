@@ -364,6 +364,10 @@ export function buildSummaryObj(plays, label) {
     return { down: d, plays: dnDef.length, runPct: dnDef.length ? Math.round(dnDef.filter(isRun).length/dnDef.length*100) : 0, passPct: dnDef.length ? Math.round(dnDef.filter(isPass).length/dnDef.length*100) : 0, avgAllowed: avg(gl) };
   }).filter(Boolean);
 
+  // Total TDs
+  const offTDs = off.filter(p => (getResult(p) || '').toLowerCase().includes('td')).length;
+  const defTDsAllowed = def.filter(p => (getResult(p) || '').toLowerCase().includes('td')).length;
+
   return {
     totalPlays: active.length,
     offense: {
@@ -378,6 +382,7 @@ export function buildSummaryObj(plays, label) {
       thirdDowns: third.length, thirdConversions: thirdConv.length,
       thirdConvPct: third.length ? Math.round(thirdConv.length/third.length*100) : 0,
       tflAgainst: offTfl, // times OUR offense was tackled for a loss by the opponent
+      totalTDs: offTDs,
     },
     defense: {
       plays: def.length, playsWithYardage: defGL.length, missingYardage: def.length - defGL.length,
@@ -389,6 +394,7 @@ export function buildSummaryObj(plays, label) {
       thirdDownFaced: defThird.length, thirdDownStops: defThirdStop.length,
       thirdDownStopPct: defThird.length ? Math.round(defThirdStop.length/defThird.length*100) : 0,
       topResults: Object.entries(defResults).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([r, c]) => ({ result: r, count: c })),
+      tdsAllowed: defTDsAllowed,
     },
     defenseDownTendencies: defDnStats,
     downTendencies: dnStats,
@@ -486,4 +492,5 @@ export function buildSlimCsv(plays, label) {
 
   return `${label || 'data'} | ${active.length} plays\n${header}\n${rows.join('\n')}`;
 }
+
 
