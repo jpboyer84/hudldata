@@ -38,11 +38,15 @@ export function parseFootballSpeech(text) {
   const result = {};
   const t = text.toLowerCase().trim();
 
-  // Commands
-  if (/^(next\s*play|next|advance)$/i.test(t)) return { _command: 'next' };
-  if (/^(previous|prev|back|go\s*back)$/i.test(t)) return { _command: 'prev' };
-  if (/^(clear|clear\s*row|reset)$/i.test(t)) return { _command: 'clear' };
-  if (/^(stop|stop\s*listening|exit|quit|done)$/i.test(t)) return { _command: 'stop' };
+  // Commands — lenient matching (allow trailing noise from speech recognition)
+  if (/^(next\s*play|next|advance)\b/i.test(t)) return { _command: 'next' };
+  if (/^(previous|prev|go\s*back)\b/i.test(t)) return { _command: 'prev' };
+  if (/^(clear|clear\s*row|reset)\b/i.test(t)) return { _command: 'clear' };
+  if (/^(stop|stop\s*listening|exit|quit|done)\b/i.test(t)) return { _command: 'stop' };
+
+  // "Play 77" / "go to play 12" / "play number 5"
+  const playNumMatch = t.match(/(?:go\s*to\s*)?play\s*(?:number\s*)?(\d+)/);
+  if (playNumMatch) return { _command: 'goto', _playNum: parseInt(playNumMatch[1]) };
 
   // ODK
   for (const [phrase, val] of Object.entries(ODK_MAP)) {
@@ -251,8 +255,8 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
           onToggleRef.current();
           return;
         }
-        onCommandRef.current(result._command);
-        setParsed({ command: result._command });
+        onCommandRef.current(result._command, result._playNum);
+        setParsed({ command: result._command, playNum: result._playNum });
         setTimeout(() => setParsed(null), 1500);
       } else if (Object.keys(result).length > 0) {
         onValuesRef.current(result);
@@ -339,7 +343,7 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
         )}
         {parsed?.command && (
           <div style={{ fontSize: 10, color: '#22c55e', marginTop: 2 }}>
-            → {parsed.command.toUpperCase()}
+            → {parsed.command.toUpperCase()}{parsed.playNum ? ` #${parsed.playNum}` : ''}
           </div>
         )}
       </div>
