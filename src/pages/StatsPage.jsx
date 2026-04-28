@@ -194,12 +194,14 @@ CRITICAL RULES:
 - Analyze BOTH "offense" and "defense" sections. Do not skip defense.
 - DEF analysis: yards allowed, opp run/pass tendencies, 3rd DN stop rate, sacks, TFLs, INTs, down-by-down.
 - Check "playsWithYardage" and "missingYardage". If fewer than 10 plays with yardage, do NOT make avg claims.
+- NEVER fabricate or infer stats not explicitly present in the data. If totalTDs is 0, do NOT claim any player scored TDs. If a per-player tds field is 0, that player has 0 TDs. Only report numbers you can see in the data.
 - Be specific with numbers. Use shorthand everywhere.
 - Do NOT repeat prior insights (listed below if follow-up).
 - STAT PRIORITY: Prefer EFFICIENCY RATES over averages. Averages (YPC, YPP) are easily skewed by one big play. Instead use "% of runs gaining 3+ yds", "% of runs gaining <3 yds" (stuff rate — how often the run game gets stopped), "% of passes gaining 5+ yds", "% of pass plays gaining 0 yds" (combines incompletions, sacks, and throwaways into one stat — better than completion % alone), "% of plays gaining 10+ yds" (explosive rate), "% of plays going negative". These are more honest and actionable. Only use YPC/YPP if there's no better way to express the finding.${feedbackCtx}`;
 
     // Build pre-computed summary object (token-efficient, matches HTML)
     const summaryObj = buildSummaryObj(plays);
+    console.log('[AI Analysis] Summary sent to Claude:', JSON.stringify(summaryObj, null, 2));
     const existingNote = append && insights.length > 0 ? '\n\nYou have ALREADY provided these insights — do NOT repeat them, find NEW patterns:\n' + insights.map(i => `- ${i.headline} (${i.stat})`).join('\n') : '';
 
     try {
@@ -251,20 +253,20 @@ CRITICAL RULES:
   const priorityOrder = { high: 0, medium: 1, low: 2 };
   const sorted = arr => [...arr].sort((a, b) => (priorityOrder[a.priority] || 1) - (priorityOrder[b.priority] || 1));
 
-  function renderCard(ins, sideColor) {
-    const tagLabel = ins.tag === 'O' ? 'OFFENSE' : ins.tag === 'D' ? 'DEFENSE' : 'GENERAL';
+  function renderCard(ins, statColor, headlineColor) {
+    const tagLabel = ins.tag === 'O' ? 'OFF' : ins.tag === 'D' ? 'DEF' : 'GEN';
     return (
-      <div key={ins.headline} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderLeft: `3px solid ${sideColor}`, borderRadius: 10, padding: '12px 14px', marginBottom: 8 }}>
+      <div key={ins.headline} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderLeft: `3px solid ${statColor}`, borderRadius: 10, padding: '12px 14px', marginBottom: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <span style={{ fontSize: 11, color: sideColor, fontWeight: 600 }}>{tagLabel}</span>
+          <span style={{ fontSize: 11, color: statColor, fontWeight: 600 }}>{tagLabel}</span>
           <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
             <button onClick={() => explainMethodology(ins)} style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', padding: '2px 4px', opacity: 0.4 }} title="How was this calculated?">❓</button>
             <button onClick={() => rate(ins, true)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', padding: '2px 4px', opacity: 0.4 }}>👍</button>
             <button onClick={() => rate(ins, false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', padding: '2px 4px', opacity: 0.4 }}>👎</button>
           </div>
         </div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: sideColor, marginTop: 4 }}>{ins.stat}</div>
-        <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4, color: ins.priority === 'high' ? '#ef4444' : ins.priority === 'medium' ? '#f59e0b' : 'var(--color-text)' }}>{ins.headline}</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: statColor, marginTop: 4 }}>{ins.stat}</div>
+        <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4, color: headlineColor }}>{ins.headline}</div>
       </div>
     );
   }
@@ -279,12 +281,12 @@ CRITICAL RULES:
         <div style={{ textAlign: 'center', padding: 40, color: 'var(--color-muted)', fontSize: 13 }}>AI is analyzing your play data…</div>
       )}
       {offInsights.length > 0 && (
-        <><div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-accent)', marginBottom: 6, letterSpacing: '0.06em' }}>OFFENSE</div>
-        {sorted(offInsights).map(ins => renderCard(ins, 'var(--color-green)'))}</>
+        <><div style={{ fontSize: 11, fontWeight: 600, color: '#f0983a', marginBottom: 6, letterSpacing: '0.06em' }}>OFF</div>
+        {sorted(offInsights).map(ins => renderCard(ins, '#f0983a', '#c4956e'))}</>
       )}
       {defInsights.length > 0 && (
-        <><div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-blue)', marginBottom: 6, marginTop: 14, letterSpacing: '0.06em' }}>DEFENSE</div>
-        {sorted(defInsights).map(ins => renderCard(ins, 'var(--color-blue)'))}</>
+        <><div style={{ fontSize: 11, fontWeight: 600, color: '#4fc4a8', marginBottom: 6, marginTop: 14, letterSpacing: '0.06em' }}>DEF</div>
+        {sorted(defInsights).map(ins => renderCard(ins, '#4fc4a8', '#89a89d'))}</>
       )}
       {!loading && insights.length > 0 && (
         <button className="btn btn-secondary" onClick={() => runAnalysis(true)} style={{ width: '100%', marginTop: 10, fontSize: 12 }}>
@@ -579,7 +581,7 @@ export default function StatsPage() {
     <div className="view">
       <div className="hdr">
         <button className="hdr-btn" onClick={() => navigate('/')}>← Back</button>
-        <div className="hdr-title">Stats & analysis</div>
+        <div className="hdr-title"></div>
         <div style={{ display: 'flex', gap: 5 }}>
           <button className="hdr-btn" onClick={() => setPickerOpen(true)} style={{ color: 'var(--color-accent)' }}>
             {label ? (label.length > 18 ? label.substring(0, 16) + '…' : label) : 'FILTER ▼'}
@@ -654,5 +656,6 @@ export default function StatsPage() {
     </div>
   );
 }
+
 
 
