@@ -464,12 +464,17 @@ export default function TrackerPage() {
     }
   }
 
-  function handleVoiceCommand(cmd) {
+  function handleVoiceCommand(cmd, playNum) {
     switch (cmd) {
       case 'next': nextPlay(); break;
       case 'prev': prevPlay(); break;
       case 'clear': clearRow(); break;
       case 'stop': setVoiceActive(false); break;
+      case 'goto':
+        if (playNum >= 1 && playNum <= plays.length) {
+          setPlayIdx(playNum - 1);
+        }
+        break;
       default: break;
     }
   }
@@ -939,3 +944,4 @@ function HudlPushModal({ plays, cutupId, coach, onClose, onSuccess, onError }) {
     </div>
   );
 }
+
