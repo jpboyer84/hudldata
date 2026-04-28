@@ -213,6 +213,14 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
   const restartTimer = useRef(null);
   const stoppedRef = useRef(false);
 
+  // Store callbacks in refs so they're always current without triggering useCallback/useEffect
+  const onValuesRef = useRef(onValues);
+  const onCommandRef = useRef(onCommand);
+  const onToggleRef = useRef(onToggle);
+  useEffect(() => { onValuesRef.current = onValues; }, [onValues]);
+  useEffect(() => { onCommandRef.current = onCommand; }, [onCommand]);
+  useEffect(() => { onToggleRef.current = onToggle; }, [onToggle]);
+
   const hasSpeechAPI = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
@@ -240,14 +248,14 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
       if (result._command) {
         if (result._command === 'stop') {
           stoppedRef.current = true;
-          onToggle(); // Turn off voice mode
+          onToggleRef.current();
           return;
         }
-        onCommand(result._command);
+        onCommandRef.current(result._command);
         setParsed({ command: result._command });
         setTimeout(() => setParsed(null), 1500);
       } else if (Object.keys(result).length > 0) {
-        onValues(result);
+        onValuesRef.current(result);
         setParsed(result);
         setTimeout(() => setParsed(null), 2500);
       }
@@ -258,25 +266,23 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
 
     recognition.onerror = (event) => {
       console.log('[Voice] Error:', event.error);
-      // Ignore common non-errors
       if (event.error === 'no-speech' || event.error === 'aborted') return;
     };
 
     recognition.onend = () => {
-      console.log('[Voice] Recognition ended, active:', active, 'stopped:', stoppedRef.current);
-      // Auto-restart after a pause — the delay prevents feedback loop
-      if (active && !stoppedRef.current) {
+      console.log('[Voice] Recognition ended, stopped:', stoppedRef.current);
+      if (!stoppedRef.current) {
         restartTimer.current = setTimeout(() => {
-          if (active && !stoppedRef.current) {
+          if (!stoppedRef.current) {
             try { startListening(); } catch {}
           }
-        }, 1500); // 1.5s pause between listens
+        }, 1500);
       }
     };
 
     recognitionRef.current = recognition;
     try { recognition.start(); console.log('[Voice] Recognition started'); } catch (e) { console.log('[Voice] Start failed:', e); }
-  }, [active, hasSpeechAPI, onValues, onCommand, onToggle]);
+  }, [hasSpeechAPI]); // Only depends on hasSpeechAPI — callbacks use refs
 
   useEffect(() => {
     if (active) {
