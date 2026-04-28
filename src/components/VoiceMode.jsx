@@ -230,10 +230,12 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
 
     recognition.onresult = (event) => {
       const text = event.results[0]?.[0]?.transcript?.trim();
+      console.log('[Voice] Raw transcript:', text);
       if (!text) return;
 
       setTranscript(text);
       const result = parseFootballSpeech(text);
+      console.log('[Voice] Parsed result:', JSON.stringify(result));
 
       if (result._command) {
         if (result._command === 'stop') {
@@ -255,12 +257,13 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
     };
 
     recognition.onerror = (event) => {
+      console.log('[Voice] Error:', event.error);
       // Ignore common non-errors
       if (event.error === 'no-speech' || event.error === 'aborted') return;
-      console.log('[Voice] Error:', event.error);
     };
 
     recognition.onend = () => {
+      console.log('[Voice] Recognition ended, active:', active, 'stopped:', stoppedRef.current);
       // Auto-restart after a pause — the delay prevents feedback loop
       if (active && !stoppedRef.current) {
         restartTimer.current = setTimeout(() => {
@@ -272,7 +275,7 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
     };
 
     recognitionRef.current = recognition;
-    try { recognition.start(); } catch {}
+    try { recognition.start(); console.log('[Voice] Recognition started'); } catch (e) { console.log('[Voice] Start failed:', e); }
   }, [active, hasSpeechAPI, onValues, onCommand, onToggle]);
 
   useEffect(() => {
@@ -355,5 +358,6 @@ export default function VoiceMode({ onValues, onCommand, active, onToggle }) {
     </div>
   );
 }
+
 
 
